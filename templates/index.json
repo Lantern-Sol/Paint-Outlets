@@ -9,292 +9,520 @@
  */
 {
   "sections": {
-    "hero_jVaWmY": {
-      "type": "hero",
+    "ls_hero_hxytDT": {
+      "type": "ls-hero",
+      "name": "LS Hero",
+      "settings": {
+        "font_family": "outfit_n4",
+        "heading": "<p>Pro-Quality Paint & Supplies <em>Delivered </em></p><p><em>To Your Door</em></p>",
+        "subtext": "Shop Benjamin Moore, Festool, Graco, stains, coatings, and pro-grade supplies for weekend projects and job sites alike, backed by 72+ years of paint expertise.",
+        "image": "shopify://shop_images/homepage-hero-current.png",
+        "image_mobile": "shopify://shop_images/hero-mobile-current.png",
+        "image_position": "right center",
+        "show_rating": true,
+        "rating_score": 5,
+        "rating_text": "Rated 4.5/5 from 233 verified reviews",
+        "star_color": "#f5b301",
+        "rating_text_color": "#ffffff",
+        "button_1_label": "Shop now",
+        "button_1_link": "",
+        "button_1_show_arrow": true,
+        "button_1_open_new_tab": false,
+        "button_1_background": "#c13121",
+        "button_1_text": "#ffffff",
+        "button_1_border": "#c13121",
+        "button_1_hover_background": "",
+        "button_1_hover_text": "",
+        "button_1_hover_border": "",
+        "button_1_border_width": 0,
+        "button_1_border_radius": 40,
+        "button_2_label": "Shop by color",
+        "button_2_link": "",
+        "button_2_open_new_tab": false,
+        "button_2_background": "rgba(0,0,0,0)",
+        "button_2_text": "#ffffff",
+        "button_2_border": "{{ settings.color_palette.background }}",
+        "button_2_hover_background": "",
+        "button_2_hover_text": "",
+        "button_2_hover_border": "",
+        "button_2_border_width": 1,
+        "button_2_border_radius": 40,
+        "background_color": "#5fa1e5",
+        "mobile_gradient_color": "#7cb3ed",
+        "mobile_gradient_position": 28,
+        "mobile_gradient_width": 120,
+        "mobile_gradient_height": 72,
+        "mobile_gradient_coverage": 4,
+        "mobile_gradient_fade": 60,
+        "mobile_image_offset": 140,
+        "mobile_offset_color": "#1a4f95",
+        "text_color": "#ffffff",
+        "heading_color": "#ffffff",
+        "heading_accent_color": "#c13121",
+        "subtext_color": "#ffffff",
+        "section_min_height": 640,
+        "image_width": 1500,
+        "gradient_coverage": 48,
+        "gradient_angle": 120,
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "ls_features_bar": {
+      "type": "ls-features",
       "blocks": {
-        "text_YLPk4p": {
-          "type": "text",
-          "name": "t:names.heading",
+        "feature_delivery": {
+          "type": "feature",
           "settings": {
-            "text": "<p>Browse our latest products</p>",
-            "mobile_text": "",
-            "width": "fit-content",
-            "max_width": "normal",
-            "alignment": "left",
-            "type_preset": "h1",
-            "font": "var(--font-body--family)",
-            "enable_custom_font_weight": false,
-            "weight": "400",
-            "font_size": "1rem",
-            "line_height": "custom",
-            "custom_line_height": 1,
-            "letter_spacing": "normal",
-            "case": "none",
-            "wrap": "pretty",
-            "text_color": "{{ settings.color_palette.background }}",
-            "use_mobile_settings": false,
-            "mobile_font_size": "1rem",
-            "mobile_custom_line_height": 1.5,
-            "background": false,
-            "background_color": "#00000026",
-            "corner_radius": 0,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0,
-            "use_mobile_padding": false,
-            "padding-block-start-mobile": 0,
-            "padding-block-end-mobile": 0,
-            "padding-inline-start-mobile": 0,
-            "padding-inline-end-mobile": 0
-          },
-          "blocks": {}
+            "icon": "truck",
+            "text": "Free local delivery on bulk orders"
+          }
         },
-        "button_H9gpTf": {
-          "type": "button",
-          "name": "t:names.button",
+        "feature_guarantee": {
+          "type": "feature",
           "settings": {
-            "label": "Shop all",
-            "link": "shopify://collections/all",
-            "open_in_new_tab": false,
-            "style_class": "button-custom",
-            "custom_button_background": "rgba(0, 0, 0, 0)",
-            "custom_button_text": "{{ settings.color_palette.background }}",
-            "custom_button_border": "{{ settings.color_palette.background }}",
-            "width": "fit-content",
-            "custom_width": 100,
-            "width_mobile": "fit-content",
-            "custom_width_mobile": 100
-          },
-          "blocks": {}
+            "icon": "guarantee",
+            "text": "100% satisfaction guarantee"
+          }
+        },
+        "feature_shipping": {
+          "type": "feature",
+          "settings": {
+            "icon": "location",
+            "text": "Ships to all 48 states"
+          }
+        },
+        "feature_color": {
+          "type": "feature",
+          "settings": {
+            "icon": "color",
+            "text": "Expert color matching & tinting"
+          }
         }
       },
       "block_order": [
-        "text_YLPk4p",
-        "button_H9gpTf"
+        "feature_delivery",
+        "feature_guarantee",
+        "feature_shipping",
+        "feature_color"
       ],
-      "name": "t:names.hero",
+      "name": "LS Features",
       "settings": {
-        "media_type_1": "image",
-        "parallax_effect": false,
-        "hide_media_on_mobile": false,
-        "media_type_2": "image",
-        "link": "",
-        "open_in_new_tab": false,
-        "content_direction": "column",
-        "vertical_on_mobile": true,
-        "horizontal_alignment": "space-between",
-        "vertical_alignment": "flex-end",
-        "align_baseline": true,
-        "horizontal_alignment_flex_direction_column": "center",
-        "vertical_alignment_flex_direction_column": "flex-end",
-        "gap": 24,
-        "section_width": "page-width",
-        "section_width-mobile": "page-width",
-        "section_height": "medium",
-        "section_height_custom": 50,
-        "toggle_overlay": true,
-        "overlay_color": "#12121266",
-        "overlay_style": "solid",
-        "gradient_direction": "to bottom",
-        "blurred_reflection": false,
-        "reflection_opacity": 75,
-        "padding-block-start": 100,
-        "padding-block-end": 72,
-        "use_mobile_padding": false,
-        "padding-block-start-mobile": 0,
-        "padding-block-end-mobile": 0
+        "font_family": "outfit_n4",
+        "background_color": "#1a1a1a",
+        "text_color": "#f2f2f2",
+        "icon_color": "#c13121",
+        "icon_size": 20,
+        "item_gap": 32,
+        "bar_padding": 14,
+        "marquee_speed": 24,
+        "padding-block-start": 0,
+        "padding-block-end": 0
       }
     },
-    "product_list_fa6P9H": {
-      "type": "product-list",
+    "ls_trusted_brands": {
+      "type": "ls-trusted",
       "blocks": {
-        "static-header": {
-          "type": "_product-list-content",
-          "name": "t:names.header",
-          "static": true,
+        "brand_lenmar": {
+          "type": "brand",
           "settings": {
-            "content_direction": "row",
-            "vertical_on_mobile": false,
-            "horizontal_alignment": "space-between",
-            "vertical_alignment": "flex-end",
-            "align_baseline": true,
-            "horizontal_alignment_flex_direction_column": "flex-start",
-            "vertical_alignment_flex_direction_column": "center",
-            "gap": 12,
-            "width": "fill",
-            "custom_width": 100,
-            "width_mobile": "fill",
-            "custom_width_mobile": 100,
-            "height": "fit",
-            "custom_height": 100,
-            "background_media": "none",
-            "video_position": "cover",
-            "background_image_position": "cover",
-            "border": "none",
-            "border_width": 1,
-            "border_opacity": 100,
-            "border_radius": 0,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {
-            "product_list_text_YFtzcL": {
-              "type": "_product-list-text",
-              "name": "t:names.collection_title",
-              "settings": {
-                "text": "<h3>{{ closest.collection.title }}</h3>",
-                "width": "fit-content",
-                "max_width": "normal",
-                "alignment": "left",
-                "type_preset": "h4",
-                "font": "var(--font-body--family)",
-                "font_size": "",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "wrap": "pretty",
-                "background": false,
-                "background_color": "#00000026",
-                "corner_radius": 0,
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            },
-            "product_list_button_MWeP9V": {
-              "type": "_product-list-button",
-              "name": "t:names.product_list_button",
-              "settings": {
-                "label": "View all",
-                "open_in_new_tab": false,
-                "style_class": "button-unstyled",
-                "width": "fit-content",
-                "custom_width": 100,
-                "width_mobile": "fit-content",
-                "custom_width_mobile": 100
-              },
-              "blocks": {}
-            }
-          },
-          "block_order": [
-            "product_list_text_YFtzcL",
-            "product_list_button_MWeP9V"
-          ]
+            "logo": "shopify://shop_images/lenmar-logo.png",
+            "name": "Lenmar",
+            "link": ""
+          }
         },
-        "static-product-card": {
-          "type": "_product-card",
-          "name": "t:names.product_card",
-          "static": true,
+        "brand_oldmasters": {
+          "type": "brand",
           "settings": {
-            "product_card_gap": 4,
-            "border": "none",
-            "border_width": 1,
-            "border_opacity": 100,
-            "border_radius": 0,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {
-            "product_card_gallery_677WP3": {
-              "type": "_product-card-gallery",
-              "name": "t:names.product_card_media",
-              "settings": {
-                "image_ratio": "adapt",
-                "border": "none",
-                "border_width": 1,
-                "border_opacity": 100,
-                "border_radius": 0,
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            },
-            "product_title_YXxMTj": {
-              "type": "product-title",
-              "name": "t:names.product_title",
-              "settings": {
-                "width": "100%",
-                "max_width": "normal",
-                "alignment": "left",
-                "type_preset": "paragraph",
-                "font": "var(--font-body--family)",
-                "font_size": "1rem",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "wrap": "pretty",
-                "background": false,
-                "background_color": "#00000026",
-                "corner_radius": 0,
-                "padding-block-start": 4,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            },
-            "price_JQzVV4": {
-              "type": "price",
-              "name": "t:names.product_price",
-              "settings": {
-                "show_sale_price_first": true,
-                "show_installments": false,
-                "show_tax_info": false,
-                "type_preset": "h6",
-                "width": "100%",
-                "alignment": "left",
-                "font": "var(--font-body--family)",
-                "font_size": "1rem",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            }
-          },
-          "block_order": [
-            "product_card_gallery_677WP3",
-            "product_title_YXxMTj",
-            "price_JQzVV4"
-          ]
+            "logo": "shopify://shop_images/old-masters-logo.png",
+            "name": "Old Masters",
+            "link": ""
+          }
+        },
+        "brand_tritech": {
+          "type": "brand",
+          "settings": {
+            "logo": "shopify://shop_images/tritech.png",
+            "name": "TriTech",
+            "link": ""
+          }
+        },
+        "brand_benjaminmoore": {
+          "type": "brand",
+          "settings": {
+            "logo": "shopify://shop_images/benjamin-moore-paints-logo.png",
+            "name": "Benjamin Moore",
+            "link": ""
+          }
+        },
+        "brand_festool": {
+          "type": "brand",
+          "settings": {
+            "logo": "shopify://shop_images/festool-logo.png",
+            "name": "Festool",
+            "link": ""
+          }
+        },
+        "brand_8y93BV": {
+          "type": "brand",
+          "settings": {
+            "logo": "shopify://shop_images/old-masters-logo.png",
+            "name": "Old Masters",
+            "link": ""
+          }
+        },
+        "brand_graco": {
+          "type": "brand",
+          "settings": {
+            "logo": "shopify://shop_images/graco-logo.png",
+            "name": "Graco",
+            "link": ""
+          }
+        },
+        "brand_rustoleum": {
+          "type": "brand",
+          "settings": {
+            "logo": "shopify://shop_images/rustoleum-logo.png",
+            "name": "Rust-Oleum",
+            "link": ""
+          }
+        },
+        "brand_evo": {
+          "type": "brand",
+          "settings": {
+            "logo": "shopify://shop_images/evo-logo.png",
+            "name": "EVO Eclipse",
+            "link": ""
+          }
         }
       },
-      "name": "t:names.featured_collection",
+      "block_order": [
+        "brand_lenmar",
+        "brand_oldmasters",
+        "brand_tritech",
+        "brand_benjaminmoore",
+        "brand_festool",
+        "brand_8y93BV",
+        "brand_graco",
+        "brand_rustoleum",
+        "brand_evo"
+      ],
+      "name": "LS Trusted",
       "settings": {
-        "collection": "all",
-        "layout_type": "grid",
-        "carousel_on_mobile": false,
-        "max_products": 8,
+        "font_family": "outfit_n4",
+        "heading": "The brands you know — trusted by pros, loved by DIYers",
+        "heading_mobile": "",
+        "background_color": "#ffffff",
+        "heading_color": "#6b7280",
+        "logo_height": 44,
+        "item_gap": 40,
+        "logo_opacity": 100,
+        "section_padding": 40,
+        "section_padding_mobile": 28,
+        "marquee_speed": 30,
+        "padding-block-start": 24,
+        "padding-block-end": 0
+      }
+    },
+    "ls_shop_categories_p3UiCj": {
+      "type": "ls-shop-categories",
+      "blocks": {
+        "category_card_XmrATV": {
+          "type": "category_card",
+          "settings": {
+            "collection": "interior-paint",
+            "category": "Interior",
+            "subtitle": "Benjamin Moore · ALLPRO",
+            "title": "",
+            "badge": "",
+            "image": "shopify://shop_images/interior-paint-override.png"
+          }
+        },
+        "category_card_b6U9g6": {
+          "type": "category_card",
+          "settings": {
+            "collection": "exterior-paint-1",
+            "category": "Exterior",
+            "subtitle": "All-weather coatings",
+            "title": "",
+            "badge": "",
+            "image": "shopify://shop_images/exterior-paint-override.png"
+          }
+        },
+        "category_card_XpLHHR": {
+          "type": "category_card",
+          "settings": {
+            "collection": "interior-primers",
+            "category": "Interior",
+            "subtitle": "Stain-blocking",
+            "title": "Primers & Sealers",
+            "badge": "",
+            "image": "shopify://shop_images/primers-override.png"
+          }
+        },
+        "category_card_zHLQqF": {
+          "type": "category_card",
+          "settings": {
+            "collection": "painting-tools",
+            "category": "Tools & Supplies",
+            "subtitle": "Brushes · rollers · tape",
+            "title": "",
+            "badge": "",
+            "image": "shopify://shop_images/tools-override.png"
+          }
+        },
+        "category_card_CrAWpV": {
+          "type": "category_card",
+          "settings": {
+            "collection": "exterior-wood-stains-and-finishes",
+            "category": "Exterior",
+            "subtitle": "Decks · sliding",
+            "title": "",
+            "badge": "",
+            "image": "shopify://shop_images/exterior-stain-override.png"
+          }
+        },
+        "category_card_3zNx4A": {
+          "type": "category_card",
+          "settings": {
+            "collection": "spray-paints",
+            "category": "Tools & Supplies",
+            "subtitle": "Decks · sliding",
+            "title": "",
+            "badge": "",
+            "image": "shopify://shop_images/spray-paint-override.png"
+          }
+        },
+        "category_card_eiXrQP": {
+          "type": "category_card",
+          "settings": {
+            "collection": "thinners-additives-and-cleaners",
+            "category": "Tools & Supplies",
+            "subtitle": "Solvents · prep",
+            "title": "",
+            "badge": "",
+            "image": "shopify://shop_images/thinner-override.png"
+          }
+        },
+        "category_card_hGKk9p": {
+          "type": "category_card",
+          "settings": {
+            "collection": "prosaver",
+            "category": "Interior",
+            "subtitle": "Pro Saver Items",
+            "title": "Pro Saver",
+            "badge": "",
+            "image": "shopify://shop_images/prosaver-override.png"
+          }
+        }
+      },
+      "block_order": [
+        "category_card_XmrATV",
+        "category_card_b6U9g6",
+        "category_card_XpLHHR",
+        "category_card_zHLQqF",
+        "category_card_CrAWpV",
+        "category_card_3zNx4A",
+        "category_card_eiXrQP",
+        "category_card_hGKk9p"
+      ],
+      "name": "LS Shop by Category",
+      "settings": {
+        "font_family": "outfit_n4",
+        "eyebrow": "Start here",
+        "heading": "Shop by category",
+        "link_label": "All categories",
+        "link_url": "",
+        "show_filter_label": true,
+        "all_label": "All",
+        "show_count": true,
+        "show_sort": true,
         "columns": 4,
-        "mobile_columns": "2",
-        "mobile_card_size": "60cqw",
-        "columns_gap": 8,
-        "rows_gap": 24,
-        "icons_style": "arrow",
-        "icons_shape": "none",
-        "section_width": "page-width",
-        "horizontal_alignment": "flex-start",
-        "gap": 28,
+        "card_radius": 14,
+        "background_color": "#fafafa",
+        "eyebrow_color": "#c13121",
+        "heading_color": "#1a1a1a",
+        "accent_color": "#c13121",
+        "text_color": "#1a1a1a",
+        "muted_color": "#6b7280",
+        "card_background": "#ffffff",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    },
+    "ls_featured_collections_qwJHcr": {
+      "type": "ls-featured-collections",
+      "blocks": {
+        "collection_card_Q4jKRL": {
+          "type": "collection_card",
+          "settings": {
+            "collection": "romabio",
+            "category": "Paint",
+            "title": "Romabio",
+            "subtitle": "Mineral & lime paints",
+            "badge": "Paint",
+            "image": "shopify://shop_images/romabio-override.jpg",
+            "link": ""
+          }
+        },
+        "collection_card_eqmmEM": {
+          "type": "collection_card",
+          "settings": {
+            "collection": "golden-paintworks",
+            "category": "Decorative",
+            "title": "Faux Finishing",
+            "subtitle": "Decorative & texture",
+            "badge": "Decorative",
+            "image": "shopify://shop_images/faux-override.png",
+            "link": ""
+          }
+        },
+        "collection_card_kWN4E9": {
+          "type": "collection_card",
+          "settings": {
+            "collection": "lenmar®-wood-finishes-and-coatings",
+            "category": "Paint",
+            "title": "Lenmar Professional",
+            "subtitle": "Lacquers & coatings",
+            "badge": "Paint",
+            "image": "shopify://shop_images/lenmar-override.jpg",
+            "link": ""
+          }
+        },
+        "collection_card_QNipen": {
+          "type": "collection_card",
+          "settings": {
+            "collection": "evo",
+            "category": "Paint",
+            "title": "EVO Eclipse",
+            "subtitle": "Premium interior",
+            "badge": "Paint",
+            "image": "shopify://shop_images/evo-override.jpg",
+            "link": ""
+          }
+        },
+        "collection_card_ar6TVr": {
+          "type": "collection_card",
+          "settings": {
+            "collection": "festool",
+            "category": "Tools",
+            "title": "FESTOOL",
+            "subtitle": "Sanders & power tools",
+            "badge": "Tools",
+            "image": "shopify://shop_images/festool-override.png",
+            "link": ""
+          }
+        },
+        "collection_card_zcgpmn": {
+          "type": "collection_card",
+          "settings": {
+            "collection": "festool",
+            "category": "Tools",
+            "title": "FESTOOL",
+            "subtitle": "Sanders & power tools",
+            "badge": "Tools",
+            "link": ""
+          }
+        }
+      },
+      "block_order": [
+        "collection_card_Q4jKRL",
+        "collection_card_eqmmEM",
+        "collection_card_kWN4E9",
+        "collection_card_QNipen",
+        "collection_card_ar6TVr",
+        "collection_card_zcgpmn"
+      ],
+      "name": "LS Featured Collections",
+      "settings": {
+        "font_family": "outfit_n4",
+        "eyebrow": "Curated",
+        "show_eyebrow_mobile": true,
+        "heading": "Featured collections",
+        "show_arrows": true,
+        "show_filters": true,
+        "all_label": "All",
+        "card_width": 260,
+        "card_radius": 18,
+        "background_color": "#fafafa",
+        "eyebrow_color": "#c13121",
+        "heading_color": "#1a1a1a",
+        "accent_color": "#c13121",
+        "text_color": "#1a1a1a",
+        "muted_color": "#6b7280",
+        "card_background": "#ffffff",
+        "padding-block-start": 0,
+        "padding-block-end": 48
+      }
+    },
+    "ls_deal_UdVyRE": {
+      "type": "ls-deal",
+      "blocks": {
+        "feature_7adaDx": {
+          "type": "feature",
+          "settings": {
+            "text": "Airless sprayer · 0.31 GPM"
+          }
+        },
+        "feature_zNdhWg": {
+          "type": "feature",
+          "settings": {
+            "text": "Sprays unthinned latex & primers"
+          }
+        },
+        "feature_xmgRpD": {
+          "type": "feature",
+          "settings": {
+            "text": "Pro-grade stand mount"
+          }
+        }
+      },
+      "block_order": [
+        "feature_7adaDx",
+        "feature_zNdhWg",
+        "feature_xmgRpD"
+      ],
+      "name": "LS Deal",
+      "settings": {
+        "product": "allpro-mustang-2400-stand-24f559",
+        "deal_label": "Deal of the week",
+        "show_save_badge": true,
+        "font_family": "outfit_n4",
+        "dealer_label": "Authorized dealer",
+        "title_override": "Graco AllPro Mustang 2400 Stand",
+        "description_override": "<p>Pro-grade airless sprayer on a heavy-duty stand — sprays unthinned latex and primers, whether it's a whole-house repaint or the job site.</p>",
+        "price_note": "Pricing illustrative — confirm live price & availability",
+        "add_label": "Add to cart",
+        "sold_out_label": "Sold out",
+        "secondary_label": "Call to order",
+        "secondary_link": "",
+        "trust_1": "Free local delivery",
+        "trust_2": "100% satisfaction guarantee",
+        "trust_3": "In-store & curbside pickup",
+        "card_radius": 24,
+        "background_color": "#fafafa",
+        "card_left_background": "#eeeeee",
+        "card_right_background": "#ffffff",
+        "card_left_background_mobile": "#ffffff",
+        "card_right_background_mobile": "#ffffff",
+        "media_tile_background": "#ffffff",
+        "card_border_color": "#e6e2db",
+        "eyebrow_color": "#c13121",
+        "heading_color": "#1a1a1a",
+        "accent_color": "#c13121",
+        "text_color": "#1a1a1a",
+        "muted_color": "#6b7280",
         "padding-block-start": 48,
         "padding-block-end": 48
       }
     }
   },
   "order": [
-    "hero_jVaWmY",
-    "product_list_fa6P9H"
+    "ls_hero_hxytDT",
+    "ls_features_bar",
+    "ls_trusted_brands",
+    "ls_shop_categories_p3UiCj",
+    "ls_featured_collections_qwJHcr",
+    "ls_deal_UdVyRE"
   ]
 }

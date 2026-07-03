@@ -1,0 +1,853 @@
+{%- liquid
+  assign sc_font = section.settings.font_family
+  assign sc_font_500 = sc_font | font_modify: 'weight', '500'
+  assign sc_font_600 = sc_font | font_modify: 'weight', '600'
+  assign sc_font_700 = sc_font | font_modify: 'weight', '700'
+
+  # Build a unique, order-preserving list of the categories used by the cards.
+  assign cat_list = '|'
+  for block in section.blocks
+    assign cat = block.settings.category | strip
+    unless cat == blank
+      assign needle = '|' | append: cat | append: '|'
+      unless cat_list contains needle
+        assign cat_list = cat_list | append: cat | append: '|'
+      endunless
+    endunless
+  endfor
+  assign categories = cat_list | split: '|'
+-%}
+
+{% style %}
+  {{ sc_font | font_face: font_display: 'swap' }}
+  {{ sc_font_500 | font_face: font_display: 'swap' }}
+  {{ sc_font_600 | font_face: font_display: 'swap' }}
+  {{ sc_font_700 | font_face: font_display: 'swap' }}
+
+  .ls-shopcat-{{ section.id }} {
+    --ls-sc-font-family: {{ sc_font.family }}, {{ sc_font.fallback_families }};
+    --ls-sc-eyebrow: {{ section.settings.eyebrow_color | default: '#c13121' }};
+    --ls-sc-heading: {{ section.settings.heading_color | default: '#1a1a1a' }};
+    --ls-sc-accent: {{ section.settings.accent_color | default: '#c13121' }};
+    --ls-sc-text: {{ section.settings.text_color | default: '#1a1a1a' }};
+    --ls-sc-muted: {{ section.settings.muted_color | default: '#6b7280' }};
+    --ls-sc-card-bg: {{ section.settings.card_background | default: '#ffffff' }};
+    --ls-sc-cols: {{ section.settings.columns | default: 4 }};
+    --ls-sc-radius: {{ section.settings.card_radius | default: 14 }}px;
+  }
+{% endstyle %}
+
+{%- if section.settings.background_color != blank -%}
+  <div class="section-background" style="background-color: {{ section.settings.background_color }};"></div>
+{%- endif -%}
+<div
+  class="section ls-shopcat ls-shopcat-{{ section.id }} spacing-style"
+  style="{% render 'spacing-style', settings: section.settings %}"
+>
+  <div class="ls-shopcat__inner">
+    <header class="ls-shopcat__header">
+      <div class="ls-shopcat__titles">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="ls-shopcat__eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        {%- if section.settings.heading != blank -%}
+          <h2 class="ls-shopcat__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+      </div>
+      {%- if section.settings.show_count -%}
+        <span class="ls-shopcat__count ls-shopcat__count--header" data-count>{{ section.blocks.size }} items</span>
+      {%- endif -%}
+      {%- if section.settings.link_label != blank -%}
+        <a class="ls-shopcat__all-link" href="{{ section.settings.link_url | default: '#' }}">
+          {{ section.settings.link_label }}
+        </a>
+      {%- endif -%}
+    </header>
+
+    <div class="ls-shopcat__toolbar">
+      <div class="ls-shopcat__tabs" role="tablist" aria-label="{{ section.settings.heading | escape }}">
+        {%- if section.settings.show_filter_label -%}
+          <span class="ls-shopcat__filter-label" aria-hidden="true">
+            <svg viewBox="0 0 20 20" fill="none" focusable="false">
+              <path d="M3 5h14M6 10h8M9 15h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            Filter
+          </span>
+        {%- endif -%}
+        <button type="button" class="ls-shopcat__tab is-active" data-filter="all" role="tab" aria-selected="true">
+          {{ section.settings.all_label | default: 'All' }}
+        </button>
+        {%- for cat in categories -%}
+          {%- unless cat == blank -%}
+            <button type="button" class="ls-shopcat__tab" data-filter="{{ cat | handleize }}" role="tab" aria-selected="false">
+              {{ cat }}
+            </button>
+          {%- endunless -%}
+        {%- endfor -%}
+      </div>
+
+      <div class="ls-shopcat__meta">
+        {%- if section.settings.show_count -%}
+          <span class="ls-shopcat__count" data-count>{{ section.blocks.size }} items</span>
+        {%- endif -%}
+        {%- if section.settings.show_sort -%}
+          <label class="ls-shopcat__sort">
+            <span class="ls-shopcat__sort-caption">Sort</span>
+            <select class="ls-shopcat__sort-select" data-sort>
+              <option value="featured">Featured</option>
+              <option value="products-desc">Most products</option>
+              <option value="products-asc">Fewest products</option>
+              <option value="title-asc">A–Z</option>
+            </select>
+          </label>
+        {%- endif -%}
+      </div>
+    </div>
+
+    <div class="ls-shopcat__grid" data-grid>
+      {%- for block in section.blocks -%}
+        {%- liquid
+          assign collection = block.settings.collection
+          assign cat = block.settings.category | strip
+          assign card_image = block.settings.image | default: collection.featured_image
+          assign card_title = block.settings.title | default: collection.title
+          assign count = collection.all_products_count | default: 0
+          assign card_url = collection.url | default: '#'
+        -%}
+        <article
+          class="ls-shopcat__card"
+          data-category="{{ cat | handleize }}"
+          data-products="{{ count }}"
+          data-title="{{ card_title | downcase | escape }}"
+          {{ block.shopify_attributes }}
+        >
+          <a class="ls-shopcat__media" href="{{ card_url }}">
+            {%- if cat != blank -%}
+              <span class="ls-shopcat__badge">{{ block.settings.badge | default: cat }}</span>
+            {%- endif -%}
+            {%- if card_image != blank -%}
+              {{
+                card_image
+                | image_url: width: 800
+                | image_tag:
+                  class: 'ls-shopcat__img',
+                  widths: '300, 450, 600, 800',
+                  sizes: '(min-width: 750px) 25vw, (min-width: 600px) 50vw, 100vw',
+                  loading: 'lazy',
+                  alt: card_title
+              }}
+            {%- else -%}
+              <div class="ls-shopcat__img ls-shopcat__img--placeholder">
+                {{ 'collection-1' | placeholder_svg_tag: 'placeholder-image' }}
+              </div>
+            {%- endif -%}
+          </a>
+
+          <div class="ls-shopcat__body">
+            <h3 class="ls-shopcat__card-title">
+              <a href="{{ card_url }}">{{ card_title }}</a>
+            </h3>
+            {%- if block.settings.subtitle != blank -%}
+              <p class="ls-shopcat__card-sub">
+                <svg class="ls-shopcat__sub-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M1.75 7.00004L6.41667 2.33337L11.6667 2.91671L12.25 8.16671L7.58333 12.8334L1.75 7.00004Z" stroke="currentColor" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M8.75002 6.06668C9.20105 6.06668 9.56668 5.70105 9.56668 5.25002C9.56668 4.79898 9.20105 4.43335 8.75002 4.43335C8.29898 4.43335 7.93335 4.79898 7.93335 5.25002C7.93335 5.70105 8.29898 6.06668 8.75002 6.06668Z" fill="currentColor"/>
+                </svg>
+                {{ block.settings.subtitle }}
+              </p>
+            {%- endif -%}
+          </div>
+
+          <div class="ls-shopcat__foot">
+            <span class="ls-shopcat__products"><strong>{{ count }}</strong><span class="ls-shopcat__products-word">products</span></span>
+            <a class="ls-shopcat__shop" href="{{ card_url }}" aria-label="Shop {{ card_title | escape }}">
+              <span class="ls-shopcat__shop-label">Shop</span>
+              <span class="ls-shopcat__shop-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none" focusable="false">
+                  <path d="M4 10h11M11 6l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </a>
+          </div>
+        </article>
+      {%- endfor -%}
+
+      <p class="ls-shopcat__empty" data-empty hidden>No categories to show.</p>
+    </div>
+
+    {%- if section.settings.link_label != blank -%}
+      <a class="ls-shopcat__all-btn" href="{{ section.settings.link_url | default: '#' }}">
+        {{ section.settings.link_label }}
+      </a>
+    {%- endif -%}
+  </div>
+</div>
+
+<script>
+  (function () {
+    function init() {
+    var root = document.querySelector('.ls-shopcat-{{ section.id }}');
+    if (!root) return;
+    var grid = root.querySelector('[data-grid]');
+    if (!grid) return;
+    var cards = Array.prototype.slice.call(grid.querySelectorAll('.ls-shopcat__card'));
+    var tabs = Array.prototype.slice.call(root.querySelectorAll('.ls-shopcat__tab'));
+    var countEls = Array.prototype.slice.call(root.querySelectorAll('[data-count]'));
+    var emptyEl = root.querySelector('[data-empty]');
+    var sortEl = root.querySelector('[data-sort]');
+    var current = 'all';
+
+    function apply() {
+      var visible = 0;
+      cards.forEach(function (card) {
+        var show = current === 'all' || card.getAttribute('data-category') === current;
+        card.hidden = !show;
+        if (show) visible++;
+      });
+      var label = visible + (visible === 1 ? ' item' : ' items');
+      countEls.forEach(function (el) { el.textContent = label; });
+      if (emptyEl) emptyEl.hidden = visible !== 0;
+    }
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(function (t) {
+          t.classList.remove('is-active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        tab.classList.add('is-active');
+        tab.setAttribute('aria-selected', 'true');
+        current = tab.getAttribute('data-filter');
+        apply();
+      });
+    });
+
+    if (sortEl) {
+      sortEl.addEventListener('change', function () {
+        var v = sortEl.value;
+        var order = cards.slice();
+        if (v === 'products-desc') {
+          order.sort(function (a, b) { return (+b.dataset.products) - (+a.dataset.products); });
+        } else if (v === 'products-asc') {
+          order.sort(function (a, b) { return (+a.dataset.products) - (+b.dataset.products); });
+        } else if (v === 'title-asc') {
+          order.sort(function (a, b) { return a.dataset.title.localeCompare(b.dataset.title); });
+        }
+        order.forEach(function (card) { grid.appendChild(card); });
+        if (emptyEl) grid.appendChild(emptyEl);
+      });
+    }
+
+    apply();
+    }
+
+    init();
+    document.addEventListener('shopify:section:load', function (e) {
+      if (!e.detail || e.detail.sectionId === '{{ section.id }}') init();
+    });
+  })();
+</script>
+
+{% stylesheet %}
+  .ls-shopcat__inner {
+    font-family: var(--ls-sc-font-family, 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    color: var(--ls-sc-text);
+  }
+
+  .ls-shopcat__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+
+  .ls-shopcat__eyebrow {
+    margin: 0 0 0.25rem;
+    color: var(--ls-sc-eyebrow);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .ls-shopcat__heading {
+    margin: 0;
+    color: var(--ls-sc-heading);
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+  }
+
+  .ls-shopcat__all-link {
+    color: var(--ls-sc-text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .ls-shopcat__all-link:hover {
+    color: var(--ls-sc-accent);
+  }
+
+  /* Header count + bottom button are mobile-only */
+  .ls-shopcat__count--header {
+    display: none;
+  }
+
+  .ls-shopcat__all-btn {
+    display: none;
+  }
+
+  .ls-shopcat__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .ls-shopcat__tabs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .ls-shopcat__filter-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--ls-sc-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-right: 0.25rem;
+  }
+
+  .ls-shopcat__filter-label svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .ls-shopcat__tab {
+    appearance: none;
+    border: 1px solid rgb(0 0 0 / 0.12);
+    background: transparent;
+    color: var(--ls-sc-text);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .ls-shopcat__tab:hover {
+    border-color: rgb(0 0 0 / 0.3);
+  }
+
+  .ls-shopcat__tab.is-active {
+    background: var(--ls-sc-heading);
+    border-color: var(--ls-sc-heading);
+    color: #fff;
+  }
+
+  .ls-shopcat__meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .ls-shopcat__count {
+    color: var(--ls-sc-muted);
+    font-size: 0.875rem;
+  }
+
+  .ls-shopcat__sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+    color: var(--ls-sc-muted);
+  }
+
+  .ls-shopcat__sort-select {
+    font: inherit;
+    font-size: 0.875rem;
+    color: var(--ls-sc-text);
+    border: 1px solid rgb(0 0 0 / 0.12);
+    border-radius: 8px;
+    padding: 0.4rem 0.6rem;
+    background: var(--ls-sc-card-bg);
+    cursor: pointer;
+  }
+
+  .ls-shopcat__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.75rem, 1.5vw, 1.25rem);
+  }
+
+  .ls-shopcat__card {
+    display: flex;
+    flex-direction: column;
+    background: var(--ls-sc-card-bg);
+    border: 1px solid rgb(0 0 0 / 0.07);
+    border-radius: var(--ls-sc-radius, 14px);
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+  }
+
+  .ls-shopcat__card[hidden] {
+    display: none;
+  }
+
+  .ls-shopcat__media {
+    position: relative;
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+  }
+
+  .ls-shopcat__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+
+  .ls-shopcat__card:hover .ls-shopcat__img {
+    transform: scale(1.04);
+  }
+
+  .ls-shopcat__img--placeholder {
+    display: grid;
+    place-items: center;
+    background: rgb(0 0 0 / 0.05);
+  }
+
+  .ls-shopcat__badge {
+    position: absolute;
+    z-index: 2;
+    top: 0.625rem;
+    left: 0.625rem;
+    background: rgb(255 255 255 / 0.95);
+    color: var(--ls-sc-heading);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  }
+
+  .ls-shopcat__body {
+    padding: 0.9rem 1rem 0.5rem;
+    flex: 1 0 auto;
+  }
+
+  .ls-shopcat__card-title {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .ls-shopcat__card-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .ls-shopcat__card-title a:hover {
+    color: var(--ls-sc-accent);
+  }
+
+  .ls-shopcat__card-sub {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.35rem 0 0;
+    color: var(--ls-sc-muted);
+    font-size: 0.85rem;
+  }
+
+  .ls-shopcat__sub-icon {
+    width: 14px;
+    height: 14px;
+    color: var(--ls-sc-accent);
+    flex-shrink: 0;
+  }
+
+  .ls-shopcat__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem 1rem;
+  }
+
+  .ls-shopcat__products {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    color: var(--ls-sc-muted);
+    font-size: 0.8125rem;
+  }
+
+  .ls-shopcat__products strong {
+    color: var(--ls-sc-text);
+    font-weight: 700;
+    font-size: 1.0625rem;
+  }
+
+  .ls-shopcat__shop {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--ls-sc-text);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .ls-shopcat__shop-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    background: var(--ls-sc-accent);
+    color: #fff;
+    transition: transform 0.15s ease;
+  }
+
+  .ls-shopcat__shop-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .ls-shopcat__shop:hover .ls-shopcat__shop-icon {
+    transform: translateX(2px);
+  }
+
+  .ls-shopcat__empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--ls-sc-muted);
+    padding: 2rem 0;
+  }
+
+  @media screen and (max-width: 749px) {
+    .ls-shopcat__products {
+      gap: 0.5rem;
+    }
+
+    .ls-shopcat__shop-label {
+      display: none;
+    }
+
+    /* Count sits to the right of the heading, bottom-aligned with it */
+    .ls-shopcat__header {
+      align-items: flex-end;
+      flex-wrap: nowrap;
+    }
+
+    .ls-shopcat__count--header {
+      display: inline;
+      flex-shrink: 0;
+      white-space: nowrap;
+      line-height: 1.1;
+    }
+
+    /* "All categories" moves out of the header to a button below the cards */
+    .ls-shopcat__all-link {
+      display: none;
+    }
+
+    /* Filter tabs stay on a single, horizontally scrollable line */
+    .ls-shopcat__toolbar {
+      flex-wrap: nowrap;
+    }
+
+    .ls-shopcat__tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      margin: 0 calc(-1 * var(--ls-sc-edge, 0px));
+      padding: 0 var(--ls-sc-edge, 0px);
+    }
+
+    .ls-shopcat__tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .ls-shopcat__filter-label,
+    .ls-shopcat__tab {
+      flex-shrink: 0;
+    }
+
+    /* Count + sort dropdown are not shown in the mobile toolbar */
+    .ls-shopcat__meta {
+      display: none;
+    }
+
+    /* Full-width "All categories" button below the grid */
+    .ls-shopcat__all-btn {
+      display: block;
+      width: 100%;
+      margin-top: 1.25rem;
+      padding: 0.85rem 1rem;
+      border: 1px solid rgb(0 0 0 / 0.16);
+      border-radius: 999px;
+      background: var(--ls-sc-card-bg);
+      color: var(--ls-sc-text);
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .ls-shopcat__all-btn:hover {
+      border-color: var(--ls-sc-heading);
+    }
+  }
+
+  @media screen and (min-width: 750px) {
+    .ls-shopcat__grid {
+      grid-template-columns: repeat(var(--ls-sc-cols, 4), 1fr);
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS Shop by Category",
+  "tag": "section",
+  "class": "ls-shopcat-section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "max_blocks": 24,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "font_family",
+      "label": "Font",
+      "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Header"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Start here"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Shop by category"
+    },
+    {
+      "type": "text",
+      "id": "link_label",
+      "label": "Link label",
+      "default": "All categories"
+    },
+    {
+      "type": "url",
+      "id": "link_url",
+      "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Toolbar"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_filter_label",
+      "label": "Show \"Filter\" label",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "all_label",
+      "label": "\"All\" tab label",
+      "default": "All"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_count",
+      "label": "Show item count",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_sort",
+      "label": "Show sort dropdown",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "Columns (desktop)",
+      "min": 2,
+      "max": 5,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "card_radius",
+      "label": "Card corner radius",
+      "min": 0,
+      "max": 28,
+      "step": 2,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Section background",
+      "default": "#fafafa"
+    },
+    {
+      "type": "color",
+      "id": "eyebrow_color",
+      "label": "Eyebrow",
+      "default": "#c13121"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading & active tab",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent (Shop button)",
+      "default": "#c13121"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted text",
+      "default": "#6b7280"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "blocks": [
+    {
+      "type": "category_card",
+      "name": "Category card",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Collection"
+        },
+        {
+          "type": "text",
+          "id": "category",
+          "label": "Category (filter tag)",
+          "info": "Cards with the same value are grouped under one filter tab, e.g. Interior."
+        },
+        {
+          "type": "text",
+          "id": "subtitle",
+          "label": "Subtitle",
+          "info": "e.g. Benjamin Moore · ALLPRO"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title override",
+          "info": "Defaults to the collection title."
+        },
+        {
+          "type": "text",
+          "id": "badge",
+          "label": "Badge override",
+          "info": "Defaults to the category."
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image override",
+          "info": "Defaults to the collection image."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "LS Shop by Category",
+      "category": "t:categories.collections",
+      "blocks": [
+        { "type": "category_card", "settings": { "category": "Interior", "subtitle": "Benjamin Moore · ALLPRO" } },
+        { "type": "category_card", "settings": { "category": "Exterior", "subtitle": "All-weather coatings" } },
+        { "type": "category_card", "settings": { "category": "Interior", "subtitle": "Stain-blocking" } },
+        { "type": "category_card", "settings": { "category": "Tools & Supplies", "subtitle": "Brushes · rollers · tape" } }
+      ]
+    }
+  ]
+}
+{% endschema %}
