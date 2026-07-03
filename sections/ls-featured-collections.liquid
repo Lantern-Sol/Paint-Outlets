@@ -1,0 +1,829 @@
+{%- liquid
+  assign fc_font = section.settings.font_family
+  assign fc_font_500 = fc_font | font_modify: 'weight', '500'
+  assign fc_font_600 = fc_font | font_modify: 'weight', '600'
+  assign fc_font_700 = fc_font | font_modify: 'weight', '700'
+
+  # Build a unique, order-preserving list of the categories used by the cards.
+  assign cat_list = '|'
+  for block in section.blocks
+    assign cat = block.settings.category | strip
+    unless cat == blank
+      assign needle = '|' | append: cat | append: '|'
+      unless cat_list contains needle
+        assign cat_list = cat_list | append: cat | append: '|'
+      endunless
+    endunless
+  endfor
+  assign categories = cat_list | split: '|'
+
+  # Order the filter tabs by card count (most first), e.g. Paint, Tools, Decorative.
+  # Each entry is "<zero-padded count>~<category>" so a string sort ranks by count.
+  assign sortable = ''
+  for cat in categories
+    unless cat == blank
+      assign c_count = 0
+      for block in section.blocks
+        assign bcat = block.settings.category | strip
+        if bcat == cat
+          assign c_count = c_count | plus: 1
+        endif
+      endfor
+      assign pad = c_count | prepend: '00' | slice: -2, 2
+      assign sortable = sortable | append: pad | append: '~' | append: cat | append: '¶'
+    endunless
+  endfor
+  assign ordered_cats = sortable | split: '¶' | sort | reverse
+-%}
+
+{% style %}
+  {{ fc_font | font_face: font_display: 'swap' }}
+  {{ fc_font_500 | font_face: font_display: 'swap' }}
+  {{ fc_font_600 | font_face: font_display: 'swap' }}
+  {{ fc_font_700 | font_face: font_display: 'swap' }}
+
+  .ls-featcol-{{ section.id }} {
+    --ls-fc-font-family: {{ fc_font.family }}, {{ fc_font.fallback_families }};
+    --ls-fc-eyebrow: {{ section.settings.eyebrow_color | default: '#c13121' }};
+    --ls-fc-heading: {{ section.settings.heading_color | default: '#1a1a1a' }};
+    --ls-fc-accent: {{ section.settings.accent_color | default: '#c13121' }};
+    --ls-fc-text: {{ section.settings.text_color | default: '#1a1a1a' }};
+    --ls-fc-muted: {{ section.settings.muted_color | default: '#6b7280' }};
+    --ls-fc-card-bg: {{ section.settings.card_background | default: '#ffffff' }};
+    --ls-fc-radius: {{ section.settings.card_radius | default: 18 }}px;
+    --ls-fc-card-w: {{ section.settings.card_width | default: 260 }}px;
+  }
+{% endstyle %}
+
+{%- if section.settings.background_color != blank -%}
+  <div class="section-background" style="background-color: {{ section.settings.background_color }};"></div>
+{%- endif -%}
+<div
+  class="section ls-featcol ls-featcol-{{ section.id }} spacing-style{% unless section.settings.show_eyebrow_mobile %} ls-featcol--no-eyebrow-mobile{% endunless %}"
+  style="{% render 'spacing-style', settings: section.settings %}"
+>
+  <div class="ls-featcol__inner">
+    <header class="ls-featcol__header">
+      <div class="ls-featcol__titles">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="ls-featcol__eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        {%- if section.settings.heading != blank -%}
+          <h2 class="ls-featcol__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+      </div>
+
+      {%- if section.settings.show_arrows -%}
+        <div class="ls-featcol__nav">
+          <button type="button" class="ls-featcol__arrow" data-arrow="prev" aria-label="Previous">
+            <svg viewBox="0 0 20 20" fill="none" focusable="false" aria-hidden="true">
+              <path d="M12 5l-5 5 5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button type="button" class="ls-featcol__arrow" data-arrow="next" aria-label="Next">
+            <svg viewBox="0 0 20 20" fill="none" focusable="false" aria-hidden="true">
+              <path d="M8 5l5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      {%- endif -%}
+    </header>
+
+    {%- if section.settings.show_filters -%}
+      <div class="ls-featcol__tabs" role="tablist" aria-label="{{ section.settings.heading | escape }}">
+        <button type="button" class="ls-featcol__tab is-active" data-filter="all" role="tab" aria-selected="true">
+          {{ section.settings.all_label | default: 'All' }}
+        </button>
+        {%- for entry in ordered_cats -%}
+          {%- unless entry == blank -%}
+            {%- assign parts = entry | split: '~' -%}
+            {%- assign cat = parts[1] -%}
+            {%- assign c_count = parts[0] | plus: 0 -%}
+            <button type="button" class="ls-featcol__tab" data-filter="{{ cat | handleize }}" role="tab" aria-selected="false">
+              {{ cat }}
+              <span class="ls-featcol__tab-count">[{{ c_count }}]</span>
+            </button>
+          {%- endunless -%}
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+
+    <div class="ls-featcol__track" data-track>
+      {%- for block in section.blocks -%}
+        {%- liquid
+          assign collection = block.settings.collection
+          assign cat = block.settings.category | strip
+          assign card_image = block.settings.image | default: collection.featured_image
+          assign card_title = block.settings.title | default: collection.title
+          assign card_url = collection.url | default: block.settings.link | default: '#'
+        -%}
+        <article
+          class="ls-featcol__card"
+          data-category="{{ cat | handleize }}"
+          {{ block.shopify_attributes }}
+        >
+          <a class="ls-featcol__media" href="{{ card_url }}">
+            {%- if cat != blank -%}
+              <span class="ls-featcol__badge">{{ block.settings.badge | default: cat }}</span>
+            {%- endif -%}
+            {%- if card_image != blank -%}
+              {{
+                card_image
+                | image_url: width: 720
+                | image_tag:
+                  class: 'ls-featcol__img',
+                  widths: '260, 390, 520, 720',
+                  sizes: '(min-width: 750px) 260px, 70vw',
+                  loading: 'lazy',
+                  alt: card_title
+              }}
+            {%- else -%}
+              <div class="ls-featcol__img ls-featcol__img--placeholder">
+                {{ 'collection-1' | placeholder_svg_tag: 'placeholder-image' }}
+              </div>
+            {%- endif -%}
+          </a>
+
+          <div class="ls-featcol__body">
+            <div class="ls-featcol__head">
+              <h3 class="ls-featcol__card-title">
+                <a href="{{ card_url }}">{{ card_title }}</a>
+              </h3>
+              <a class="ls-featcol__go" href="{{ card_url }}" aria-label="Shop {{ card_title | escape }}">
+                <svg viewBox="0 0 20 20" fill="none" focusable="false" aria-hidden="true">
+                  <path d="M4 10h11M11 6l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+            </div>
+            {%- if block.settings.subtitle != blank -%}
+              <p class="ls-featcol__card-sub">{{ block.settings.subtitle }}</p>
+            {%- endif -%}
+          </div>
+        </article>
+      {%- endfor -%}
+
+      <p class="ls-featcol__empty" data-empty hidden>No collections to show.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    function init() {
+      var root = document.querySelector('.ls-featcol-{{ section.id }}');
+      if (!root) return;
+      var track = root.querySelector('[data-track]');
+      if (!track) return;
+      var cards = Array.prototype.slice.call(track.querySelectorAll('.ls-featcol__card'));
+      var tabs = Array.prototype.slice.call(root.querySelectorAll('.ls-featcol__tab'));
+      var emptyEl = root.querySelector('[data-empty]');
+      var prev = root.querySelector('[data-arrow="prev"]');
+      var next = root.querySelector('[data-arrow="next"]');
+      var current = 'all';
+
+      function updateArrows() {
+        if (!prev && !next) return;
+        var max = track.scrollWidth - track.clientWidth;
+        var atStart = track.scrollLeft <= 1;
+        var atEnd = track.scrollLeft >= max - 1;
+        // Nothing to scroll (all cards fit) — disable both.
+        var noScroll = max <= 1;
+        if (prev) prev.disabled = atStart || noScroll;
+        if (next) next.disabled = atEnd || noScroll;
+      }
+
+      function apply() {
+        var visible = 0;
+        cards.forEach(function (card) {
+          var show = current === 'all' || card.getAttribute('data-category') === current;
+          card.hidden = !show;
+          if (show) visible++;
+        });
+        if (emptyEl) emptyEl.hidden = visible !== 0;
+        track.scrollTo({ left: 0, behavior: 'smooth' });
+        // Wait for the smooth scroll before measuring position.
+        setTimeout(updateArrows, 300);
+      }
+
+      tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          tabs.forEach(function (t) {
+            t.classList.remove('is-active');
+            t.setAttribute('aria-selected', 'false');
+          });
+          tab.classList.add('is-active');
+          tab.setAttribute('aria-selected', 'true');
+          current = tab.getAttribute('data-filter');
+          apply();
+        });
+      });
+
+      // Absolute scroll offsets of each visible card's left/right edges,
+      // relative to the track's scroll origin. Derived from live rects so it
+      // stays correct regardless of positioned ancestors or filtering.
+      function edges() {
+        var origin = track.getBoundingClientRect().left - track.scrollLeft;
+        return cards
+          .filter(function (c) { return !c.hidden; })
+          .map(function (c) {
+            var r = c.getBoundingClientRect();
+            return { left: Math.round(r.left - origin), right: Math.round(r.right - origin) };
+          });
+      }
+
+      // Page a full viewport's worth of cards, snapping to a card edge. "Next"
+      // brings the first card cut off on the right (even one only showing its
+      // left edge) to the left; "prev" makes the first card cut off on the
+      // left the new rightmost fully-visible card.
+      function scrollToCard(dir) {
+        var e = edges();
+        if (!e.length) return;
+        var cur = track.scrollLeft;
+        var view = track.clientWidth;
+        var max = track.scrollWidth - view;
+        var viewRight = cur + view;
+        var target;
+        if (dir > 0) {
+          for (var i = 0; i < e.length; i++) {
+            if (e[i].right > viewRight + 1) { target = e[i].left; break; }
+          }
+          if (target == null || target <= cur + 1) target = max;
+        } else {
+          target = 0;
+          for (var j = e.length - 1; j >= 0; j--) {
+            if (e[j].left < cur - 1) { target = e[j].right - view; break; }
+          }
+          if (target < 0) target = 0;
+        }
+        track.scrollTo({ left: target, behavior: 'smooth' });
+      }
+
+      if (next) {
+        next.addEventListener('click', function () { scrollToCard(1); });
+      }
+      if (prev) {
+        prev.addEventListener('click', function () { scrollToCard(-1); });
+      }
+
+      track.addEventListener('scroll', updateArrows, { passive: true });
+      window.addEventListener('resize', updateArrows, { passive: true });
+
+      apply();
+    }
+
+    init();
+    document.addEventListener('shopify:section:load', function (e) {
+      if (!e.detail || e.detail.sectionId === '{{ section.id }}') init();
+    });
+  })();
+</script>
+
+{% stylesheet %}
+  .ls-featcol__inner {
+    font-family: var(--ls-fc-font-family, 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    color: var(--ls-fc-text);
+  }
+
+  .ls-featcol__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .ls-featcol__eyebrow {
+    margin: 0 0 0.35rem;
+    color: var(--ls-fc-eyebrow);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .ls-featcol__heading {
+    margin: 0;
+    color: var(--ls-fc-heading);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+
+  .ls-featcol__nav {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .ls-featcol__arrow {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 999px;
+    border: 1px solid rgb(0 0 0 / 0.14);
+    background: var(--ls-fc-card-bg);
+    color: var(--ls-fc-text);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .ls-featcol__arrow:hover:not(:disabled) {
+    border-color: var(--ls-fc-heading);
+    color: var(--ls-fc-accent);
+  }
+
+  .ls-featcol__arrow:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .ls-featcol__arrow svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .ls-featcol__tabs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .ls-featcol__tab {
+    appearance: none;
+    border: 1px solid rgb(0 0 0 / 0.12);
+    background: var(--ls-fc-card-bg);
+    color: var(--ls-fc-text);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 8px 13px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .ls-featcol__tab:hover {
+    border-color: rgb(0 0 0 / 0.3);
+  }
+
+  .ls-featcol__tab.is-active {
+    background: var(--ls-fc-heading);
+    border-color: var(--ls-fc-heading);
+    color: #fff;
+  }
+
+  .ls-featcol__tab-count {
+    color: var(--ls-fc-muted);
+    font-weight: 500;
+    margin-left: 0.15rem;
+  }
+
+  .ls-featcol__tab.is-active .ls-featcol__tab-count {
+    color: rgb(255 255 255 / 0.65);
+  }
+
+  .ls-featcol__track {
+    display: flex;
+    gap: clamp(1rem, 1.6vw, 1.5rem);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 0.5rem;
+    scroll-padding-left: 2px;
+  }
+
+  .ls-featcol__track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ls-featcol__card {
+    flex: 0 0 var(--ls-fc-card-w, 260px);
+    width: var(--ls-fc-card-w, 260px);
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    background: var(--ls-fc-card-bg);
+    border-radius: var(--ls-fc-radius, 18px);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.05);
+  }
+
+  .ls-featcol__card[hidden] {
+    display: none;
+  }
+
+  .ls-featcol__media {
+    position: relative;
+    display: block;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+  }
+
+  .ls-featcol__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+
+  .ls-featcol__card:hover .ls-featcol__img {
+    transform: scale(1.05);
+  }
+
+  .ls-featcol__img--placeholder {
+    display: grid;
+    place-items: center;
+    background: rgb(0 0 0 / 0.05);
+  }
+
+  .ls-featcol__badge {
+    position: absolute;
+    z-index: 2;
+    top: 0.75rem;
+    left: 0.75rem;
+    background: rgb(255 255 255 / 0.95);
+    color: var(--ls-fc-heading);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  }
+
+  .ls-featcol__body {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 1.1rem 1.15rem;
+  }
+
+  .ls-featcol__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .ls-featcol__card-title {
+    min-width: 0;
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .ls-featcol__card-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .ls-featcol__card-title a:hover {
+    color: var(--ls-fc-accent);
+  }
+
+  .ls-featcol__card-sub {
+    margin: 0.25rem 0 0;
+    color: var(--ls-fc-muted);
+    font-size: 0.8125rem;
+    line-height: 1.3;
+  }
+
+  .ls-featcol__go {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ls-fc-accent) 14%, transparent);
+    color: var(--ls-fc-accent);
+    text-decoration: none;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+  }
+
+  .ls-featcol__go svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .ls-featcol__card:hover .ls-featcol__go {
+    background: var(--ls-fc-accent);
+    color: #fff;
+  }
+
+  .ls-featcol__go:hover {
+    transform: translateX(2px);
+  }
+
+  .ls-featcol__empty {
+    align-self: center;
+    text-align: center;
+    color: var(--ls-fc-muted);
+    padding: 2rem 0;
+  }
+
+  @media screen and (max-width: 749px) {
+    .ls-featcol__header {
+      align-items: flex-end;
+    }
+
+    /* Arrows are hidden on mobile — cards are swiped directly. */
+    .ls-featcol__nav {
+      display: none;
+    }
+
+    .ls-featcol--no-eyebrow-mobile .ls-featcol__eyebrow {
+      display: none;
+    }
+
+    /* Two cards fit, with a slice of the third peeking in to cue swiping. */
+    .ls-featcol__track {
+      gap: 0.75rem;
+    }
+
+    .ls-featcol__card {
+      flex-basis: calc((100% - 1.5rem) / 2.05);
+      width: calc((100% - 1.5rem) / 2.05);
+    }
+
+    .ls-featcol__body {
+      padding: 0.75rem 0.85rem 0.9rem;
+    }
+
+    .ls-featcol__card-sub {
+      font-size: 0.71875rem;
+    }
+
+    .ls-featcol__go {
+      width: 2.1rem;
+      height: 2.1rem;
+    }
+
+    .ls-featcol__go svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .ls-featcol__tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .ls-featcol__tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .ls-featcol__tab {
+      flex-shrink: 0;
+    }
+  }
+
+  @media screen and (min-width: 750px) {
+    /* Shorter cards on desktop — wider-than-tall image. */
+    .ls-featcol__media {
+      aspect-ratio: 4 / 3;
+    }
+
+    .ls-featcol__card-title {
+      font-size: 1.25rem;
+    }
+
+    .ls-featcol__card-sub {
+      margin-top: 0;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS Featured Collections",
+  "tag": "section",
+  "class": "ls-featcol-section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "max_blocks": 24,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "font_family",
+      "label": "Font",
+      "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Header"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Curated"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_eyebrow_mobile",
+      "label": "Show eyebrow on mobile",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Featured collections"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_arrows",
+      "label": "Show carousel arrows",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Filters"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_filters",
+      "label": "Show category filter tabs",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "all_label",
+      "label": "\"All\" tab label",
+      "default": "All"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "card_width",
+      "label": "Card width",
+      "min": 200,
+      "max": 340,
+      "step": 10,
+      "unit": "px",
+      "default": 260
+    },
+    {
+      "type": "range",
+      "id": "card_radius",
+      "label": "Card corner radius",
+      "min": 0,
+      "max": 28,
+      "step": 2,
+      "unit": "px",
+      "default": 18
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Section background",
+      "default": "#fafafa"
+    },
+    {
+      "type": "color",
+      "id": "eyebrow_color",
+      "label": "Eyebrow",
+      "default": "#c13121"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading & active tab",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent (arrow button)",
+      "default": "#c13121"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted text",
+      "default": "#6b7280"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "blocks": [
+    {
+      "type": "collection_card",
+      "name": "Collection",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Collection"
+        },
+        {
+          "type": "text",
+          "id": "category",
+          "label": "Category (filter tag)",
+          "info": "Cards sharing a value are grouped under one filter tab, e.g. Paint."
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title override",
+          "info": "Defaults to the collection title."
+        },
+        {
+          "type": "text",
+          "id": "subtitle",
+          "label": "Subtitle",
+          "info": "e.g. Mineral & lime paints"
+        },
+        {
+          "type": "text",
+          "id": "badge",
+          "label": "Badge override",
+          "info": "Defaults to the category."
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image override",
+          "info": "Defaults to the collection image."
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link override",
+          "info": "Used only when no collection is selected."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "LS Featured Collections",
+      "category": "t:categories.collections",
+      "blocks": [
+        { "type": "collection_card", "settings": { "category": "Paint", "title": "Romabio", "subtitle": "Mineral & lime paints", "badge": "Paint" } },
+        { "type": "collection_card", "settings": { "category": "Decorative", "title": "Faux Finishing", "subtitle": "Decorative & texture", "badge": "Decorative" } },
+        { "type": "collection_card", "settings": { "category": "Paint", "title": "Lenmar Professional", "subtitle": "Lacquers & coatings", "badge": "Paint" } },
+        { "type": "collection_card", "settings": { "category": "Paint", "title": "EVO Eclipse", "subtitle": "Premium interior", "badge": "Paint" } },
+        { "type": "collection_card", "settings": { "category": "Tools", "title": "FESTOOL", "subtitle": "Sanders & power tools", "badge": "Tools" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

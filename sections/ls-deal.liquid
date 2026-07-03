@@ -1,0 +1,969 @@
+{%- liquid
+  assign dl_font = section.settings.font_family
+  assign dl_font_500 = dl_font | font_modify: 'weight', '500'
+  assign dl_font_600 = dl_font | font_modify: 'weight', '600'
+  assign dl_font_700 = dl_font | font_modify: 'weight', '700'
+
+  assign product = section.settings.product
+  assign has_product = false
+  if product != blank
+    assign has_product = true
+  endif
+
+  assign variant = product.selected_or_first_available_variant
+  assign price = variant.price
+  assign compare = variant.compare_at_price
+  assign on_sale = false
+  if compare != blank and compare > price
+    assign on_sale = true
+    assign savings = compare | minus: price
+  endif
+
+  assign card_title = section.settings.title_override | default: product.title | default: 'Deal of the week'
+  assign card_desc = section.settings.description_override
+  if card_desc == blank
+    assign card_desc = product.description
+  endif
+-%}
+
+{% style %}
+  {{ dl_font | font_face: font_display: 'swap' }}
+  {{ dl_font_500 | font_face: font_display: 'swap' }}
+  {{ dl_font_600 | font_face: font_display: 'swap' }}
+  {{ dl_font_700 | font_face: font_display: 'swap' }}
+
+  .ls-deal-{{ section.id }} {
+    --ls-dl-font-family: {{ dl_font.family }}, {{ dl_font.fallback_families }};
+    --ls-dl-eyebrow: {{ section.settings.eyebrow_color | default: '#c13121' }};
+    --ls-dl-heading: {{ section.settings.heading_color | default: '#1a1a1a' }};
+    --ls-dl-accent: {{ section.settings.accent_color | default: '#c13121' }};
+    --ls-dl-text: {{ section.settings.text_color | default: '#1a1a1a' }};
+    --ls-dl-muted: {{ section.settings.muted_color | default: '#6b7280' }};
+    --ls-dl-left-bg: {{ section.settings.card_left_background | default: '#eeeeee' }};
+    --ls-dl-right-bg: {{ section.settings.card_right_background | default: '#ffffff' }};
+    --ls-dl-left-bg-mobile: {{ section.settings.card_left_background_mobile | default: '#ffffff' }};
+    --ls-dl-right-bg-mobile: {{ section.settings.card_right_background_mobile | default: '#ffffff' }};
+    --ls-dl-media-tile-bg: {{ section.settings.media_tile_background | default: '#ffffff' }};
+    --ls-dl-border: {{ section.settings.card_border_color | default: '#e5e7eb' }};
+    --ls-dl-radius: {{ section.settings.card_radius | default: 24 }}px;
+  }
+{% endstyle %}
+
+{%- if section.settings.background_color != blank -%}
+  <div class="section-background" style="background-color: {{ section.settings.background_color }};"></div>
+{%- endif -%}
+<div
+  class="section ls-deal ls-deal-{{ section.id }} spacing-style"
+  style="{% render 'spacing-style', settings: section.settings %}"
+>
+  <div class="ls-deal__cards">
+    {%- comment -%} ---------- Left (media) ---------- {%- endcomment -%}
+    <div class="ls-deal__card-left">
+      <div class="ls-deal__media-col">
+        {%- if section.settings.show_save_badge and on_sale -%}
+          <span class="ls-deal__flag ls-deal__flag--save">Save {{ savings | money_without_trailing_zeros }}</span>
+        {%- endif -%}
+        {%- if section.settings.deal_label != blank -%}
+          <span class="ls-deal__flag ls-deal__flag--deal">
+            <svg viewBox="0 0 10 13" fill="none" aria-hidden="true">
+              <path d="M5.77502 0.525146L0.525024 7.52515H4.60836L4.02502 12.1918L9.27502 5.19181H5.19169L5.77502 0.525146Z" stroke="currentColor" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            {{ section.settings.deal_label }}
+          </span>
+        {%- endif -%}
+
+        <div class="ls-deal__media" data-main>
+          {%- if has_product and product.featured_image != blank -%}
+            {{
+              product.featured_image
+              | image_url: width: 1200
+              | image_tag:
+                class: 'ls-deal__main-img',
+                widths: '500, 700, 900, 1200',
+                sizes: '(min-width: 750px) 46vw, 92vw',
+                loading: 'lazy',
+                alt: card_title,
+                data-main-img: ''
+            }}
+          {%- else -%}
+            <div class="ls-deal__main-img ls-deal__main-img--placeholder">
+              {{ 'product-1' | placeholder_svg_tag: 'placeholder-image' }}
+            </div>
+          {%- endif -%}
+        </div>
+
+        {%- if has_product and product.images.size > 1 -%}
+          <div class="ls-deal__thumbs" data-thumbs>
+            {%- for image in product.images limit: 5 -%}
+              <button
+                type="button"
+                class="ls-deal__thumb{% if forloop.first %} is-active{% endif %}"
+                data-thumb
+                data-full="{{ image | image_url: width: 1200 }}"
+                data-alt="{{ image.alt | default: card_title | escape }}"
+                aria-label="View image {{ forloop.index }}"
+              >
+                {{ image | image_url: width: 240 | image_tag: widths: '120, 240', loading: 'lazy', alt: image.alt | default: card_title }}
+              </button>
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+
+    {%- comment -%} ---------- Right (content) ---------- {%- endcomment -%}
+    <div class="ls-deal__card-right">
+      <div class="ls-deal__content">
+        {%- if product.vendor != blank or section.settings.dealer_label != blank -%}
+          <p class="ls-deal__eyebrow">
+            {%- if product.vendor != blank -%}{{ product.vendor }}{%- endif -%}
+            {%- if product.vendor != blank and section.settings.dealer_label != blank %} · {% endif -%}
+            {%- if section.settings.dealer_label != blank -%}{{ section.settings.dealer_label }}{%- endif -%}
+          </p>
+        {%- endif -%}
+
+        <h2 class="ls-deal__title">{{ card_title }}</h2>
+
+        {%- if card_desc != blank -%}
+          <div class="ls-deal__desc rte">{{ card_desc }}</div>
+        {%- endif -%}
+
+        {%- if section.blocks.size > 0 -%}
+          <ul class="ls-deal__features" role="list">
+            {%- for block in section.blocks -%}
+              {%- if block.type == 'feature' and block.settings.text != blank -%}
+                <li class="ls-deal__feature" {{ block.shopify_attributes }}>
+                  <span class="ls-deal__check" aria-hidden="true">
+                    <svg viewBox="0 0 20 20" fill="none">
+                      <circle cx="10" cy="10" r="9" fill="#EEEEEE"/>
+                      <path d="M6 10.5l2.5 2.5L14 7.5" stroke="#1E854A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                  <span>{{ block.settings.text }}</span>
+                </li>
+              {%- endif -%}
+            {%- endfor -%}
+          </ul>
+        {%- endif -%}
+
+        {%- if has_product -%}
+          <div class="ls-deal__price-row">
+            <span class="ls-deal__price">{{ price | money_without_trailing_zeros }}</span>
+            {%- if on_sale -%}
+              <s class="ls-deal__compare">{{ compare | money_without_trailing_zeros }}</s>
+              {%- if section.settings.show_save_badge -%}
+                <span class="ls-deal__save-pill">Save {{ savings | money_without_trailing_zeros }}</span>
+              {%- endif -%}
+            {%- endif -%}
+          </div>
+          {%- if section.settings.price_note != blank -%}
+            <p class="ls-deal__price-note">{{ section.settings.price_note }}</p>
+          {%- endif -%}
+
+          <div class="ls-deal__actions">
+            <form method="post" action="{{ routes.cart_add_url }}" class="ls-deal__form" novalidate>
+              <input type="hidden" name="id" value="{{ variant.id }}">
+              <input type="hidden" name="quantity" value="1">
+              <button
+                type="submit"
+                class="ls-deal__btn ls-deal__btn--primary"
+                {% unless variant.available %}disabled{% endunless %}
+              >
+                {% if variant.available %}
+                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path d="M3 3h2l1.2 9.2a1 1 0 0 0 1 .8h7.6a1 1 0 0 0 1-.8L18 6H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="8" cy="17" r="1.2" fill="currentColor"/>
+                    <circle cx="15" cy="17" r="1.2" fill="currentColor"/>
+                  </svg>
+                  {{ section.settings.add_label | default: 'Add to cart' }}
+                {% else %}
+                  {{ section.settings.sold_out_label | default: 'Sold out' }}
+                {% endif %}
+              </button>
+            </form>
+
+            {%- if section.settings.secondary_label != blank -%}
+              <a
+                class="ls-deal__btn ls-deal__btn--ghost"
+                href="{{ section.settings.secondary_link | default: '#' }}"
+                aria-label="{{ section.settings.secondary_label | escape }}"
+              >
+                <svg viewBox="0 0 12 14" fill="none" aria-hidden="true">
+                  <path d="M1.70874 0.675412H4.04208L4.97541 3.34208L3.64208 4.34208C4.42819 5.97314 5.74435 7.2893 7.37541 8.07541L8.37541 6.74208L11.0421 7.67541V12.6754C11.0425 12.7689 11.0234 12.8614 10.9858 12.9469C10.9482 13.0325 10.893 13.1092 10.8239 13.172C10.7547 13.2349 10.6731 13.2825 10.5844 13.3118C10.4956 13.3411 10.4017 13.3514 10.3087 13.3421C7.6849 12.8556 5.31686 11.4589 3.62172 9.39788C1.92657 7.33688 1.01306 4.74382 1.04208 2.07541C0.856427 1.98701 0.713498 1.82847 0.644735 1.63468C0.575971 1.4409 0.587006 1.22773 0.675412 1.04208C0.763817 0.856427 0.922351 0.713498 1.11614 0.644735C1.30993 0.575971 1.52309 0.587006 1.70874 0.675412Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="ls-deal__btn-label">{{ section.settings.secondary_label }}</span>
+              </a>
+            {%- endif -%}
+          </div>
+        {%- else -%}
+          <p class="ls-deal__price-note">Select a product in the theme editor to show pricing and add-to-cart.</p>
+        {%- endif -%}
+
+        {%- assign has_trust = false -%}
+        {%- if section.settings.trust_1 != blank or section.settings.trust_2 != blank or section.settings.trust_3 != blank -%}
+          {%- assign has_trust = true -%}
+        {%- endif -%}
+        {%- if has_trust -%}
+          <div class="ls-deal__trust">
+            {%- if section.settings.trust_1 != blank -%}
+              <span class="ls-deal__trust-item">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M1.5 5.5h9v7h-9zM10.5 8h4l2.5 2.5v2h-6.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="5" cy="14.5" r="1.4" stroke="currentColor" stroke-width="1.3"/><circle cx="14" cy="14.5" r="1.4" stroke="currentColor" stroke-width="1.3"/></svg>
+                {{ section.settings.trust_1 }}
+              </span>
+            {%- endif -%}
+            {%- if section.settings.trust_2 != blank -%}
+              <span class="ls-deal__trust-item">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2l6 2.2v4.3c0 4-2.6 7.4-6 9-3.4-1.6-6-5-6-9V4.2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M7.2 10l1.9 1.9 3.7-3.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                {{ section.settings.trust_2 }}
+              </span>
+            {%- endif -%}
+            {%- if section.settings.trust_3 != blank -%}
+              <span class="ls-deal__trust-item">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 18s6-5.2 6-9.5A6 6 0 0 0 4 8.5C4 12.8 10 18 10 18z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="10" cy="8.5" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
+                {{ section.settings.trust_3 }}
+              </span>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    function init() {
+      var root = document.querySelector('.ls-deal-{{ section.id }}');
+      if (!root) return;
+      var mainImg = root.querySelector('[data-main-img]');
+      var thumbs = Array.prototype.slice.call(root.querySelectorAll('[data-thumb]'));
+      if (!mainImg || !thumbs.length) return;
+
+      var current = 0;
+
+      function select(index) {
+        if (index < 0) index = thumbs.length - 1;
+        if (index >= thumbs.length) index = 0;
+        var thumb = thumbs[index];
+        var full = thumb.getAttribute('data-full');
+        if (!full) return;
+        mainImg.setAttribute('src', full);
+        mainImg.removeAttribute('srcset');
+        mainImg.setAttribute('alt', thumb.getAttribute('data-alt') || '');
+        thumbs.forEach(function (t) { t.classList.remove('is-active'); });
+        thumb.classList.add('is-active');
+        current = index;
+      }
+
+      thumbs.forEach(function (thumb, i) {
+        thumb.addEventListener('click', function () { select(i); });
+      });
+
+      // Touch swipe on the main image drives the same pagination.
+      var media = root.querySelector('[data-main]');
+      if (media) {
+        var startX = 0, startY = 0, tracking = false;
+        media.addEventListener('touchstart', function (e) {
+          if (!e.touches || e.touches.length !== 1) return;
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+          tracking = true;
+        }, { passive: true });
+        media.addEventListener('touchend', function (e) {
+          if (!tracking) return;
+          tracking = false;
+          var touch = e.changedTouches && e.changedTouches[0];
+          if (!touch) return;
+          var dx = touch.clientX - startX;
+          var dy = touch.clientY - startY;
+          if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+          select(dx < 0 ? current + 1 : current - 1);
+        }, { passive: true });
+      }
+    }
+
+    init();
+    document.addEventListener('shopify:section:load', function (e) {
+      if (!e.detail || e.detail.sectionId === '{{ section.id }}') init();
+    });
+  })();
+</script>
+
+{% stylesheet %}
+  .ls-deal {
+    font-family: var(--ls-dl-font-family, 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    color: var(--ls-dl-text);
+  }
+
+  .ls-deal__cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    border-radius: var(--ls-dl-radius, 24px);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06), 0 18px 48px rgb(0 0 0 / 0.06);
+  }
+
+  /* ---------- Cards (two joined sibling halves, no gap) ---------- */
+  .ls-deal__card-left,
+  .ls-deal__card-right {
+    padding: clamp(1.25rem, 2.5vw, 2rem);
+    border: 1px solid var(--ls-dl-border);
+  }
+
+  /* Stacked (mobile): left on top, right below — seam is horizontal */
+  .ls-deal__card-left {
+    background: var(--ls-dl-left-bg);
+    border-radius: var(--ls-dl-radius, 24px) var(--ls-dl-radius, 24px) 0 0;
+    border-bottom: 0;
+  }
+
+  .ls-deal__card-right {
+    background: var(--ls-dl-right-bg);
+    border-radius: 0 0 var(--ls-dl-radius, 24px) var(--ls-dl-radius, 24px);
+    border-top: 0;
+  }
+
+  /* ---------- Media ---------- */
+  .ls-deal__media-col {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .ls-deal__media {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+    flex: 1 1 auto;
+    background: var(--ls-dl-media-tile-bg);
+    border-radius: calc(var(--ls-dl-radius, 24px) - 8px);
+  }
+
+  .ls-deal__main-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .ls-deal__main-img--placeholder {
+    display: grid;
+    place-items: center;
+    background: rgb(0 0 0 / 0.04);
+  }
+
+  .ls-deal__flag {
+    position: absolute;
+    z-index: 2;
+    top: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+  }
+
+  .ls-deal__flag svg {
+    width: auto;
+    height: 15px;
+  }
+
+  .ls-deal__flag--save {
+    left: 1rem;
+    background: var(--ls-dl-accent);
+    color: #fff;
+  }
+
+  .ls-deal__flag--deal {
+    right: 1rem;
+    background: rgb(255 255 255 / 0.92);
+    color: var(--ls-dl-heading);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+  }
+
+  .ls-deal__flag--deal svg {
+    color: var(--ls-dl-accent);
+  }
+
+  .ls-deal__thumbs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .ls-deal__thumb {
+    appearance: none;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #eeeeee;
+    cursor: pointer;
+    aspect-ratio: 16 / 7;
+    transition: border-color 0.15s ease;
+  }
+
+  .ls-deal__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .ls-deal__thumb.is-active {
+    border-color: var(--ls-dl-accent);
+  }
+
+  /* ---------- Content ---------- */
+  .ls-deal__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .ls-deal__eyebrow {
+    margin: 0 0 0.6rem;
+    color: var(--ls-dl-eyebrow);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .ls-deal__title {
+    margin: 0;
+    color: var(--ls-dl-heading);
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+  }
+
+  .ls-deal__desc {
+    margin: 0.9rem 0 0;
+    color: #17181B;
+    font-size: 15px;
+    line-height: 1.5;
+    max-width: 46ch;
+  }
+
+  .ls-deal__desc > * {
+    margin: 0;
+  }
+
+  .ls-deal__features {
+    list-style: none;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .ls-deal__feature {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .ls-deal__check {
+    color: var(--ls-dl-accent);
+    flex-shrink: 0;
+    line-height: 0;
+  }
+
+  .ls-deal__check svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .ls-deal__price-row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+  }
+
+  .ls-deal__price {
+    color: var(--ls-dl-heading);
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .ls-deal__compare {
+    color: var(--ls-dl-muted);
+    font-size: 1.1rem;
+  }
+
+  .ls-deal__save-pill {
+    background: color-mix(in srgb, var(--ls-dl-accent) 14%, transparent);
+    color: var(--ls-dl-accent);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+  }
+
+  .ls-deal__price-note {
+    margin: 0.4rem 0 0;
+    color: var(--ls-dl-muted);
+    font-size: 0.8125rem;
+  }
+
+  .ls-deal__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+
+  .ls-deal__form {
+    margin: 0;
+  }
+
+  .ls-deal__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.5rem;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+  }
+
+  .ls-deal__btn svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .ls-deal__btn--ghost svg {
+    width: auto;
+    height: 17px;
+  }
+
+  .ls-deal__btn--primary {
+    border: none;
+    background: var(--ls-dl-accent);
+    color: #fff;
+  }
+
+  .ls-deal__btn--primary:hover {
+    background: color-mix(in srgb, var(--ls-dl-accent) 88%, #000);
+  }
+
+  .ls-deal__btn--primary:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .ls-deal__btn--ghost {
+    width: auto;
+    border: 1px solid rgb(0 0 0 / 0.16);
+    background: var(--ls-dl-right-bg);
+    color: var(--ls-dl-text);
+  }
+
+  .ls-deal__btn--ghost:hover {
+    border-color: var(--ls-dl-heading);
+  }
+
+  .ls-deal__trust {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgb(0 0 0 / 0.08);
+  }
+
+  .ls-deal__trust-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--ls-dl-heading);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .ls-deal__trust-item svg {
+    width: 17px;
+    height: 17px;
+    color: var(--ls-dl-accent);
+    flex-shrink: 0;
+  }
+
+  @media screen and (min-width: 750px) {
+    .ls-deal__cards {
+      grid-template-columns: 1fr 1fr;
+      align-items: stretch;
+    }
+
+    /* Side-by-side: seam is vertical — flatten the touching edges */
+    .ls-deal__card-left {
+      border-radius: var(--ls-dl-radius, 24px) 0 0 var(--ls-dl-radius, 24px);
+      border-top: 1px solid var(--ls-dl-border);
+      border-bottom: 1px solid var(--ls-dl-border);
+      border-right: 0;
+    }
+
+    .ls-deal__card-right {
+      border-radius: 0 var(--ls-dl-radius, 24px) var(--ls-dl-radius, 24px) 0;
+      border-top: 1px solid var(--ls-dl-border);
+      border-bottom: 1px solid var(--ls-dl-border);
+      border-left: 0;
+    }
+
+    /* Keep the copy to 80% of the info block; it wraps within that width. */
+    .ls-deal__content {
+      max-width: 80%;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .ls-deal__card-left {
+      background: var(--ls-dl-left-bg-mobile);
+    }
+
+    .ls-deal__card-right {
+      background: var(--ls-dl-right-bg-mobile);
+    }
+
+    /* Drop the image below the flags so the pills don't cover it */
+    .ls-deal__media {
+      margin-top: 3rem;
+    }
+
+    /* Thumbnail strip becomes centered carousel dots */
+    .ls-deal__thumbs {
+      display: flex;
+      justify-content: center;
+      gap: 0.4rem;
+      margin-top: 0.9rem;
+    }
+
+    .ls-deal__thumb {
+      width: 15px;
+      height: 15px;
+      aspect-ratio: auto;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: rgb(0 0 0 / 0.18);
+    }
+
+    .ls-deal__thumb img {
+      display: none;
+    }
+
+    .ls-deal__thumb.is-active {
+      background: var(--ls-dl-accent);
+    }
+
+    /* Full-width primary + circular icon-only secondary */
+    .ls-deal__actions {
+      flex-wrap: nowrap;
+      align-items: stretch;
+    }
+
+    .ls-deal__form {
+      flex: 1 1 auto;
+      display: flex;
+    }
+
+    .ls-deal__btn--primary {
+      width: 100%;
+    }
+
+    .ls-deal__btn--ghost {
+      flex: 0 0 auto;
+      width: 3.25rem;
+      min-width: 0;
+      aspect-ratio: 1 / 1;
+      padding: 0;
+    }
+
+    .ls-deal__btn--ghost .ls-deal__btn-label {
+      display: none;
+    }
+
+    .ls-deal__trust {
+      gap: 0.4rem 0.9rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS Deal",
+  "tag": "section",
+  "class": "ls-deal-section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "max_blocks": 6,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Product"
+    },
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product"
+    },
+    {
+      "type": "text",
+      "id": "deal_label",
+      "label": "Corner label",
+      "default": "Deal of the week"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_save_badge",
+      "label": "Show savings badge",
+      "info": "Shows when the product has a compare-at price higher than its price.",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "font_family",
+      "label": "Font",
+      "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Text"
+    },
+    {
+      "type": "text",
+      "id": "dealer_label",
+      "label": "Eyebrow suffix",
+      "info": "Shown after the product vendor, e.g. Vendor · Authorized dealer.",
+      "default": "Authorized dealer"
+    },
+    {
+      "type": "text",
+      "id": "title_override",
+      "label": "Title override",
+      "info": "Defaults to the product title."
+    },
+    {
+      "type": "richtext",
+      "id": "description_override",
+      "label": "Description override",
+      "info": "Defaults to the product description."
+    },
+    {
+      "type": "text",
+      "id": "price_note",
+      "label": "Price note",
+      "default": "Pricing illustrative — confirm live price & availability"
+    },
+    {
+      "type": "header",
+      "content": "Buttons"
+    },
+    {
+      "type": "text",
+      "id": "add_label",
+      "label": "Add to cart label",
+      "default": "Add to cart"
+    },
+    {
+      "type": "text",
+      "id": "sold_out_label",
+      "label": "Sold out label",
+      "default": "Sold out"
+    },
+    {
+      "type": "text",
+      "id": "secondary_label",
+      "label": "Secondary button label",
+      "default": "Call to order"
+    },
+    {
+      "type": "url",
+      "id": "secondary_link",
+      "label": "Secondary button link",
+      "info": "Use a tel: link, e.g. tel:+15551234567"
+    },
+    {
+      "type": "header",
+      "content": "Trust badges"
+    },
+    {
+      "type": "text",
+      "id": "trust_1",
+      "label": "Badge 1",
+      "default": "Free local delivery"
+    },
+    {
+      "type": "text",
+      "id": "trust_2",
+      "label": "Badge 2",
+      "default": "100% satisfaction guarantee"
+    },
+    {
+      "type": "text",
+      "id": "trust_3",
+      "label": "Badge 3",
+      "default": "In-store & curbside pickup"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "card_radius",
+      "label": "Card corner radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Section background",
+      "default": "#fafafa"
+    },
+    {
+      "type": "color",
+      "id": "card_left_background",
+      "label": "Card left background",
+      "default": "#eeeeee"
+    },
+    {
+      "type": "color",
+      "id": "card_right_background",
+      "label": "Card right background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_left_background_mobile",
+      "label": "Card left background (mobile)",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_right_background_mobile",
+      "label": "Card right background (mobile)",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "media_tile_background",
+      "label": "Media tile background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_border_color",
+      "label": "Card border",
+      "default": "#e5e7eb"
+    },
+    {
+      "type": "color",
+      "id": "eyebrow_color",
+      "label": "Eyebrow",
+      "default": "#c13121"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent (buttons, badges)",
+      "default": "#c13121"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted text",
+      "default": "#6b7280"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "blocks": [
+    {
+      "type": "feature",
+      "name": "Feature",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Feature",
+          "default": "Key feature or spec"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "LS Deal",
+      "category": "t:categories.product",
+      "blocks": [
+        { "type": "feature", "settings": { "text": "Airless sprayer · 0.31 GPM" } },
+        { "type": "feature", "settings": { "text": "Sprays unthinned latex & primers" } },
+        { "type": "feature", "settings": { "text": "Pro-grade stand mount" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

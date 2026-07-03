@@ -1,0 +1,976 @@
+{% liquid
+  assign rating_score = section.settings.rating_score | default: 5
+  assign rating_score = rating_score | at_most: 5 | at_least: 0
+%}
+
+{% liquid
+  assign btn_1_bg = section.settings.button_1_background
+  assign btn_1_text = section.settings.button_1_text
+  assign btn_1_border = section.settings.button_1_border
+  assign btn_2_bg = section.settings.button_2_background
+  assign btn_2_text = section.settings.button_2_text
+  assign btn_2_border = section.settings.button_2_border
+%}
+
+{% capture btn_1_hover %}
+  {% render 'resolve-custom-hover',
+    base_bg: btn_1_bg,
+    base_text: btn_1_text,
+    base_border: btn_1_border,
+    hover_bg: section.settings.button_1_hover_background,
+    hover_text: section.settings.button_1_hover_text,
+    hover_border: section.settings.button_1_hover_border
+  %}
+{% endcapture %}
+{% assign btn_1_hover_parts = btn_1_hover | strip | split: '||' %}
+
+{% capture btn_2_hover %}
+  {% render 'resolve-custom-hover',
+    base_bg: btn_2_bg,
+    base_text: btn_2_text,
+    base_border: btn_2_border,
+    hover_bg: section.settings.button_2_hover_background,
+    hover_text: section.settings.button_2_hover_text,
+    hover_border: section.settings.button_2_hover_border
+  %}
+{% endcapture %}
+{% assign btn_2_hover_parts = btn_2_hover | strip | split: '||' %}
+
+{%- liquid
+  assign hero_font = section.settings.font_family
+  assign hero_font_500 = hero_font | font_modify: 'weight', '500'
+  assign hero_font_600 = hero_font | font_modify: 'weight', '600'
+  assign hero_font_700 = hero_font | font_modify: 'weight', '700'
+-%}
+
+{% style %}
+  {{ hero_font | font_face: font_display: 'swap' }}
+  {{ hero_font_500 | font_face: font_display: 'swap' }}
+  {{ hero_font_600 | font_face: font_display: 'swap' }}
+  {{ hero_font_700 | font_face: font_display: 'swap' }}
+
+  .ls-hero-{{ section.id }} {
+    --ls-hero-font-family: {{ hero_font.family }}, {{ hero_font.fallback_families }};
+    --ls-hero-bg-rgb: {{ section.settings.background_color.rgb | default: '95 161 229' }};
+    --ls-hero-text: {{ section.settings.text_color | default: '#ffffff' }};
+    --ls-hero-min-height: {{ section.settings.section_min_height }}px;
+    --ls-hero-image-width: {{ section.settings.image_width | default: 900 | divided_by: 16.0 }}rem;
+    --ls-hero-coverage: {{ section.settings.gradient_coverage | default: 40 }}%;
+    --ls-hero-gradient-angle: {{ section.settings.gradient_angle | default: 120 }}deg;
+    --ls-hero-radial-rgb: {{ section.settings.mobile_gradient_color.rgb | default: '124 179 237' }};
+    --ls-hero-radial-y: {{ section.settings.mobile_gradient_position | default: 34 }}%;
+    --ls-hero-radial-w: {{ section.settings.mobile_gradient_width | default: 120 }}%;
+    --ls-hero-radial-h: {{ section.settings.mobile_gradient_height | default: 72 }}%;
+    --ls-hero-radial-solid: {{ section.settings.mobile_gradient_coverage | default: 8 }}%;
+    --ls-hero-radial-fade: {{ section.settings.mobile_gradient_fade | default: 100 }}%;
+    --ls-hero-mobile-offset: {{ section.settings.mobile_image_offset | default: 0 }}px;
+    --ls-hero-offset-rgb: {{ section.settings.mobile_offset_color.rgb | default: '124 179 237' }};
+    --ls-hero-star-color: {{ section.settings.star_color | default: '#f5b301' }};
+    --ls-hero-rating-text-color: {{ section.settings.rating_text_color | default: section.settings.text_color | default: '#ffffff' }};
+    --ls-hero-heading-color: {{ section.settings.heading_color | default: section.settings.text_color | default: '#ffffff' }};
+    --ls-hero-heading-accent: {{ section.settings.heading_accent_color | default: '#e85d3b' }};
+    --ls-hero-subtext-color: {{ section.settings.subtext_color | default: section.settings.text_color | default: '#ffffff' }};
+    --ls-hero-btn-1-radius: {{ section.settings.button_1_border_radius }}px;
+    --ls-hero-btn-2-radius: {{ section.settings.button_2_border_radius }}px;
+    --ls-hero-btn-1-border-width: {{ section.settings.button_1_border_width }}px;
+    --ls-hero-btn-2-border-width: {{ section.settings.button_2_border_width }}px;
+  }
+
+  .ls-hero-{{ section.id }} .ls-hero__button--1 {
+    --button-background-color: rgb({{ btn_1_bg.rgba }});
+    --button-color: rgb({{ btn_1_text.rgba }});
+    --button-border-color: rgb({{ btn_1_border.rgba }});
+  }
+
+  .ls-hero-{{ section.id }} .ls-hero__button--1:hover {
+    --button-background-color: {{ btn_1_hover_parts[0] }};
+    --button-color: {{ btn_1_hover_parts[1] }};
+    --button-border-color: {{ btn_1_hover_parts[2] }};
+  }
+
+  .ls-hero-{{ section.id }} .ls-hero__button--2 {
+    --button-background-color: rgb({{ btn_2_bg.rgba }});
+    --button-color: rgb({{ btn_2_text.rgba }});
+    --button-border-color: rgb({{ btn_2_border.rgba }});
+  }
+
+  .ls-hero-{{ section.id }} .ls-hero__button--2:hover {
+    --button-background-color: {{ btn_2_hover_parts[0] }};
+    --button-color: {{ btn_2_hover_parts[1] }};
+    --button-border-color: {{ btn_2_hover_parts[2] }};
+  }
+
+  {% if section.settings.star_color != blank %}
+    .ls-hero-{{ section.id }} .ls-hero__stars {
+      --star-fill-color: {{ section.settings.star_color }};
+      --star-fill-color-rgb: {{ section.settings.star_color.rgb }};
+    }
+  {% endif %}
+{% endstyle %}
+
+<div
+  class="section section--full-width ls-hero ls-hero-{{ section.id }} spacing-style"
+  style="{% render 'spacing-style', settings: section.settings %}"
+>
+  <div class="ls-hero__inner">
+    <div class="ls-hero__content">
+      <div class="ls-hero__content-inner">
+        {%- if section.settings.show_rating -%}
+          <div class="ls-hero__rating">
+            <div
+              class="ls-hero__stars"
+              aria-label="{{ 'accessibility.rating' | t: rating: rating_score }}"
+            >
+              {%- for star in (1..5) -%}
+                <svg
+                  class="ls-hero__star{% if star <= rating_score %} ls-hero__star--filled{% endif %}"
+                  viewBox="0 0 32 32"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <path d="M31.547 12a.848.848 0 00-.677-.577l-9.427-1.376-4.224-8.532a.847.847 0 00-1.516 0l-4.218 8.534-9.427 1.355a.847.847 0 00-.467 1.467l6.823 6.664-1.612 9.375a.847.847 0 001.23.893l8.428-4.434 8.432 4.432a.847.847 0 001.229-.894l-1.615-9.373 6.822-6.665a.845.845 0 00.214-.869z"></path>
+                </svg>
+              {%- endfor -%}
+            </div>
+            {%- if section.settings.rating_text != blank -%}
+              <p class="ls-hero__rating-text">{{ section.settings.rating_text }}</p>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+
+        {%- if section.settings.heading != blank -%}
+          <div class="ls-hero__heading rte">{{ section.settings.heading }}</div>
+        {%- endif -%}
+
+        {%- if section.settings.subtext != blank -%}
+          <p class="ls-hero__subtext">{{ section.settings.subtext }}</p>
+        {%- endif -%}
+
+        {%- if section.settings.button_1_label != blank or section.settings.button_2_label != blank -%}
+          <div class="ls-hero__buttons">
+            {%- if section.settings.button_1_label != blank -%}
+              <a
+                {% if section.settings.button_1_link == blank %}
+                  role="link"
+                  aria-disabled="true"
+                {% else %}
+                  href="{{ section.settings.button_1_link }}"
+                {% endif %}
+                class="ls-hero__button ls-hero__button--1 button-custom"
+                {% if section.settings.button_1_open_new_tab %}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                {% endif %}
+              >
+                <span>{{ section.settings.button_1_label }}</span>
+                {%- if section.settings.button_1_show_arrow -%}
+                  <span class="ls-hero__button-icon" aria-hidden="true">
+                    <svg viewBox="0 0 20 20" focusable="false">
+                      {% render 'icon', icon: 'arrow' %}
+                    </svg>
+                  </span>
+                {%- endif -%}
+              </a>
+            {%- endif -%}
+
+            {%- if section.settings.button_2_label != blank -%}
+              <a
+                {% if section.settings.button_2_link == blank %}
+                  role="link"
+                  aria-disabled="true"
+                {% else %}
+                  href="{{ section.settings.button_2_link }}"
+                {% endif %}
+                class="ls-hero__button ls-hero__button--2 button-custom"
+                {% if section.settings.button_2_open_new_tab %}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                {% endif %}
+              >
+                {{ section.settings.button_2_label }}
+              </a>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+
+    <div class="ls-hero__media">
+      <div class="ls-hero__media-inner">
+        {%- if section.settings.image != blank or section.settings.image_mobile != blank -%}
+          {%- liquid
+            assign hero_image = section.settings.image | default: section.settings.image_mobile
+            assign image_position = section.settings.image_position | default: 'center center'
+            if hero_image.presentation.focal_point != blank
+              assign image_position = hero_image.presentation.focal_point
+            endif
+            assign image_style = 'object-position: ' | append: image_position | append: ';'
+          -%}
+          <picture class="ls-hero__picture">
+            {%- if section.settings.image_mobile != blank -%}
+              <source
+                media="(max-width: 749px)"
+                sizes="100vw"
+                srcset="
+                  {{ section.settings.image_mobile | image_url: width: 600 }} 600w,
+                  {{ section.settings.image_mobile | image_url: width: 900 }} 900w,
+                  {{ section.settings.image_mobile | image_url: width: 1200 }} 1200w,
+                  {{ section.settings.image_mobile | image_url: width: 1600 }} 1600w
+                "
+              >
+            {%- endif -%}
+            {{
+              hero_image
+              | image_url: width: 2400
+              | image_tag:
+                class: 'ls-hero__image',
+                widths: '750, 1100, 1500, 1800, 2200, 2400',
+                sizes: '(min-width: 750px) 55vw, 100vw',
+                loading: 'eager',
+                fetchpriority: 'high',
+                alt: hero_image.alt,
+                style: image_style
+            }}
+          </picture>
+        {%- else -%}
+          <div class="ls-hero__image ls-hero__image--placeholder">
+            {{ 'lifestyle-2' | placeholder_svg_tag: 'placeholder-image' }}
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .ls-hero {
+    position: relative;
+    overflow: hidden;
+    font-family: var(--ls-hero-font-family, 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  }
+
+  .ls-hero__inner {
+    position: relative;
+    min-height: var(--ls-hero-min-height, 580px);
+    background: rgb(var(--ls-hero-bg-rgb, 95 161 229));
+    display: flex;
+    align-items: center;
+  }
+
+  .ls-hero__content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: clamp(2rem, 5vw, 4rem) var(--page-margin, 1.5rem);
+  }
+
+  .ls-hero__content-inner {
+    width: 100%;
+    max-width: 38rem;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1rem, 2vw, 1.5rem);
+  }
+
+  .ls-hero__rating {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+  }
+
+  .ls-hero__stars {
+    --star-fill-color: #f5b301;
+    --star-fill-color-rgb: 245 179 1;
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+  }
+
+  .ls-hero__star {
+    width: 1rem;
+    height: 1rem;
+    fill: rgb(var(--star-fill-color-rgb) / 0.25);
+  }
+
+  .ls-hero__star--filled {
+    fill: var(--star-fill-color);
+  }
+
+  .ls-hero__rating-text {
+    margin: 0;
+    color: var(--ls-hero-rating-text-color);
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  .ls-hero__heading {
+    margin: 0;
+    color: var(--ls-hero-heading-color);
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    line-height: 1.05;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .ls-hero__heading :is(p, h1, h2, h3, h4, h5, h6) {
+    margin: 0;
+  }
+
+  .ls-hero__heading :is(em, strong) {
+    color: var(--ls-hero-heading-accent);
+    font-style: normal;
+    font-weight: inherit;
+  }
+
+  .ls-hero__subtext {
+    margin: 0;
+    color: var(--ls-hero-subtext-color);
+    font-size: clamp(1rem, 1.5vw, 1.1875rem);
+    font-weight: 400;
+    line-height: 1.55;
+    max-width: 34rem;
+  }
+
+  .ls-hero__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+  }
+
+  .ls-hero__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 3rem;
+    box-shadow: none;
+    font-family: var(--ls-hero-font-family, 'Outfit', sans-serif);
+    font-weight: 600;
+  }
+
+  .ls-hero__button--1 {
+    border-radius: var(--ls-hero-btn-1-radius);
+    --button-border-width: var(--ls-hero-btn-1-border-width);
+  }
+
+  .ls-hero__button--2 {
+    border-radius: var(--ls-hero-btn-2-radius);
+    --button-border-width: var(--ls-hero-btn-2-border-width);
+  }
+
+  .ls-hero__button-icon {
+    display: inline-flex;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .ls-hero__button-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .ls-hero__media {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: min(var(--ls-hero-image-width, 56.25rem), 100%);
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .ls-hero__media-inner {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* Blue dissolving into the left edge of the fixed-width image. */
+  .ls-hero__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      var(--ls-hero-gradient-angle, 120deg),
+      rgb(var(--ls-hero-bg-rgb, 95 161 229)) 0%,
+      rgb(var(--ls-hero-bg-rgb, 95 161 229)) calc(var(--ls-hero-coverage, 40%) - 18%),
+      rgb(var(--ls-hero-bg-rgb, 95 161 229) / 0) var(--ls-hero-coverage, 40%)
+    );
+  }
+
+  .ls-hero__picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .ls-hero__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+  }
+
+  .ls-hero__image--placeholder {
+    display: grid;
+    place-items: center;
+    min-height: 16rem;
+    background: rgb(0 0 0 / 0.08);
+  }
+
+  /* Mobile: image bleeds as the full background, text centered on top. */
+  @media screen and (max-width: 749px) {
+    /* Offset color fills the gap when the image is pushed down. */
+    .ls-hero__inner {
+      background: rgb(var(--ls-hero-offset-rgb, 124 179 237));
+      min-height: 0;
+      align-items: flex-start;
+    }
+
+    /* Text pinned to the top; reserve the bottom for the building. */
+    .ls-hero__content {
+      padding-bottom: clamp(200px, 52vw, 300px);
+    }
+
+    .ls-hero__media {
+      inset: 0;
+      top: var(--ls-hero-mobile-offset, 0);
+      width: auto;
+      margin-inline: 0;
+    }
+
+    .ls-hero__media::after {
+      display: none;
+    }
+
+    /* Radial blue over the whole hero (offset gap + image): solid behind the text,
+       fading out so the building shows below the buttons. */
+    .ls-hero__inner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(
+        var(--ls-hero-radial-w, 120%) var(--ls-hero-radial-h, 72%) at 50% var(--ls-hero-radial-y, 28%),
+        rgb(var(--ls-hero-radial-rgb, 124 179 237)) 0%,
+        rgb(var(--ls-hero-radial-rgb, 124 179 237)) var(--ls-hero-radial-solid, 8%),
+        rgb(var(--ls-hero-radial-rgb, 124 179 237) / 0) var(--ls-hero-radial-fade, 100%)
+      );
+    }
+
+    .ls-hero__content-inner {
+      align-items: center;
+      text-align: center;
+    }
+
+    .ls-hero__rating {
+      justify-content: center;
+    }
+
+    .ls-hero__heading {
+      font-size: 2.625rem;
+    }
+
+    .ls-hero__subtext {
+      font-size: 1.1875rem;
+      margin-inline: auto;
+    }
+
+    .ls-hero__buttons {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+    }
+
+    .ls-hero__button {
+      width: 100%;
+    }
+  }
+
+  @media screen and (min-width: 750px) {
+    .ls-hero__content {
+      padding-inline: clamp(3rem, 9vw, 9rem) clamp(2rem, 6vw, 5rem);
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS Hero",
+  "tag": "section",
+  "class": "ls-hero-section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "font_family",
+      "label": "Font",
+      "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "richtext",
+      "id": "heading",
+      "label": "Heading",
+      "default": "<p>Pro-Quality Paint &amp; Supplies <em>Delivered To Your Door</em></p>"
+    },
+    {
+      "type": "textarea",
+      "id": "subtext",
+      "label": "Subtext",
+      "default": "Shop Benjamin Moore, Festool, Graco, stains, coatings, and pro-grade supplies for weekend projects and job sites alike, backed by 72+ years of paint expertise."
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Hero image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_mobile",
+      "label": "Hero image (mobile)",
+      "info": "Optional. Shown as a full-width block below the text on mobile. Falls back to the main image."
+    },
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "Image focal point",
+      "info": "Overrides the theme editor focal point when set. Center shows the full composition; Right center crops toward the right of wide images.",
+      "options": [
+        {
+          "value": "center center",
+          "label": "Center"
+        },
+        {
+          "value": "right center",
+          "label": "Right center"
+        },
+        {
+          "value": "left center",
+          "label": "Left center"
+        },
+        {
+          "value": "right top",
+          "label": "Right top"
+        },
+        {
+          "value": "right bottom",
+          "label": "Right bottom"
+        }
+      ],
+      "default": "center center"
+    },
+    {
+      "type": "header",
+      "content": "Star rating"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_rating",
+      "label": "Show star rating",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "rating_score",
+      "label": "Star rating",
+      "info": "Number of filled stars (1–5).",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "text",
+      "id": "rating_text",
+      "label": "Rating text",
+      "default": "Rated 4.5/5 from 233 verified reviews"
+    },
+    {
+      "type": "color",
+      "id": "star_color",
+      "label": "Star color",
+      "default": "#f5b301"
+    },
+    {
+      "type": "color",
+      "id": "rating_text_color",
+      "label": "Rating text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Button 1"
+    },
+    {
+      "type": "text",
+      "id": "button_1_label",
+      "label": "Button text",
+      "default": "Shop now"
+    },
+    {
+      "type": "url",
+      "id": "button_1_link",
+      "label": "Button link"
+    },
+    {
+      "type": "checkbox",
+      "id": "button_1_show_arrow",
+      "label": "Show arrow icon",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "button_1_open_new_tab",
+      "label": "Open in new tab",
+      "default": false
+    },
+    {
+      "type": "color",
+      "id": "button_1_background",
+      "label": "Background",
+      "default": "#e85d3b",
+      "alpha": true
+    },
+    {
+      "type": "color",
+      "id": "button_1_text",
+      "label": "Text",
+      "default": "#ffffff",
+      "alpha": true
+    },
+    {
+      "type": "color",
+      "id": "button_1_border",
+      "label": "Border",
+      "default": "#e85d3b",
+      "alpha": true
+    },
+    {
+      "type": "color",
+      "id": "button_1_hover_background",
+      "label": "Hover background",
+      "alpha": true
+    },
+    {
+      "type": "color",
+      "id": "button_1_hover_text",
+      "label": "Hover text",
+      "alpha": true
+    },
+    {
+      "type": "color",
+      "id": "button_1_hover_border",
+      "label": "Hover border",
+      "alpha": true
+    },
+    {
+      "type": "range",
+      "id": "button_1_border_width",
+      "label": "Border width",
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "button_1_border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "header",
+      "content": "Button 2"
+    },
+    {
+      "type": "text",
+      "id": "button_2_label",
+      "label": "Button text",
+      "default": "Shop by color"
+    },
+    {
+      "type": "url",
+      "id": "button_2_link",
+      "label": "Button link"
+    },
+    {
+      "type": "checkbox",
+      "id": "button_2_open_new_tab",
+      "label": "Open in new tab",
+      "default": false
+    },
+    {
+      "type": "color",
+      "id": "button_2_background",
+      "label": "Background",
+      "default": "#00000000",
+      "alpha": true
+    },
+    {
+      "type": "color",
+      "id": "button_2_text",
+      "label": "Text",
+      "default": "#ffffff",
+      "alpha": true
+    },
+    {
+      "type": "color",
+      "id": "button_2_border",
+      "label": "Border",
+      "default": "#ffffff",
+      "alpha": true
+    },
+    {
+      "type": "color",
+      "id": "button_2_hover_background",
+      "label": "Hover background",
+      "alpha": true
+    },
+    {
+      "type": "color",
+      "id": "button_2_hover_text",
+      "label": "Hover text",
+      "alpha": true
+    },
+    {
+      "type": "color",
+      "id": "button_2_hover_border",
+      "label": "Hover border",
+      "alpha": true
+    },
+    {
+      "type": "range",
+      "id": "button_2_border_width",
+      "label": "Border width",
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "button_2_border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Gradient color",
+      "default": "#5FA1E5"
+    },
+    {
+      "type": "color",
+      "id": "mobile_gradient_color",
+      "label": "Mobile radial gradient color",
+      "default": "#7CB3ED"
+    },
+    {
+      "type": "range",
+      "id": "mobile_gradient_position",
+      "label": "Mobile gradient vertical center",
+      "info": "0% = top, 100% = bottom. Moves the bright center of the radial gradient.",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "%",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "mobile_gradient_width",
+      "label": "Mobile gradient width",
+      "info": "Horizontal size of the ellipse. Above 100% it gets cut off at the sides.",
+      "min": 40,
+      "max": 220,
+      "step": 5,
+      "unit": "%",
+      "default": 120
+    },
+    {
+      "type": "range",
+      "id": "mobile_gradient_height",
+      "label": "Mobile gradient height",
+      "info": "Vertical size of the ellipse.",
+      "min": 30,
+      "max": 200,
+      "step": 2,
+      "unit": "%",
+      "default": 72
+    },
+    {
+      "type": "range",
+      "id": "mobile_gradient_coverage",
+      "label": "Mobile gradient solid area",
+      "info": "Size of the solid core before it starts fading (small = soft glow).",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "%",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "mobile_gradient_fade",
+      "label": "Mobile gradient fade end",
+      "info": "Where the blue becomes fully transparent and the building shows through.",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "mobile_image_offset",
+      "label": "Mobile image offset",
+      "info": "Pushes the image down on mobile. The gap it leaves at the top fills with the offset color.",
+      "min": 0,
+      "max": 400,
+      "step": 10,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "color",
+      "id": "mobile_offset_color",
+      "label": "Mobile offset color",
+      "info": "Fills the gap above the image when an offset is set.",
+      "default": "#7CB3ED"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "heading_accent_color",
+      "label": "Heading accent color",
+      "info": "Applied to bold or italic text within the heading.",
+      "default": "#e85d3b"
+    },
+    {
+      "type": "color",
+      "id": "subtext_color",
+      "label": "Subtext color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "section_min_height",
+      "label": "Minimum height",
+      "min": 400,
+      "max": 800,
+      "step": 10,
+      "unit": "px",
+      "default": 580
+    },
+    {
+      "type": "range",
+      "id": "image_width",
+      "label": "Image width",
+      "info": "Fixed width of the image on the right. Keeps its framing consistent as the window resizes; the blue fills the remaining space on the left.",
+      "min": 600,
+      "max": 1800,
+      "step": 20,
+      "unit": "px",
+      "default": 900
+    },
+    {
+      "type": "range",
+      "id": "gradient_coverage",
+      "label": "Blue coverage",
+      "info": "How far the blue reaches across the image before fading to reveal it.",
+      "min": 20,
+      "max": 70,
+      "step": 2,
+      "unit": "%",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "gradient_angle",
+      "label": "Gradient angle",
+      "min": 90,
+      "max": 150,
+      "step": 2,
+      "unit": "deg",
+      "default": 120
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "LS Hero",
+      "category": "t:categories.banners"
+    }
+  ]
+}
+{% endschema %}

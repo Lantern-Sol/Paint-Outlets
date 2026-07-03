@@ -1,0 +1,355 @@
+{%- liquid
+  assign features_font = section.settings.font_family
+  assign features_font_500 = features_font | font_modify: 'weight', '500'
+-%}
+
+{% style %}
+  {{ features_font | font_face: font_display: 'swap' }}
+  {{ features_font_500 | font_face: font_display: 'swap' }}
+
+  .ls-features-{{ section.id }} {
+    --ls-features-font-family: {{ features_font.family }}, {{ features_font.fallback_families }};
+    --ls-features-bg: {{ section.settings.background_color | default: '#1a1a1a' }};
+    --ls-features-text: {{ section.settings.text_color | default: '#f2f2f2' }};
+    --ls-features-icon: {{ section.settings.icon_color | default: '#e0281e' }};
+    --ls-features-icon-size: {{ section.settings.icon_size | default: 20 }}px;
+    --ls-features-gap: {{ section.settings.item_gap | default: 32 }}px;
+    --ls-features-pad-y: {{ section.settings.bar_padding | default: 14 }}px;
+    --ls-features-speed: {{ section.settings.marquee_speed | default: 24 }}s;
+  }
+{% endstyle %}
+
+<div
+  class="section section--full-width ls-features ls-features-{{ section.id }} spacing-style"
+  style="{% render 'spacing-style', settings: section.settings %}"
+>
+  <div class="ls-features__inner">
+    <div class="ls-features__track">
+    {%- for pass in (1..2) -%}
+    {%- for block in section.blocks -%}
+      <div
+        class="ls-features__item{% if pass == 2 %} ls-features__item--clone{% endif %}"
+        {% if pass == 1 %}{{ block.shopify_attributes }}{% else %}aria-hidden="true"{% endif %}
+      >
+        <span class="ls-features__icon" aria-hidden="true">
+          {%- if block.settings.custom_icon != blank -%}
+            <img
+              src="{{ block.settings.custom_icon | image_url: width: 96 }}"
+              alt=""
+              width="20"
+              height="20"
+              loading="lazy"
+            >
+          {%- else -%}
+            {%- case block.settings.icon -%}
+              {%- when 'truck' -%}
+                <svg viewBox="0 0 17 17" fill="none" focusable="false" aria-hidden="true">
+                  <path d="M2.125 4.25H9.91667V10.625H2.125V4.25Z" stroke-width="1.275" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M9.91663 6.375H12.75L14.875 8.5V10.625H9.91663V6.375Z" stroke-width="1.275" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M4.95828 13.8833C5.58421 13.8833 6.09162 13.3759 6.09162 12.75C6.09162 12.124 5.58421 11.6166 4.95828 11.6166C4.33236 11.6166 3.82495 12.124 3.82495 12.75C3.82495 13.3759 4.33236 13.8833 4.95828 13.8833Z" stroke-width="1.275" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12.3958 13.8833C13.0217 13.8833 13.5291 13.3759 13.5291 12.75C13.5291 12.124 13.0217 11.6166 12.3958 11.6166C11.7699 11.6166 11.2625 12.124 11.2625 12.75C11.2625 13.3759 11.7699 13.8833 12.3958 13.8833Z" stroke-width="1.275" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              {%- when 'guarantee' -%}
+                <svg viewBox="0 0 17 17" fill="none" focusable="false" aria-hidden="true">
+                  <path d="M8.49996 2.125L13.4583 4.25V7.79167C13.4583 10.9792 11.3333 13.4583 8.49996 14.875C5.66663 13.4583 3.54163 10.9792 3.54163 7.79167V4.25L8.49996 2.125Z" stroke-width="1.275" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M6.375 8.49998L7.79167 9.91665L10.625 7.08331" stroke-width="1.275" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              {%- when 'location' -%}
+                <svg viewBox="0 0 17 17" fill="none" focusable="false" aria-hidden="true">
+                  <path d="M8.50002 14.875C8.50002 14.875 13.4584 10.9792 13.4584 7.08333C13.4584 6.4322 13.3301 5.78743 13.0809 5.18586C12.8317 4.58429 12.4665 4.03769 12.0061 3.57726C11.5457 3.11684 10.9991 2.75161 10.3975 2.50243C9.79592 2.25325 9.15116 2.125 8.50002 2.125C7.84888 2.125 7.20412 2.25325 6.60255 2.50243C6.00098 2.75161 5.45437 3.11684 4.99395 3.57726C4.53353 4.03769 4.1683 4.58429 3.91912 5.18586C3.66994 5.78743 3.54169 6.4322 3.54169 7.08333C3.54169 10.9792 8.50002 14.875 8.50002 14.875Z" stroke-width="1.275" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M8.50002 8.85417C9.47802 8.85417 10.2709 8.06134 10.2709 7.08333C10.2709 6.10533 9.47802 5.3125 8.50002 5.3125C7.52202 5.3125 6.72919 6.10533 6.72919 7.08333C6.72919 8.06134 7.52202 8.85417 8.50002 8.85417Z" stroke-width="1.275" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              {%- when 'color' -%}
+                <svg viewBox="0 0 17 17" fill="none" focusable="false" aria-hidden="true">
+                  <path d="M8.5 2.125V4.95833M8.5 12.0417V14.875M2.125 8.5H4.95833M12.0417 8.5H14.875M4.25 4.25L6.02083 6.02083M10.9792 10.9792L12.75 12.75M12.75 4.25L10.9792 6.02083M6.02083 10.9792L4.25 12.75" stroke-width="1.275" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              {%- endcase -%}
+          {%- endif -%}
+        </span>
+        {%- if block.settings.text != blank -%}
+          <span class="ls-features__text">{{ block.settings.text }}</span>
+        {%- endif -%}
+      </div>
+    {%- endfor -%}
+    {%- endfor -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .ls-features__inner {
+    background-color: var(--ls-features-bg);
+    color: var(--ls-features-text);
+    font-family: var(--ls-features-font-family, 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    padding: var(--ls-features-pad-y, 14px) clamp(1rem, 4vw, 3rem);
+    overflow: hidden;
+  }
+
+  .ls-features__track {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: var(--ls-features-gap, 32px);
+  }
+
+  /* Duplicate set only used for the mobile marquee loop. */
+  .ls-features__track .ls-features__item--clone {
+    display: none;
+  }
+
+  .ls-features__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: clamp(0.85rem, 1.15vw, 0.95rem);
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+
+  .ls-features__icon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--ls-features-icon);
+    flex-shrink: 0;
+  }
+
+  .ls-features__icon svg {
+    width: var(--ls-features-icon-size, 20px);
+    height: var(--ls-features-icon-size, 20px);
+    fill: none;
+    stroke: currentColor;
+  }
+
+  .ls-features__icon img {
+    width: var(--ls-features-icon-size, 20px);
+    height: var(--ls-features-icon-size, 20px);
+    object-fit: contain;
+  }
+
+  .ls-features__text {
+    color: var(--ls-features-text);
+  }
+
+  /* Mobile: continuous marquee. The track holds two identical copies and slides
+     by 50% so the loop is seamless. Even spacing via margin (not gap) keeps the
+     two copies perfectly tileable. */
+  @media screen and (max-width: 749px) {
+    .ls-features__track {
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      gap: 0;
+      width: max-content;
+      animation: ls-features-marquee var(--ls-features-speed, 24s) linear infinite;
+    }
+
+    .ls-features__item {
+      flex: 0 0 auto;
+      margin-right: var(--ls-features-gap, 32px);
+    }
+
+    .ls-features__track .ls-features__item--clone {
+      display: inline-flex;
+    }
+  }
+
+  @keyframes ls-features-marquee {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ls-features__track {
+      animation: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS Features",
+  "tag": "section",
+  "class": "ls-features-section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "max_blocks": 6,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "font_family",
+      "label": "Font",
+      "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#f2f2f2"
+    },
+    {
+      "type": "color",
+      "id": "icon_color",
+      "label": "Icon",
+      "default": "#c13121"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "label": "Icon size",
+      "min": 14,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "item_gap",
+      "label": "Space between items",
+      "min": 8,
+      "max": 80,
+      "step": 4,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "bar_padding",
+      "label": "Bar vertical padding",
+      "min": 4,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "marquee_speed",
+      "label": "Mobile marquee speed",
+      "info": "Seconds for one full loop. Lower = faster.",
+      "min": 5,
+      "max": 60,
+      "step": 1,
+      "unit": "s",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "blocks": [
+    {
+      "type": "feature",
+      "name": "Feature",
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "truck", "label": "Truck (delivery)" },
+            { "value": "guarantee", "label": "Shield (guarantee)" },
+            { "value": "location", "label": "Map pin (location)" },
+            { "value": "color", "label": "Color / tint" }
+          ],
+          "default": "truck"
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_icon",
+          "label": "Custom icon",
+          "info": "Optional. Overrides the icon above."
+        },
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Text",
+          "default": "Free local delivery on bulk orders"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "LS Features",
+      "category": "t:categories.banners",
+      "blocks": [
+        {
+          "type": "feature",
+          "settings": {
+            "icon": "truck",
+            "text": "Free local delivery on bulk orders"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "icon": "guarantee",
+            "text": "100% satisfaction guarantee"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "icon": "location",
+            "text": "Ships to all 48 states"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "icon": "color",
+            "text": "Expert color matching & tinting"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
