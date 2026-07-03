@@ -22,7 +22,7 @@
             "link": "",
             "font": "var(--font-subheading--family)",
             "font_size": "1rem",
-            "line_height": "tight",
+            "line_height": "normal",
             "custom_line_height": 1.5,
             "weight": "",
             "letter_spacing": "normal",
