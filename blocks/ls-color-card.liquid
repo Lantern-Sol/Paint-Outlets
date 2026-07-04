@@ -1,0 +1,96 @@
+{%- liquid
+  assign card_image = block.settings.image
+  assign card_title = block.settings.title
+  assign card_sub = block.settings.subtitle
+  assign card_url = block.settings.link
+-%}
+{%- capture swatches -%}
+  {% content_for 'blocks' %}
+{%- endcapture -%}
+
+<article class="ls-cs__card" {{ block.shopify_attributes }}>
+  <div class="ls-cs__media">
+    {%- if card_image != blank -%}
+      {{
+        card_image
+        | image_url: width: 760
+        | image_tag:
+          class: 'ls-cs__img',
+          widths: '280, 420, 560, 760',
+          sizes: '(min-width: 750px) 280px, 75vw',
+          loading: 'lazy',
+          alt: card_title
+      }}
+    {%- else -%}
+      <div class="ls-cs__img ls-cs__img--placeholder">
+        {{ 'lifestyle-1' | placeholder_svg_tag: 'placeholder-image' }}
+      </div>
+    {%- endif -%}
+
+    <div class="ls-cs__overlay">
+      {%- if card_title != blank -%}
+        <h3 class="ls-cs__card-title">
+          {%- if card_url != blank -%}
+            <a href="{{ card_url }}">{{ card_title }}</a>
+          {%- else -%}
+            {{ card_title }}
+          {%- endif -%}
+        </h3>
+      {%- endif -%}
+      {%- if card_sub != blank -%}
+        <p class="ls-cs__card-sub">{{ card_sub }}</p>
+      {%- endif -%}
+      {%- if swatches != blank -%}
+        <div class="ls-cs__swatches">{{ swatches }}</div>
+      {%- endif -%}
+    </div>
+  </div>
+</article>
+
+{% schema %}
+{
+  "name": "Color card",
+  "tag": null,
+  "blocks": [
+    {
+      "type": "ls-color-swatch"
+    }
+  ],
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Whites & Off-Whites"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "info": "e.g. Chantilly Lace · Simply White"
+    },
+    {
+      "type": "url",
+      "id": "link",
+      "label": "Card link",
+      "info": "Where the title links (e.g. a collection)."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Color card",
+      "blocks": {
+        "swatch-1": { "type": "ls-color-swatch" },
+        "swatch-2": { "type": "ls-color-swatch" },
+        "swatch-3": { "type": "ls-color-swatch" }
+      },
+      "block_order": ["swatch-1", "swatch-2", "swatch-3"]
+    }
+  ]
+}
+{% endschema %}

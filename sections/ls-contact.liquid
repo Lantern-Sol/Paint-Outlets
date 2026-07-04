@@ -1,0 +1,728 @@
+{%- liquid
+  assign contact_font = section.settings.font_family
+  assign contact_font_500 = contact_font | font_modify: 'weight', '500'
+  assign contact_font_600 = contact_font | font_modify: 'weight', '600'
+  assign contact_font_700 = contact_font | font_modify: 'weight', '700'
+
+  assign phone_href = section.settings.phone_link
+  if phone_href == blank and section.settings.phone_number != blank
+    assign phone_href = 'tel:' | append: section.settings.phone_number | strip | replace: ' ', '' | replace: '.', '' | replace: '-', '' | replace: '(', '' | replace: ')', ''
+  endif
+
+  assign glow_start_alpha = section.settings.glow_start_opacity | default: 35 | times: 0.01
+  assign glow_start_rgba = section.settings.glow_start_color | default: '#D42A1C' | color_modify: 'alpha', glow_start_alpha
+  assign glow_end_alpha = section.settings.glow_end_opacity | default: 0 | times: 0.01
+  assign glow_end_rgba = section.settings.glow_end_color | default: '#D42A1C' | color_modify: 'alpha', glow_end_alpha
+
+  assign glow_size_x = section.settings.glow_size_x | default: 60
+  assign glow_size_y = section.settings.glow_size_y | default: 60
+  assign glow_box = glow_size_x | times: 2
+
+  assign glow_size_x_mobile = section.settings.glow_size_x_mobile | default: 60
+  assign glow_size_y_mobile = section.settings.glow_size_y_mobile | default: 60
+  assign glow_box_mobile = glow_size_x_mobile | times: 2
+-%}
+
+{% style %}
+  {{ contact_font | font_face: font_display: 'swap' }}
+  {{ contact_font_500 | font_face: font_display: 'swap' }}
+  {{ contact_font_600 | font_face: font_display: 'swap' }}
+  {{ contact_font_700 | font_face: font_display: 'swap' }}
+
+  .ls-contact-{{ section.id }} {
+    --ls-contact-font-family: {{ contact_font.family }}, {{ contact_font.fallback_families }};
+    --ls-contact-bg: {{ section.settings.background_color | default: '#0d0f12' }};
+    --ls-contact-linear-angle: {{ section.settings.linear_angle | default: 140 }}deg;
+    --ls-contact-linear-1: {{ section.settings.linear_color_1 | default: '#1E232C' }};
+    --ls-contact-linear-1-pos: {{ section.settings.linear_pos_1 | default: 0 }}%;
+    --ls-contact-linear-2: {{ section.settings.linear_color_2 | default: '#13161C' }};
+    --ls-contact-linear-2-pos: {{ section.settings.linear_pos_2 | default: 55 }}%;
+    --ls-contact-linear-3: {{ section.settings.linear_color_3 | default: '#0B0D11' }};
+    --ls-contact-linear-3-pos: {{ section.settings.linear_pos_3 | default: 100 }}%;
+    --ls-contact-glow-box: {{ glow_box }}%;
+    --ls-contact-glow-ratio: {{ glow_size_x }} / {{ glow_size_y }};
+    --ls-contact-glow-box-mobile: {{ glow_box_mobile }}%;
+    --ls-contact-glow-ratio-mobile: {{ glow_size_x_mobile }} / {{ glow_size_y_mobile }};
+    --ls-contact-glow-x: {{ section.settings.glow_x | default: 82 }}%;
+    --ls-contact-glow-y: {{ section.settings.glow_y | default: 40 }}%;
+    --ls-contact-glow-x-mobile: {{ section.settings.glow_x_mobile | default: 70 }}%;
+    --ls-contact-glow-y-mobile: {{ section.settings.glow_y_mobile | default: 14 }}%;
+    --ls-contact-glow-start-color: {{ glow_start_rgba }};
+    --ls-contact-glow-start-pos: {{ section.settings.glow_start_pos | default: 0 }}%;
+    --ls-contact-glow-end-color: {{ glow_end_rgba }};
+    --ls-contact-glow-end-pos: {{ section.settings.glow_end_pos | default: 70 }}%;
+    --ls-contact-eyebrow: {{ section.settings.eyebrow_color | default: '#e0281e' }};
+    --ls-contact-heading: {{ section.settings.heading_color | default: '#ffffff' }};
+    --ls-contact-subtext: {{ section.settings.subtext_color | default: '#a5adba' }};
+    --ls-contact-hours: {{ section.settings.hours_color | default: '#8b93a1' }};
+    --ls-contact-radius: {{ section.settings.card_radius | default: 20 }}px;
+    --ls-contact-primary-bg: {{ section.settings.phone_background | default: '#ffffff' }};
+    --ls-contact-primary-text: {{ section.settings.phone_text | default: '#111318' }};
+    --ls-contact-secondary-text: {{ section.settings.email_text | default: '#ffffff' }};
+    --ls-contact-secondary-border: {{ section.settings.email_border | default: '#3a3f47' }};
+    --ls-contact-secondary-hover: {{ section.settings.email_hover_background | default: '#ffffff' }};
+    --ls-contact-secondary-hover-text: {{ section.settings.email_hover_text | default: '#111318' }};
+  }
+{% endstyle %}
+
+<div
+  class="section ls-contact ls-contact-{{ section.id }} spacing-style"
+  style="{% render 'spacing-style', settings: section.settings %}"
+>
+  <div class="ls-contact__card">
+    <div class="ls-contact__glow" aria-hidden="true"></div>
+    <div class="ls-contact__inner">
+      <div class="ls-contact__content">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="ls-contact__eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+
+        {%- if section.settings.heading != blank -%}
+          <h2 class="ls-contact__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+
+        {%- if section.settings.subtext != blank -%}
+          <p class="ls-contact__subtext">{{ section.settings.subtext }}</p>
+        {%- endif -%}
+      </div>
+
+      <div class="ls-contact__actions">
+        {%- if section.settings.phone_number != blank -%}
+          <a class="ls-contact__button ls-contact__button--phone" href="{{ phone_href }}">
+            <span class="ls-contact__button-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M2.28 2.9h3.11l1.24 3.56-1.78 1.33a9.34 9.34 0 0 0 4.98 4.98l1.33-1.78 3.56 1.24v3.11a.9.9 0 0 1-.98.9A13.6 13.6 0 0 1 1.38 3.88a.9.9 0 0 1 .9-.98Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <span>{{ section.settings.phone_number }}</span>
+          </a>
+        {%- endif -%}
+
+        {%- if section.settings.email_label != blank -%}
+          <a
+            class="ls-contact__button ls-contact__button--email"
+            {% if section.settings.email_link == blank %}
+              role="link"
+              aria-disabled="true"
+            {% else %}
+              href="{{ section.settings.email_link }}"
+            {% endif %}
+            {% if section.settings.email_open_new_tab %}
+              target="_blank"
+              rel="noopener noreferrer"
+            {% endif %}
+          >
+            <span class="ls-contact__button-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="none">
+                <rect x="1.75" y="3.25" width="12.5" height="9.5" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M2.25 4.25 8 8.5l5.75-4.25" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <span>{{ section.settings.email_label }}</span>
+          </a>
+        {%- endif -%}
+
+        {%- if section.settings.hours != blank -%}
+          <p class="ls-contact__hours">{{ section.settings.hours }}</p>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .ls-contact {
+    font-family: var(--ls-contact-font-family, 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  }
+
+  .ls-contact__card {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--ls-contact-radius, 20px);
+    background:
+      linear-gradient(
+        var(--ls-contact-linear-angle, 140deg),
+        var(--ls-contact-linear-1, #1E232C) var(--ls-contact-linear-1-pos, 0%),
+        var(--ls-contact-linear-2, #13161C) var(--ls-contact-linear-2-pos, 55%),
+        var(--ls-contact-linear-3, #0B0D11) var(--ls-contact-linear-3-pos, 100%)
+      ),
+      var(--ls-contact-bg);
+    isolation: isolate;
+  }
+
+  /* Radial glow painted as a fixed-ratio box tied to the card WIDTH, so it keeps
+     its shape on tall/narrow mobile cards instead of stretching. */
+  .ls-contact__glow {
+    position: absolute;
+    z-index: 0;
+    left: var(--ls-contact-glow-x, 82%);
+    top: var(--ls-contact-glow-y, 40%);
+    width: var(--ls-contact-glow-box, 120%);
+    aspect-ratio: var(--ls-contact-glow-ratio, 1);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    background: radial-gradient(
+      70.71% 70.71% at 50% 50%,
+      var(--ls-contact-glow-start-color) var(--ls-contact-glow-start-pos, 0%),
+      var(--ls-contact-glow-end-color) var(--ls-contact-glow-end-pos, 70%)
+    );
+  }
+
+  .ls-contact__inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+    padding: clamp(1.75rem, 4vw, 3rem) clamp(1.5rem, 4vw, 3.25rem);
+  }
+
+  .ls-contact__content {
+    max-width: 34rem;
+  }
+
+  .ls-contact__eyebrow {
+    margin: 0 0 0.75rem;
+    color: var(--ls-contact-eyebrow);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .ls-contact__heading {
+    margin: 0;
+    color: var(--ls-contact-heading);
+    font-size: clamp(1.9rem, 3.6vw, 2.75rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+
+  .ls-contact__subtext {
+    margin: 1rem 0 0;
+    color: var(--ls-contact-subtext);
+    font-size: clamp(0.95rem, 1.4vw, 1.0625rem);
+    font-weight: 400;
+    line-height: 1.55;
+  }
+
+  .ls-contact__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    flex-shrink: 0;
+    width: clamp(13rem, 22vw, 15.5rem);
+  }
+
+  .ls-contact__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 3.25rem;
+    padding: 0 1.5rem;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    line-height: 1.2;
+    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+  }
+
+  .ls-contact__button-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+
+  .ls-contact__button-icon svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  .ls-contact__button--phone {
+    background: var(--ls-contact-primary-bg);
+    color: var(--ls-contact-primary-text);
+    border: 1px solid var(--ls-contact-primary-bg);
+  }
+
+  .ls-contact__button--phone:hover {
+    opacity: 0.9;
+  }
+
+  .ls-contact__button--email {
+    background: transparent;
+    color: var(--ls-contact-secondary-text);
+    border: 1px solid var(--ls-contact-secondary-border);
+  }
+
+  .ls-contact__button--email:hover {
+    background: var(--ls-contact-secondary-hover);
+    color: var(--ls-contact-secondary-hover-text);
+    border-color: var(--ls-contact-secondary-hover);
+  }
+
+  .ls-contact__button[aria-disabled='true'] {
+    pointer-events: none;
+    opacity: 0.55;
+  }
+
+  .ls-contact__hours {
+    margin: 0.25rem 0 0;
+    color: var(--ls-contact-hours);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  @media screen and (max-width: 749px) {
+    .ls-contact__inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .ls-contact__glow {
+      left: var(--ls-contact-glow-x-mobile, 70%);
+      top: var(--ls-contact-glow-y-mobile, 14%);
+      width: var(--ls-contact-glow-box-mobile, 120%);
+      aspect-ratio: var(--ls-contact-glow-ratio-mobile, 1);
+    }
+
+    .ls-contact__content {
+      max-width: none;
+    }
+
+    .ls-contact__heading {
+      font-size: 1.6rem;
+    }
+
+    .ls-contact__actions {
+      width: 100%;
+    }
+
+    /* Hide the hours line on mobile — the layout ends at the buttons. */
+    .ls-contact__hours {
+      display: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS Contact",
+  "tag": "section",
+  "class": "ls-contact-section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "font_family",
+      "label": "Font",
+      "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Talk to a human"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Ready to start your project?"
+    },
+    {
+      "type": "textarea",
+      "id": "subtext",
+      "label": "Subtext",
+      "default": "Our paint experts will help you pick the right product, match your color, and handle bulk pricing — no guesswork."
+    },
+    {
+      "type": "header",
+      "content": "Phone button"
+    },
+    {
+      "type": "text",
+      "id": "phone_number",
+      "label": "Phone number",
+      "default": "248.598.0311"
+    },
+    {
+      "type": "url",
+      "id": "phone_link",
+      "label": "Phone link",
+      "info": "Optional. Defaults to a tel: link built from the number above."
+    },
+    {
+      "type": "header",
+      "content": "Email button"
+    },
+    {
+      "type": "text",
+      "id": "email_label",
+      "label": "Button text",
+      "default": "Email an expert"
+    },
+    {
+      "type": "url",
+      "id": "email_link",
+      "label": "Button link",
+      "info": "Use a mailto: link, e.g. mailto:experts@example.com"
+    },
+    {
+      "type": "checkbox",
+      "id": "email_open_new_tab",
+      "label": "Open in new tab",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "hours",
+      "label": "Hours",
+      "default": "Mon–Fri 7:30–5:30 · Sat 8–3"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Card background",
+      "default": "#0d0f12"
+    },
+    {
+      "type": "color",
+      "id": "eyebrow_color",
+      "label": "Eyebrow",
+      "default": "#e0281e"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "subtext_color",
+      "label": "Subtext",
+      "default": "#a5adba"
+    },
+    {
+      "type": "color",
+      "id": "hours_color",
+      "label": "Hours",
+      "default": "#8b93a1"
+    },
+    {
+      "type": "header",
+      "content": "Phone button colors"
+    },
+    {
+      "type": "color",
+      "id": "phone_background",
+      "label": "Background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "phone_text",
+      "label": "Text",
+      "default": "#111318"
+    },
+    {
+      "type": "header",
+      "content": "Email button colors"
+    },
+    {
+      "type": "color",
+      "id": "email_text",
+      "label": "Text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "email_border",
+      "label": "Border",
+      "default": "#3a3f47"
+    },
+    {
+      "type": "color",
+      "id": "email_hover_background",
+      "label": "Hover background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "email_hover_text",
+      "label": "Hover text",
+      "default": "#111318"
+    },
+    {
+      "type": "header",
+      "content": "Card gradient",
+      "info": "The base linear gradient across the whole dark card."
+    },
+    {
+      "type": "range",
+      "id": "linear_angle",
+      "label": "Angle",
+      "info": "140° ≈ top-left to bottom-right diagonal.",
+      "min": 0,
+      "max": 360,
+      "step": 5,
+      "unit": "deg",
+      "default": 140
+    },
+    {
+      "type": "color",
+      "id": "linear_color_1",
+      "label": "Color 1 (start)",
+      "default": "#1E232C"
+    },
+    {
+      "type": "range",
+      "id": "linear_pos_1",
+      "label": "Color 1 position",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 0
+    },
+    {
+      "type": "color",
+      "id": "linear_color_2",
+      "label": "Color 2 (middle)",
+      "default": "#13161C"
+    },
+    {
+      "type": "range",
+      "id": "linear_pos_2",
+      "label": "Color 2 position",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 55
+    },
+    {
+      "type": "color",
+      "id": "linear_color_3",
+      "label": "Color 3 (end)",
+      "default": "#0B0D11"
+    },
+    {
+      "type": "range",
+      "id": "linear_pos_3",
+      "label": "Color 3 position",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "header",
+      "content": "Glow",
+      "info": "The red radial highlight behind the dark card."
+    },
+    {
+      "type": "color",
+      "id": "glow_start_color",
+      "label": "Start color",
+      "default": "#D42A1C"
+    },
+    {
+      "type": "range",
+      "id": "glow_start_opacity",
+      "label": "Start opacity",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 35
+    },
+    {
+      "type": "range",
+      "id": "glow_start_pos",
+      "label": "Start position",
+      "info": "Where the start color begins fading.",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 0
+    },
+    {
+      "type": "color",
+      "id": "glow_end_color",
+      "label": "End color",
+      "default": "#D42A1C"
+    },
+    {
+      "type": "range",
+      "id": "glow_end_opacity",
+      "label": "End opacity",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "glow_end_pos",
+      "label": "End position",
+      "info": "Where the glow finishes fading out.",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 70
+    },
+    {
+      "type": "range",
+      "id": "glow_x",
+      "label": "Center X",
+      "info": "0% = left, 100% = right.",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 82
+    },
+    {
+      "type": "range",
+      "id": "glow_y",
+      "label": "Center Y",
+      "info": "0% = top, 100% = bottom.",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "glow_x_mobile",
+      "label": "Center X (mobile)",
+      "info": "0% = left, 100% = right.",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 70
+    },
+    {
+      "type": "range",
+      "id": "glow_y_mobile",
+      "label": "Center Y (mobile)",
+      "info": "0% = top, 100% = bottom.",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "glow_size_x",
+      "label": "Size (horizontal)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "glow_size_y",
+      "label": "Size (vertical)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "glow_size_x_mobile",
+      "label": "Size (horizontal, mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "glow_size_y_mobile",
+      "label": "Size (vertical, mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 60
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "card_radius",
+      "label": "Card corner radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 24
+    }
+  ],
+  "presets": [
+    {
+      "name": "LS Contact",
+      "category": "t:categories.other_sections"
+    }
+  ]
+}
+{% endschema %}

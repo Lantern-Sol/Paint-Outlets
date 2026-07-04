@@ -1,0 +1,78 @@
+{%- liquid
+  assign p = block.settings.product
+  assign sw_color = block.settings.color
+  assign sw_label = block.settings.label | default: p.title | default: 'Color'
+  assign sw_url = p.url | default: block.settings.link
+-%}
+{%- if sw_url != blank -%}
+  <a
+    class="ls-cs__swatch"
+    href="{{ sw_url }}"
+    title="{{ sw_label | escape }}"
+    aria-label="{{ sw_label | escape }}"
+    {% if sw_color != blank %}style="background-color: {{ sw_color }};"{% endif %}
+    {{ block.shopify_attributes }}
+  >
+    {%- if sw_color == blank and p.featured_image != blank -%}
+      {{
+        p.featured_image
+        | image_url: width: 96
+        | image_tag: class: 'ls-cs__swatch-img', widths: '48, 96', loading: 'lazy', alt: sw_label
+      }}
+    {%- endif -%}
+  </a>
+{%- else -%}
+  <span
+    class="ls-cs__swatch"
+    title="{{ sw_label | escape }}"
+    aria-label="{{ sw_label | escape }}"
+    {% if sw_color != blank %}style="background-color: {{ sw_color }};"{% endif %}
+    {{ block.shopify_attributes }}
+  >
+    {%- if sw_color == blank and p.featured_image != blank -%}
+      {{
+        p.featured_image
+        | image_url: width: 96
+        | image_tag: class: 'ls-cs__swatch-img', widths: '48, 96', loading: 'lazy', alt: sw_label
+      }}
+    {%- endif -%}
+  </span>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Swatch",
+  "tag": null,
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Color product",
+      "info": "Links to the product and, if no colour is set below, uses its image as the swatch."
+    },
+    {
+      "type": "color",
+      "id": "color",
+      "label": "Swatch colour override",
+      "info": "Optional. Overrides the product image with a solid colour."
+    },
+    {
+      "type": "text",
+      "id": "label",
+      "label": "Label override",
+      "info": "Tooltip / accessibility label. Defaults to the product title."
+    },
+    {
+      "type": "url",
+      "id": "link",
+      "label": "Link override",
+      "info": "Used only when no product is selected."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Swatch"
+    }
+  ]
+}
+{% endschema %}

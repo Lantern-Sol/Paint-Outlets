@@ -1,0 +1,13 @@
+/* ==========================================================================
+   LS custom global overrides
+   Home for theme-wide tweaks to the LS Paint Outlets storefront.
+   ========================================================================== */
+
+/* Inline breathing room: 2.5% each side (5% total) on every page section
+   except the full-bleed sections (hero, features marquee, trusted bar).
+   Scoped to #MainContent so the header and footer are unaffected. The padding
+   insets both the section content and its absolutely-positioned
+   .section-background. */
+#MainContent > .shopify-section:not(.ls-hero-section):not(.ls-features-section):not(.ls-trusted-section) {
+  padding-inline: 2.5%;
+}

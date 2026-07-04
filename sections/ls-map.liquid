@@ -1,0 +1,643 @@
+{%- liquid
+  assign map_font = section.settings.font_family
+  assign map_font_500 = map_font | font_modify: 'weight', '500'
+  assign map_font_600 = map_font | font_modify: 'weight', '600'
+  assign map_font_700 = map_font | font_modify: 'weight', '700'
+
+  assign hours_blocks = section.blocks | where: 'type', 'hours'
+  assign location_blocks = section.blocks | where: 'type', 'location'
+-%}
+
+{% style %}
+  {{ map_font | font_face: font_display: 'swap' }}
+  {{ map_font_500 | font_face: font_display: 'swap' }}
+  {{ map_font_600 | font_face: font_display: 'swap' }}
+  {{ map_font_700 | font_face: font_display: 'swap' }}
+
+  .ls-map-{{ section.id }} {
+    --ls-map-font-family: {{ map_font.family }}, {{ map_font.fallback_families }};
+    --ls-map-eyebrow: {{ section.settings.eyebrow_color | default: '#c13121' }};
+    --ls-map-heading: {{ section.settings.heading_color | default: '#1a1a1a' }};
+    --ls-map-accent: {{ section.settings.accent_color | default: '#c13121' }};
+    --ls-map-text: {{ section.settings.text_color | default: '#1a1a1a' }};
+    --ls-map-muted: {{ section.settings.muted_color | default: '#6b7280' }};
+    --ls-map-panel-bg: {{ section.settings.panel_background | default: '#ffffff' }};
+    --ls-map-border: {{ section.settings.border_color | default: '#e6e2db' }};
+    --ls-map-divider: {{ section.settings.divider_color | default: '#ececec' }};
+    --ls-map-radius: {{ section.settings.card_radius | default: 24 }}px;
+    --ls-map-map-radius: {{ section.settings.map_radius | default: 16 }}px;
+    --ls-map-min-height: {{ section.settings.min_height | default: 380 }}px;
+    --ls-map-media-width: {{ section.settings.map_width | default: 50 }}%;
+  }
+{% endstyle %}
+
+{%- if section.settings.background_color != blank -%}
+  <div class="section-background ls-map__bg" style="background-color: {{ section.settings.background_color }};"></div>
+{%- endif -%}
+<div
+  class="section ls-map ls-map-{{ section.id }} spacing-style"
+  style="{% render 'spacing-style', settings: section.settings %}"
+>
+  <div class="ls-map__card">
+    <div class="ls-map__panel">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="ls-map__eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+
+      {%- if section.settings.heading != blank -%}
+        <h2 class="ls-map__heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+
+      {%- if hours_blocks.size > 0 -%}
+        <p class="ls-map__hours">
+          {%- for block in hours_blocks -%}
+            <span class="ls-map__hours-item" {{ block.shopify_attributes }}>
+              {%- if block.settings.days != blank -%}
+                <span class="ls-map__hours-days">{{ block.settings.days }}</span>
+              {%- endif -%}
+              {%- if block.settings.time != blank -%}
+                <span class="ls-map__hours-time">{{ block.settings.time }}</span>
+              {%- endif -%}
+            </span>
+          {%- endfor -%}
+        </p>
+      {%- endif -%}
+
+      {%- if location_blocks.size > 0 -%}
+        <ul class="ls-map__locations" role="list">
+          {%- for block in location_blocks -%}
+            {%- capture location_body -%}
+              <span class="ls-map__location-icon" aria-hidden="true">
+                <svg viewBox="0 0 17 17" fill="none">
+                  <path d="M8.50002 14.875C8.50002 14.875 13.4584 10.9792 13.4584 7.08333C13.4584 6.4322 13.3301 5.78743 13.0809 5.18586C12.8317 4.58429 12.4665 4.03769 12.0061 3.57726C11.5457 3.11684 10.9991 2.75161 10.3975 2.50243C9.79592 2.25325 9.15116 2.125 8.50002 2.125C7.84888 2.125 7.20412 2.25325 6.60255 2.50243C6.00098 2.75161 5.45437 3.11684 4.99395 3.57726C4.53353 4.03769 4.1683 4.58429 3.91912 5.18586C3.66994 5.78743 3.54169 6.4322 3.54169 7.08333C3.54169 10.9792 8.50002 14.875 8.50002 14.875Z" stroke="currentColor" stroke-width="1.275" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M8.50002 8.85417C9.47802 8.85417 10.2709 8.06134 10.2709 7.08333C10.2709 6.10533 9.47802 5.3125 8.50002 5.3125C7.52202 5.3125 6.72919 6.10533 6.72919 7.08333C6.72919 8.06134 7.52202 8.85417 8.50002 8.85417Z" stroke="currentColor" stroke-width="1.275" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="ls-map__location-text">
+                {%- if block.settings.name != blank -%}
+                  <span class="ls-map__location-name">{{ block.settings.name }}</span>
+                {%- endif -%}
+                {%- if block.settings.address != blank -%}
+                  <span class="ls-map__location-address">{{ block.settings.address | newline_to_br }}</span>
+                {%- endif -%}
+              </span>
+            {%- endcapture -%}
+            <li class="ls-map__location" {{ block.shopify_attributes }}>
+              {%- if block.settings.link != blank -%}
+                <a class="ls-map__location-inner ls-map__location-inner--link" href="{{ block.settings.link }}">
+                  {{ location_body }}
+                </a>
+              {%- else -%}
+                <span class="ls-map__location-inner">
+                  {{ location_body }}
+                </span>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+
+      {%- if section.settings.phone_number != blank -%}
+        <a
+          class="ls-map__phone"
+          {% if section.settings.phone_link != blank %}
+            href="{{ section.settings.phone_link }}"
+          {% else %}
+            href="tel:{{ section.settings.phone_number | strip | replace: ' ', '' | replace: '.', '' }}"
+          {% endif %}
+        >
+          <span class="ls-map__phone-icon" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none">
+              <path d="M2.28 2.9h3.11l1.24 3.56-1.78 1.33a9.34 9.34 0 0 0 4.98 4.98l1.33-1.78 3.56 1.24v3.11a.9.9 0 0 1-.98.9A13.6 13.6 0 0 1 1.38 3.88a.9.9 0 0 1 .9-.98Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          {{ section.settings.phone_number }}
+        </a>
+      {%- endif -%}
+    </div>
+
+    <div class="ls-map__media">
+      {%- if section.settings.map_embed != blank -%}
+        {{ section.settings.map_embed }}
+      {%- else -%}
+        <div class="ls-map__media-placeholder">
+          <svg viewBox="0 0 17 17" fill="none" aria-hidden="true">
+            <path d="M8.50002 14.875C8.50002 14.875 13.4584 10.9792 13.4584 7.08333C13.4584 6.4322 13.3301 5.78743 13.0809 5.18586C12.8317 4.58429 12.4665 4.03769 12.0061 3.57726C11.5457 3.11684 10.9991 2.75161 10.3975 2.50243C9.79592 2.25325 9.15116 2.125 8.50002 2.125C7.84888 2.125 7.20412 2.25325 6.60255 2.50243C6.00098 2.75161 5.45437 3.11684 4.99395 3.57726C4.53353 4.03769 4.1683 4.58429 3.91912 5.18586C3.66994 5.78743 3.54169 6.4322 3.54169 7.08333C3.54169 10.9792 8.50002 14.875 8.50002 14.875Z" stroke="currentColor" stroke-width="1.275" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8.50002 8.85417C9.47802 8.85417 10.2709 8.06134 10.2709 7.08333C10.2709 6.10533 9.47802 5.3125 8.50002 5.3125C7.52202 5.3125 6.72919 6.10533 6.72919 7.08333C6.72919 8.06134 7.52202 8.85417 8.50002 8.85417Z" stroke="currentColor" stroke-width="1.275" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Paste a Google Maps embed in the section settings to show the map.</span>
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .ls-map {
+    font-family: var(--ls-map-font-family, 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    color: var(--ls-map-text);
+  }
+
+  .ls-map__card {
+    display: grid;
+    grid-template-columns: 1fr var(--ls-map-media-width, 50%);
+    background: var(--ls-map-panel-bg);
+    border: 1px solid var(--ls-map-border);
+    border-radius: var(--ls-map-radius, 24px);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.04), 0 18px 40px rgb(0 0 0 / 0.05);
+  }
+
+  .ls-map__panel {
+    padding: clamp(1.75rem, 3.2vw, 3rem);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ls-map__eyebrow {
+    margin: 0 0 0.6rem;
+    color: var(--ls-map-eyebrow);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .ls-map__heading {
+    margin: 0;
+    color: var(--ls-map-heading);
+    font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+
+  .ls-map__hours {
+    margin: clamp(0.75rem, 1.4vw, 1rem) 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.4rem;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+  }
+
+  .ls-map__hours-item {
+    display: inline-flex;
+    gap: 0.4rem;
+    white-space: nowrap;
+  }
+
+  .ls-map__hours-days {
+    color: var(--ls-map-heading);
+    font-weight: 700;
+  }
+
+  .ls-map__hours-time {
+    color: var(--ls-map-muted);
+  }
+
+  .ls-map__locations {
+    list-style: none;
+    margin: clamp(1rem, 1.8vw, 1.4rem) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25rem 1.5rem;
+  }
+
+  .ls-map__location {
+    border-bottom: 1px solid var(--ls-map-divider);
+  }
+
+  .ls-map__location-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 0;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .ls-map__location-inner--link {
+    transition: opacity 0.15s ease;
+  }
+
+  .ls-map__location-inner--link:hover {
+    opacity: 0.7;
+  }
+
+  .ls-map__location-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 9px;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--ls-map-accent) 10%, transparent);
+    color: var(--ls-map-accent);
+  }
+
+  .ls-map__location-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .ls-map__location-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    line-height: 1.4;
+  }
+
+  .ls-map__location-name {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--ls-map-heading);
+  }
+
+  .ls-map__location-address {
+    font-size: 0.8125rem;
+    color: var(--ls-map-muted);
+  }
+
+  .ls-map__phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: clamp(0.9rem, 1.6vw, 1.25rem);
+    color: var(--ls-map-heading);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    text-decoration: none;
+    align-self: flex-start;
+    transition: color 0.15s ease;
+  }
+
+  .ls-map__phone:hover {
+    color: var(--ls-map-accent);
+  }
+
+  .ls-map__phone-icon {
+    display: inline-flex;
+    color: var(--ls-map-accent);
+  }
+
+  .ls-map__phone-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .ls-map__media {
+    position: relative;
+    min-height: var(--ls-map-min-height, 380px);
+    margin: clamp(0.75rem, 1.4vw, 1.25rem);
+    border-radius: var(--ls-map-map-radius, 16px);
+    overflow: hidden;
+    background: #eef0f2;
+  }
+
+  .ls-map__media iframe,
+  .ls-map__media > :not(.ls-map__media-placeholder) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+
+  .ls-map__media-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--ls-map-muted);
+    font-size: 0.875rem;
+  }
+
+  .ls-map__media-placeholder svg {
+    width: 32px;
+    height: 32px;
+    color: var(--ls-map-accent);
+    opacity: 0.6;
+  }
+
+  @media screen and (max-width: 749px) {
+    /* White section, no card — content sits flat on the page. */
+    .ls-map__bg {
+      background-color: #ffffff !important;
+    }
+
+    .ls-map__card {
+      grid-template-columns: 1fr;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: visible;
+    }
+
+    /* Map moves above the content, flush to the page gutter. */
+    .ls-map__media {
+      order: -1;
+      min-height: 280px;
+      margin: 0 0 clamp(1.25rem, 5vw, 1.75rem);
+    }
+
+    /* Drop the panel inset so text aligns with the map's edges. */
+    .ls-map__panel {
+      padding-inline: 0;
+      padding-block: 0;
+    }
+
+    .ls-map__hours {
+      font-size: 12px;
+    }
+
+    .ls-map__locations {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    /* Phone is hidden on mobile — the reference layout ends at the locations. */
+    .ls-map__phone {
+      display: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS Map",
+  "tag": "section",
+  "class": "ls-map-section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "font_family",
+      "label": "Font",
+      "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Header"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Curbside & free local delivery"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Our store locations"
+    },
+    {
+      "type": "header",
+      "content": "Phone"
+    },
+    {
+      "type": "text",
+      "id": "phone_number",
+      "label": "Phone number",
+      "default": "248.598.0311"
+    },
+    {
+      "type": "url",
+      "id": "phone_link",
+      "label": "Phone link",
+      "info": "Optional. Defaults to a tel: link built from the number above."
+    },
+    {
+      "type": "header",
+      "content": "Map",
+      "info": "In Google Maps, search your location → Share → Embed a map → copy the HTML and paste it below. The zoom controls and “View larger map” link come with the embed."
+    },
+    {
+      "type": "html",
+      "id": "map_embed",
+      "label": "Google Maps embed code",
+      "info": "Paste the full <iframe> embed code."
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Section background",
+      "default": "#f4f4f5"
+    },
+    {
+      "type": "color",
+      "id": "panel_background",
+      "label": "Card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "eyebrow_color",
+      "label": "Eyebrow",
+      "default": "#c13121"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent (icons, phone hover)",
+      "default": "#c13121"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted text",
+      "default": "#6b7280"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Card border",
+      "default": "#e6e2db"
+    },
+    {
+      "type": "color",
+      "id": "divider_color",
+      "label": "Location divider",
+      "default": "#ececec"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "map_width",
+      "label": "Map width",
+      "info": "Share of the card the map takes on desktop.",
+      "min": 30,
+      "max": 60,
+      "step": 2,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "min_height",
+      "label": "Map minimum height",
+      "min": 240,
+      "max": 640,
+      "step": 10,
+      "unit": "px",
+      "default": 380
+    },
+    {
+      "type": "range",
+      "id": "card_radius",
+      "label": "Card corner radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "map_radius",
+      "label": "Map corner radius",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "blocks": [
+    {
+      "type": "hours",
+      "name": "Hours row",
+      "settings": [
+        {
+          "type": "text",
+          "id": "days",
+          "label": "Days",
+          "default": "Mon – Fri"
+        },
+        {
+          "type": "text",
+          "id": "time",
+          "label": "Time",
+          "default": "7:30 AM – 5:30 PM"
+        }
+      ]
+    },
+    {
+      "type": "location",
+      "name": "Location",
+      "settings": [
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Name",
+          "default": "Shelby Township"
+        },
+        {
+          "type": "textarea",
+          "id": "address",
+          "label": "Address",
+          "info": "Line breaks are preserved.",
+          "default": "47595 Van Dyke Avenue\nShelby Township 48317"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Store page link",
+          "info": "Optional. Makes the location clickable."
+        }
+      ]
+    }
+  ],
+  "max_blocks": 12,
+  "presets": [
+    {
+      "name": "LS Map",
+      "category": "t:categories.other_sections",
+      "blocks": [
+        { "type": "hours", "settings": { "days": "Mon – Fri", "time": "7:30 AM – 5:30 PM" } },
+        { "type": "hours", "settings": { "days": "Saturday", "time": "8:00 AM – 3:00 PM" } },
+        { "type": "hours", "settings": { "days": "Sunday", "time": "Closed" } },
+        {
+          "type": "location",
+          "settings": {
+            "name": "Shelby Township",
+            "address": "47595 Van Dyke Avenue\nShelby Township 48317"
+          }
+        },
+        {
+          "type": "location",
+          "settings": {
+            "name": "Rochester Hills",
+            "address": "See store page for address\nRochester Hills"
+          }
+        },
+        {
+          "type": "location",
+          "settings": {
+            "name": "Macomb Township",
+            "address": "See store page for address\nMacomb Township"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

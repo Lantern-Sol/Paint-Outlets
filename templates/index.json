@@ -51,9 +51,9 @@
         "mobile_gradient_color": "#7cb3ed",
         "mobile_gradient_position": 28,
         "mobile_gradient_width": 120,
-        "mobile_gradient_height": 72,
+        "mobile_gradient_height": 78,
         "mobile_gradient_coverage": 4,
-        "mobile_gradient_fade": 60,
+        "mobile_gradient_fade": 64,
         "mobile_image_offset": 140,
         "mobile_offset_color": "#1a4f95",
         "text_color": "#ffffff",
@@ -332,7 +332,7 @@
         "eyebrow": "Start here",
         "heading": "Shop by category",
         "link_label": "All categories",
-        "link_url": "",
+        "link_url": "shopify://collections",
         "show_filter_label": true,
         "all_label": "All",
         "show_count": true,
@@ -452,7 +452,10 @@
         "muted_color": "#6b7280",
         "card_background": "#ffffff",
         "padding-block-start": 0,
-        "padding-block-end": 48
+        "padding-block-end": 48,
+        "use_mobile_padding": false,
+        "padding-block-start-mobile": 32,
+        "padding-block-end-mobile": 32
       }
     },
     "ls_deal_UdVyRE": {
@@ -512,8 +515,547 @@
         "accent_color": "#c13121",
         "text_color": "#1a1a1a",
         "muted_color": "#6b7280",
+        "padding-block-start": 0,
+        "padding-block-end": 48
+      }
+    },
+    "ls_color_swatch_3AwTPh": {
+      "type": "ls-color-swatch",
+      "blocks": {
+        "ls_color_card_7QqBND": {
+          "type": "ls-color-card",
+          "settings": {
+            "image": "shopify://shop_images/whites-swatch.png",
+            "title": "Whites & Off-Whites",
+            "subtitle": "Chantilly Lace · Simply White",
+            "link": ""
+          },
+          "blocks": {
+            "ls_color_swatch_QhM7aW": {
+              "type": "ls-color-swatch",
+              "settings": {
+                "product": "oc-65-chantilly-lace",
+                "color": "",
+                "label": "",
+                "link": ""
+              },
+              "blocks": {}
+            },
+            "ls_color_swatch_qTGUYU": {
+              "type": "ls-color-swatch",
+              "settings": {
+                "product": "oc-117-simply-white",
+                "color": "",
+                "label": "",
+                "link": ""
+              },
+              "blocks": {}
+            },
+            "ls_color_swatch_GAr7R9": {
+              "type": "ls-color-swatch",
+              "settings": {
+                "product": "",
+                "color": "#d9d3c4",
+                "label": "",
+                "link": ""
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "ls_color_swatch_QhM7aW",
+            "ls_color_swatch_qTGUYU",
+            "ls_color_swatch_GAr7R9"
+          ]
+        },
+        "ls_color_card_P8R4PU": {
+          "type": "ls-color-card",
+          "settings": {
+            "image": "shopify://shop_images/blues-greens-swatch.png",
+            "title": "Blues & Greens",
+            "subtitle": "Hale Navy · Caldwell Green",
+            "link": ""
+          },
+          "blocks": {
+            "ls_color_swatch_yx7cNE": {
+              "type": "ls-color-swatch",
+              "settings": {
+                "product": "hc-154-hale-navy",
+                "color": "",
+                "label": "",
+                "link": ""
+              },
+              "blocks": {}
+            },
+            "ls_color_swatch_XXWQjK": {
+              "type": "ls-color-swatch",
+              "settings": {
+                "product": "hc-124-caldwell-green",
+                "color": "",
+                "label": "",
+                "link": ""
+              },
+              "blocks": {}
+            },
+            "ls_color_swatch_46tYML": {
+              "type": "ls-color-swatch",
+              "settings": {
+                "product": "",
+                "color": "#6f8b7b",
+                "label": "",
+                "link": ""
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "ls_color_swatch_yx7cNE",
+            "ls_color_swatch_XXWQjK",
+            "ls_color_swatch_46tYML"
+          ]
+        },
+        "ls_color_card_yxb4Qd": {
+          "type": "ls-color-card",
+          "settings": {
+            "image": "shopify://shop_images/bold-swatch.png",
+            "title": "Bold & Moody",
+            "subtitle": "Black Beauty · Caliente",
+            "link": ""
+          },
+          "blocks": {
+            "ls_color_swatch_xDkmLt": {
+              "type": "ls-color-swatch",
+              "settings": {
+                "product": "2128-10-black-beauty",
+                "color": "",
+                "label": "",
+                "link": ""
+              },
+              "blocks": {}
+            },
+            "ls_color_swatch_6Qtkm4": {
+              "type": "ls-color-swatch",
+              "settings": {
+                "product": "af-290-caliente",
+                "color": "",
+                "label": "",
+                "link": ""
+              },
+              "blocks": {}
+            },
+            "ls_color_swatch_4qHfpG": {
+              "type": "ls-color-swatch",
+              "settings": {
+                "product": "",
+                "color": "#4b3c46",
+                "label": "",
+                "link": ""
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "ls_color_swatch_xDkmLt",
+            "ls_color_swatch_6Qtkm4",
+            "ls_color_swatch_4qHfpG"
+          ]
+        },
+        "ls_color_card_EjAf8b": {
+          "type": "ls-color-card",
+          "settings": {
+            "image": "shopify://shop_images/cabinet-swatch.png",
+            "title": "Cabinet & Trim",
+            "subtitle": "Cloud White · Kendall Charcoal",
+            "link": ""
+          },
+          "blocks": {
+            "ls_color_swatch_VCTw3U": {
+              "type": "ls-color-swatch",
+              "settings": {
+                "product": "cc-40-cloud-white",
+                "color": "",
+                "label": "",
+                "link": ""
+              },
+              "blocks": {}
+            },
+            "ls_color_swatch_4Y7PVq": {
+              "type": "ls-color-swatch",
+              "settings": {
+                "product": "hc-166-kendall-charcoal",
+                "color": "",
+                "label": "",
+                "link": ""
+              },
+              "blocks": {}
+            },
+            "ls_color_swatch_PEx3qn": {
+              "type": "ls-color-swatch",
+              "settings": {
+                "product": "",
+                "color": "#3e4249",
+                "label": "",
+                "link": ""
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "ls_color_swatch_VCTw3U",
+            "ls_color_swatch_4Y7PVq",
+            "ls_color_swatch_PEx3qn"
+          ]
+        }
+      },
+      "block_order": [
+        "ls_color_card_7QqBND",
+        "ls_color_card_P8R4PU",
+        "ls_color_card_yxb4Qd",
+        "ls_color_card_EjAf8b"
+      ],
+      "name": "LS Color Swatch",
+      "settings": {
+        "font_family": "outfit_n4",
+        "eyebrow": "For your space",
+        "heading": "Find your color",
+        "show_arrows": true,
+        "card_width": 440,
+        "card_radius": 18,
+        "show_cta": true,
+        "cta_title": "Not sure yet? Order a color sample.",
+        "cta_text": "Peel-&-stick samples and pints shipped before you commit to a gallon.",
+        "cta_button_label": "Order samples",
+        "cta_button_link": "",
+        "background_color": "#fafafa",
+        "eyebrow_color": "#c13121",
+        "heading_color": "#1a1a1a",
+        "accent_color": "#c13121",
+        "text_color": "#1a1a1a",
+        "muted_color": "#6b7280",
+        "card_background": "#ffffff",
+        "padding-block-start": 0,
+        "padding-block-end": 48,
+        "use_mobile_padding": false,
+        "padding-block-start-mobile": 32,
+        "padding-block-end-mobile": 32
+      }
+    },
+    "ls_purpose_BAQmt8": {
+      "type": "ls-purpose",
+      "blocks": {
+        "card_R4Ki3r": {
+          "type": "card",
+          "settings": {
+            "style": "dark",
+            "icon": "truck",
+            "label": "Contractors & pros",
+            "heading": "Bulk pricing that beats the box stores",
+            "description": "Hit 48 gallons and delivery is free. Set up a contractor account for standing pricing and drop-ship straight to the job site.",
+            "tag_1": "48-gal ships free",
+            "tag_2": "Contractor accounts",
+            "tag_3": "Drop-ship to site",
+            "primary_label": "Get bulk pricing",
+            "primary_link": "",
+            "secondary_label": "248.598.0311",
+            "secondary_link": "",
+            "secondary_icon": "phone"
+          }
+        },
+        "card_J7CB77": {
+          "type": "card",
+          "settings": {
+            "style": "light",
+            "icon": "location",
+            "custom_icon": "shopify://shop_images/pen.svg",
+            "label": "DIY & homeowners",
+            "heading": "Not sure of the color? Start with a sample.",
+            "description": "Skip the guesswork. Order peel-&-stick samples, get free color matching, and talk to people who paint for a living.",
+            "tag_1": "$4.99 color samples",
+            "tag_2": "Free color matching",
+            "tag_3": "Expert advice",
+            "primary_label": "Order color samples",
+            "primary_link": "",
+            "secondary_label": "Explore colors",
+            "secondary_link": "",
+            "secondary_icon": "none"
+          }
+        },
+        "info_bckBkC": {
+          "type": "info",
+          "settings": {
+            "icon": "location",
+            "title": "In-store pickup",
+            "subtitle": "Ready at the counter"
+          }
+        },
+        "info_qLRcy8": {
+          "type": "info",
+          "settings": {
+            "icon": "truck",
+            "title": "Free curbside",
+            "subtitle": "Call ahead, we load it"
+          }
+        },
+        "info_CzNVHH": {
+          "type": "info",
+          "settings": {
+            "icon": "truck",
+            "title": "Free local delivery",
+            "subtitle": "On 48-gal qualifying orders"
+          }
+        },
+        "info_c9QUQn": {
+          "type": "info",
+          "settings": {
+            "icon": "guarantee",
+            "title": "Ships nationwide",
+            "subtitle": "Securely packed & tracked"
+          }
+        }
+      },
+      "block_order": [
+        "card_R4Ki3r",
+        "card_J7CB77",
+        "info_bckBkC",
+        "info_qLRcy8",
+        "info_CzNVHH",
+        "info_c9QUQn"
+      ],
+      "name": "LS Purpose",
+      "settings": {
+        "eyebrow": "Get started",
+        "heading": "What brings you in today?",
+        "font_family": "outfit_n4",
+        "background_color": "#fafafa",
+        "eyebrow_color": "#c13121",
+        "heading_color": "#1a1a1a",
+        "accent_color": "#c13121",
+        "text_color": "#1a1a1a",
+        "muted_color": "#17181b",
+        "dark_card_background": "#141414",
+        "light_card_background": "#ffffff",
+        "card_border_color": "#e6e2db",
+        "tag_background_color": "#f3f4f6",
+        "tag_text_color": "#374151",
+        "linear_angle": 140,
+        "linear_color_1": "#1e232c",
+        "linear_pos_1": 0,
+        "linear_color_2": "#13161c",
+        "linear_pos_2": 55,
+        "linear_color_3": "#0b0d11",
+        "linear_pos_3": 100,
+        "glow_start_color": "#d42a1c",
+        "glow_start_opacity": 27,
+        "glow_start_pos": 0,
+        "glow_end_color": "#d42a1c",
+        "glow_end_opacity": 0,
+        "glow_end_pos": 70,
+        "glow_x": 90,
+        "glow_y": 17,
+        "glow_x_mobile": 90,
+        "glow_y_mobile": 10,
+        "glow_size_x": 25,
+        "glow_size_y": 25,
+        "card_radius": 26,
+        "padding-block-start": 0,
+        "padding-block-end": 48
+      }
+    },
+    "ls_review_HJtWni": {
+      "type": "ls-review",
+      "blocks": {
+        "review_wXWDHE": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "show_verified": true,
+            "verified_label": "Verified",
+            "title": "Great paint",
+            "body": "Using this for kitchen cabinets, spraying with a 311 tip. For a water-based product it has worked excellently.",
+            "author": "Verified buyer",
+            "author_note": "Purchased & reviewed"
+          }
+        },
+        "review_f8hzVM": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "show_verified": true,
+            "verified_label": "Verified",
+            "title": "Eco Spec a must",
+            "body": "Benjamin Moore's Eco Spec is the only sane option to avoid the smell of regular paint — a high-quality odorless paint.",
+            "author": "Verified buyer",
+            "author_note": "Purchased & reviewed"
+          }
+        },
+        "review_i68TRt": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "show_verified": true,
+            "verified_label": "Verified",
+            "title": "Flawless finish",
+            "body": "Rolled two coats on the living room and the coverage was excellent. No lap marks, dried fast, and the color matched perfectly.",
+            "author": "Verified buyer",
+            "author_note": "Purchased & reviewed"
+          }
+        }
+      },
+      "block_order": [
+        "review_wXWDHE",
+        "review_f8hzVM",
+        "review_i68TRt"
+      ],
+      "name": "LS Review",
+      "settings": {
+        "font_family": "outfit_n4",
+        "eyebrow": "Reviews",
+        "heading": "Trusted by painters",
+        "show_rating": true,
+        "rating_score": 5,
+        "rating_text": "verified buyers",
+        "show_arrows": true,
+        "show_dots": true,
+        "columns": 2,
+        "card_radius": 18,
+        "background_color": "#fafafa",
+        "eyebrow_color": "#c13121",
+        "heading_color": "#1a1a1a",
+        "accent_color": "#c13121",
+        "text_color": "#1a1a1a",
+        "muted_color": "#6b7280",
+        "star_color": "#f5b301",
+        "verified_color": "#128a4f",
+        "card_background": "#ffffff",
+        "card_border_color": "#e6e2db",
+        "padding-block-start": 0,
+        "padding-block-end": 48
+      }
+    },
+    "ls_map_cGYwPb": {
+      "type": "ls-map",
+      "blocks": {
+        "hours_NwK9Fg": {
+          "type": "hours",
+          "settings": {
+            "days": "Mon – Fri",
+            "time": "7:30 AM – 5:30 PM"
+          }
+        },
+        "hours_4bhCTp": {
+          "type": "hours",
+          "settings": {
+            "days": "Saturday",
+            "time": "8:00 AM – 3:00 PM"
+          }
+        },
+        "hours_r6Kic9": {
+          "type": "hours",
+          "settings": {
+            "days": "Sunday",
+            "time": "Closed"
+          }
+        },
+        "location_pBhpJj": {
+          "type": "location",
+          "settings": {
+            "name": "Shelby Township",
+            "address": "47595 Van Dyke Avenue\nShelby Township 48317",
+            "link": ""
+          }
+        },
+        "location_gUGdNR": {
+          "type": "location",
+          "settings": {
+            "name": "Rochester Hills",
+            "address": "See store page for address\nRochester Hills",
+            "link": ""
+          }
+        },
+        "location_PF3PtN": {
+          "type": "location",
+          "settings": {
+            "name": "Macomb Township",
+            "address": "See store page for address\nMacomb Township",
+            "link": ""
+          }
+        }
+      },
+      "block_order": [
+        "hours_NwK9Fg",
+        "hours_4bhCTp",
+        "hours_r6Kic9",
+        "location_pBhpJj",
+        "location_gUGdNR",
+        "location_PF3PtN"
+      ],
+      "name": "LS Map",
+      "settings": {
+        "font_family": "outfit_n4",
+        "eyebrow": "Curbside & free local delivery",
+        "heading": "Our store locations",
+        "phone_number": "248.598.0311",
+        "phone_link": "",
+        "map_embed": "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2934.755642036516!2d-83.03619762340908!3d42.645340017030065!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8824dd8251615d9d%3A0xcab931d3b716c2b8!2sBenjamin%20Moore%20PaintOutlets.com!5e0!3m2!1sen!2sph!4v1783127585616!5m2!1sen!2sph\" width=\"600\" height=\"450\" style=\"border:0;\" allowfullscreen=\"\" loading=\"lazy\" referrerpolicy=\"strict-origin-when-cross-origin\"></iframe>",
+        "background_color": "#f4f4f5",
+        "panel_background": "#ffffff",
+        "eyebrow_color": "#c13121",
+        "heading_color": "#1a1a1a",
+        "accent_color": "#c13121",
+        "text_color": "#1a1a1a",
+        "muted_color": "#6b7280",
+        "border_color": "#e6e2db",
+        "divider_color": "#ececec",
+        "map_width": 50,
+        "min_height": 380,
+        "card_radius": 24,
+        "map_radius": 16,
         "padding-block-start": 48,
         "padding-block-end": 48
+      }
+    },
+    "ls_contact_rVceKE": {
+      "type": "ls-contact",
+      "name": "LS Contact",
+      "settings": {
+        "font_family": "outfit_n4",
+        "eyebrow": "Talk to a human",
+        "heading": "Ready to start your project?",
+        "subtext": "Our paint experts will help you pick the right product, match your color, and handle bulk pricing — no guesswork.",
+        "phone_number": "248.598.0311",
+        "phone_link": "",
+        "email_label": "Email an expert",
+        "email_link": "mailto:test@gmail.com",
+        "email_open_new_tab": false,
+        "hours": "Mon–Fri 7:30–5:30 · Sat 8–3",
+        "background_color": "#0d0f12",
+        "eyebrow_color": "#e0281e",
+        "heading_color": "#ffffff",
+        "subtext_color": "#FFFFFF",
+        "hours_color": "#8b93a1",
+        "phone_background": "#ffffff",
+        "phone_text": "#111318",
+        "email_text": "#ffffff",
+        "email_border": "#3a3f47",
+        "email_hover_background": "#ffffff",
+        "email_hover_text": "#111318",
+        "glow_start_color": "#d42a1c",
+        "glow_start_opacity": 35,
+        "glow_start_pos": 0,
+        "glow_end_color": "#d42a1c",
+        "glow_end_opacity": 0,
+        "glow_end_pos": 70,
+        "glow_x": 93,
+        "glow_y": 32,
+        "glow_x_mobile": 81,
+        "glow_y_mobile": 14,
+        "glow_size_x": 11,
+        "glow_size_y": 11,
+        "glow_size_x_mobile": 25,
+        "glow_size_y_mobile": 25,
+        "card_radius": 20,
+        "padding-block-start": 24,
+        "padding-block-end": 24
       }
     }
   },
@@ -523,6 +1065,11 @@
     "ls_trusted_brands",
     "ls_shop_categories_p3UiCj",
     "ls_featured_collections_qwJHcr",
-    "ls_deal_UdVyRE"
+    "ls_deal_UdVyRE",
+    "ls_color_swatch_3AwTPh",
+    "ls_purpose_BAQmt8",
+    "ls_review_HJtWni",
+    "ls_map_cGYwPb",
+    "ls_contact_rVceKE"
   ]
 }
