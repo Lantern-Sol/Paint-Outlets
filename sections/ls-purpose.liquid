@@ -1,0 +1,1097 @@
+{%- liquid
+  assign pp_font = section.settings.font_family
+  assign pp_font_500 = pp_font | font_modify: 'weight', '500'
+  assign pp_font_600 = pp_font | font_modify: 'weight', '600'
+  assign pp_font_700 = pp_font | font_modify: 'weight', '700'
+
+  assign card_blocks = section.blocks | where: 'type', 'card'
+  assign info_blocks = section.blocks | where: 'type', 'info'
+
+  assign glow_start_alpha = section.settings.glow_start_opacity | default: 27 | times: 0.01
+  assign glow_start_rgba = section.settings.glow_start_color | default: '#D42A1C' | color_modify: 'alpha', glow_start_alpha
+  assign glow_end_alpha = section.settings.glow_end_opacity | default: 0 | times: 0.01
+  assign glow_end_rgba = section.settings.glow_end_color | default: '#D42A1C' | color_modify: 'alpha', glow_end_alpha
+
+  assign glow_size_x = section.settings.glow_size_x | default: 70
+  assign glow_size_y = section.settings.glow_size_y | default: 70
+  assign glow_box = glow_size_x | times: 2
+-%}
+
+{% style %}
+  {{ pp_font | font_face: font_display: 'swap' }}
+  {{ pp_font_500 | font_face: font_display: 'swap' }}
+  {{ pp_font_600 | font_face: font_display: 'swap' }}
+  {{ pp_font_700 | font_face: font_display: 'swap' }}
+
+  .ls-purpose-{{ section.id }} {
+    --ls-pp-font-family: {{ pp_font.family }}, {{ pp_font.fallback_families }};
+    --ls-pp-eyebrow: {{ section.settings.eyebrow_color | default: '#c13121' }};
+    --ls-pp-heading: {{ section.settings.heading_color | default: '#1a1a1a' }};
+    --ls-pp-accent: {{ section.settings.accent_color | default: '#c13121' }};
+    --ls-pp-text: {{ section.settings.text_color | default: '#1a1a1a' }};
+    --ls-pp-muted: {{ section.settings.muted_color | default: '#6b7280' }};
+    --ls-pp-dark-bg: {{ section.settings.dark_card_background | default: '#141414' }};
+    --ls-pp-light-bg: {{ section.settings.light_card_background | default: '#ffffff' }};
+    --ls-pp-border: {{ section.settings.card_border_color | default: '#e5e7eb' }};
+    --ls-pp-radius: {{ section.settings.card_radius | default: 24 }}px;
+    --ls-pp-tag-bg: {{ section.settings.tag_background_color | default: '#f3f4f6' }};
+    --ls-pp-tag-text: {{ section.settings.tag_text_color | default: '#374151' }};
+    --ls-pp-glow-box: {{ glow_box }}%;
+    --ls-pp-glow-ratio: {{ glow_size_x }} / {{ glow_size_y }};
+    --ls-pp-glow-x: {{ section.settings.glow_x | default: 50 }}%;
+    --ls-pp-glow-y: {{ section.settings.glow_y | default: 50 }}%;
+    --ls-pp-glow-x-mobile: {{ section.settings.glow_x_mobile | default: 50 }}%;
+    --ls-pp-glow-y-mobile: {{ section.settings.glow_y_mobile | default: 50 }}%;
+    --ls-pp-glow-start-color: {{ glow_start_rgba }};
+    --ls-pp-glow-start-pos: {{ section.settings.glow_start_pos | default: 0 }}%;
+    --ls-pp-glow-end-color: {{ glow_end_rgba }};
+    --ls-pp-glow-end-pos: {{ section.settings.glow_end_pos | default: 70 }}%;
+    --ls-pp-linear-angle: {{ section.settings.linear_angle | default: 140 }}deg;
+    --ls-pp-linear-1: {{ section.settings.linear_color_1 | default: '#1E232C' }};
+    --ls-pp-linear-1-pos: {{ section.settings.linear_pos_1 | default: 0 }}%;
+    --ls-pp-linear-2: {{ section.settings.linear_color_2 | default: '#13161C' }};
+    --ls-pp-linear-2-pos: {{ section.settings.linear_pos_2 | default: 55 }}%;
+    --ls-pp-linear-3: {{ section.settings.linear_color_3 | default: '#0B0D11' }};
+    --ls-pp-linear-3-pos: {{ section.settings.linear_pos_3 | default: 100 }}%;
+  }
+{% endstyle %}
+
+{%- if section.settings.background_color != blank -%}
+  <div class="section-background" style="background-color: {{ section.settings.background_color }};"></div>
+{%- endif -%}
+<div
+  class="section ls-purpose ls-purpose-{{ section.id }} spacing-style"
+  style="{% render 'spacing-style', settings: section.settings %}"
+>
+  {%- if section.settings.eyebrow != blank or section.settings.heading != blank -%}
+    <div class="ls-purpose__head">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="ls-purpose__eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h2 class="ls-purpose__heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+
+  {%- if card_blocks.size > 0 -%}
+    <div class="ls-purpose__cards">
+      {%- for block in card_blocks -%}
+        <article
+          class="ls-purpose__card ls-purpose__card--{{ block.settings.style }}"
+          {{ block.shopify_attributes }}
+        >
+          <div class="ls-purpose__card-top">
+            <span class="ls-purpose__card-icon" aria-hidden="true">
+              {%- if block.settings.custom_icon != blank -%}
+                <img src="{{ block.settings.custom_icon | image_url: width: 96 }}" alt="" width="20" height="20" loading="lazy">
+              {%- else -%}
+                {%- render 'ls-purpose-icon', name: block.settings.icon -%}
+              {%- endif -%}
+            </span>
+            {%- if block.settings.label != blank -%}
+              <span class="ls-purpose__card-label">{{ block.settings.label }}</span>
+            {%- endif -%}
+          </div>
+
+          {%- if block.settings.heading != blank -%}
+            <h3 class="ls-purpose__card-heading">{{ block.settings.heading }}</h3>
+          {%- endif -%}
+
+          {%- if block.settings.description != blank -%}
+            <p class="ls-purpose__card-desc">{{ block.settings.description }}</p>
+          {%- endif -%}
+
+          {%- assign has_tags = false -%}
+          {%- if block.settings.tag_1 != blank or block.settings.tag_2 != blank or block.settings.tag_3 != blank -%}
+            {%- assign has_tags = true -%}
+          {%- endif -%}
+          {%- if has_tags -%}
+            <ul class="ls-purpose__tags" role="list">
+              {%- for i in (1..3) -%}
+                {%- assign tag_key = 'tag_' | append: i -%}
+                {%- assign tag = block.settings[tag_key] -%}
+                {%- if tag != blank -%}
+                  <li class="ls-purpose__tag">
+                    <svg class="ls-purpose__tag-check" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M3.5 8.5L6.5 11.5L12.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    {{ tag }}
+                  </li>
+                {%- endif -%}
+              {%- endfor -%}
+            </ul>
+          {%- endif -%}
+
+          {%- if block.settings.primary_label != blank or block.settings.secondary_label != blank -%}
+            <div class="ls-purpose__card-actions">
+              {%- if block.settings.primary_label != blank -%}
+                <a class="ls-purpose__btn ls-purpose__btn--primary" href="{{ block.settings.primary_link | default: '#' }}">
+                  {{ block.settings.primary_label }}
+                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </a>
+              {%- endif -%}
+              {%- if block.settings.secondary_label != blank -%}
+                <a class="ls-purpose__btn ls-purpose__btn--ghost" href="{{ block.settings.secondary_link | default: '#' }}">
+                  {%- if block.settings.secondary_icon == 'phone' -%}
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M2.28 2.9h3.11l1.24 3.56-1.78 1.33a9.34 9.34 0 0 0 4.98 4.98l1.33-1.78 3.56 1.24v3.11a.9.9 0 0 1-.98.9A13.6 13.6 0 0 1 1.38 3.88a.9.9 0 0 1 .9-.98Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  {%- endif -%}
+                  {{ block.settings.secondary_label }}
+                </a>
+              {%- endif -%}
+            </div>
+          {%- endif -%}
+        </article>
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+
+  {%- if info_blocks.size > 0 -%}
+    <div class="ls-purpose__info">
+      {%- for block in info_blocks -%}
+        <div class="ls-purpose__info-item" {{ block.shopify_attributes }}>
+          <span class="ls-purpose__info-icon" aria-hidden="true">
+            {%- if block.settings.custom_icon != blank -%}
+              <img src="{{ block.settings.custom_icon | image_url: width: 80 }}" alt="" width="18" height="18" loading="lazy">
+            {%- else -%}
+              {%- render 'ls-purpose-icon', name: block.settings.icon -%}
+            {%- endif -%}
+          </span>
+          <div class="ls-purpose__info-text">
+            {%- if block.settings.title != blank -%}
+              <span class="ls-purpose__info-title">{{ block.settings.title }}</span>
+            {%- endif -%}
+            {%- if block.settings.subtitle != blank -%}
+              <span class="ls-purpose__info-subtitle">{{ block.settings.subtitle }}</span>
+            {%- endif -%}
+          </div>
+        </div>
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  .ls-purpose {
+    font-family: var(--ls-pp-font-family, 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    color: var(--ls-pp-text);
+  }
+
+  .ls-purpose__head {
+    margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
+  }
+
+  .ls-purpose__eyebrow {
+    margin: 0 0 0.4rem;
+    color: var(--ls-pp-eyebrow);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .ls-purpose__heading {
+    margin: 0;
+    color: var(--ls-pp-heading);
+    font-size: clamp(1.75rem, 3.4vw, 2.75rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+
+  /* ---------- Cards ---------- */
+  .ls-purpose__cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(1rem, 1.6vw, 1.5rem);
+  }
+
+  .ls-purpose__card {
+    display: flex;
+    flex-direction: column;
+    padding: clamp(1.5rem, 2.6vw, 2.25rem);
+    border-radius: var(--ls-pp-radius, 24px);
+    border: 1px solid var(--ls-pp-border);
+  }
+
+  .ls-purpose__card--dark {
+    position: relative;
+    overflow: hidden;
+    background:
+      linear-gradient(
+        var(--ls-pp-linear-angle, 140deg),
+        var(--ls-pp-linear-1, #1E232C) var(--ls-pp-linear-1-pos, 0%),
+        var(--ls-pp-linear-2, #13161C) var(--ls-pp-linear-2-pos, 55%),
+        var(--ls-pp-linear-3, #0B0D11) var(--ls-pp-linear-3-pos, 100%)
+      ),
+      var(--ls-pp-dark-bg);
+    border-color: transparent;
+    color: #f2f2f2;
+  }
+
+  /* Radial glow painted as a fixed-ratio box tied to the card WIDTH, so it keeps
+     its circular shape on tall/narrow mobile cards instead of stretching. */
+  .ls-purpose__card--dark::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    left: var(--ls-pp-glow-x, 50%);
+    top: var(--ls-pp-glow-y, 50%);
+    width: var(--ls-pp-glow-box, 140%);
+    aspect-ratio: var(--ls-pp-glow-ratio, 1);
+    transform: translate(-50%, -50%);
+    background: radial-gradient(
+      ellipse closest-side at 50% 50%,
+      var(--ls-pp-glow-start-color) var(--ls-pp-glow-start-pos, 0%),
+      var(--ls-pp-glow-end-color) var(--ls-pp-glow-end-pos, 70%)
+    );
+    pointer-events: none;
+  }
+
+  /* Keep card content above the glow layer. */
+  .ls-purpose__card--dark > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ls-purpose__card--light {
+    background: var(--ls-pp-light-bg);
+    color: var(--ls-pp-text);
+  }
+
+  .ls-purpose__card-top {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .ls-purpose__card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 12px;
+    flex-shrink: 0;
+    background: var(--ls-pp-accent);
+    color: #fff;
+  }
+
+  .ls-purpose__card--light .ls-purpose__card-icon {
+    background: color-mix(in srgb, var(--ls-pp-accent) 12%, transparent);
+    color: var(--ls-pp-accent);
+  }
+
+  .ls-purpose__card-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .ls-purpose__card-icon img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+  }
+
+  .ls-purpose__card-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    opacity: 0.85;
+  }
+
+  .ls-purpose__card-heading {
+    margin: 0;
+    font-size: clamp(1.25rem, 2vw, 1.6rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+
+  .ls-purpose__card-desc {
+    margin: 0.7rem 0 0;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    max-width: 54ch;
+  }
+
+  .ls-purpose__card--dark .ls-purpose__card-desc {
+    color: #fafafa;
+  }
+
+  .ls-purpose__card--light .ls-purpose__card-desc {
+    color: var(--ls-pp-muted);
+  }
+
+  .ls-purpose__tags {
+    list-style: none;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-flow: row wrap;
+    gap: 0.6rem;
+  }
+
+  .ls-purpose__tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 16px;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .ls-purpose__card--dark .ls-purpose__tag {
+    background: transparent;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    color: #f2f2f2;
+  }
+
+  .ls-purpose__card--light .ls-purpose__tag {
+    background: var(--ls-pp-tag-bg, #f3f4f6);
+    color: var(--ls-pp-tag-text, #374151);
+  }
+
+  .ls-purpose__tag-check {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: var(--ls-pp-accent);
+  }
+
+  .ls-purpose__card--dark .ls-purpose__tag-check {
+    color: #fff;
+  }
+
+  .ls-purpose__card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 1.5rem;
+  }
+
+  .ls-purpose__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.4rem;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .ls-purpose__btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  .ls-purpose__btn--primary {
+    background: var(--ls-pp-accent);
+    color: #fff;
+  }
+
+  .ls-purpose__btn--primary:hover {
+    background: color-mix(in srgb, var(--ls-pp-accent) 88%, #000);
+  }
+
+  .ls-purpose__card--dark .ls-purpose__btn--ghost {
+    border: 1px solid rgb(255 255 255 / 0.22);
+    color: #f2f2f2;
+  }
+
+  .ls-purpose__card--dark .ls-purpose__btn--ghost:hover {
+    border-color: rgb(255 255 255 / 0.5);
+  }
+
+  .ls-purpose__card--light .ls-purpose__btn--ghost {
+    border: 1px solid rgb(0 0 0 / 0.16);
+    color: var(--ls-pp-text);
+  }
+
+  .ls-purpose__card--light .ls-purpose__btn--ghost:hover {
+    border-color: var(--ls-pp-heading);
+  }
+
+  /* ---------- Bottom info bar ---------- */
+  .ls-purpose__info {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin-top: clamp(1rem, 1.6vw, 1.5rem);
+    border: 1px solid var(--ls-pp-border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .ls-purpose__info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: clamp(1rem, 1.6vw, 1.25rem) clamp(1rem, 1.8vw, 1.5rem);
+    border-bottom: 1px solid var(--ls-pp-border);
+  }
+
+  .ls-purpose__info-item:last-child {
+    border-bottom: 0;
+  }
+
+  .ls-purpose__info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 10px;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--ls-pp-accent) 10%, transparent);
+    color: var(--ls-pp-accent);
+  }
+
+  .ls-purpose__info-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .ls-purpose__info-icon img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+  }
+
+  .ls-purpose__info-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+  }
+
+  .ls-purpose__info-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--ls-pp-heading);
+  }
+
+  .ls-purpose__info-subtitle {
+    font-size: 0.8125rem;
+    color: var(--ls-pp-muted);
+  }
+
+  @media screen and (max-width: 749px) {
+    /* Reposition the glow independently on mobile. */
+    .ls-purpose__card--dark::before {
+      left: var(--ls-pp-glow-x-mobile, 50%);
+      top: var(--ls-pp-glow-y-mobile, 50%);
+    }
+
+    /* Full-width, stacked buttons on mobile. */
+    .ls-purpose__card-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .ls-purpose__btn {
+      width: 100%;
+    }
+
+    /* Remove the dividers between stacked info items on mobile. */
+    .ls-purpose__info-item {
+      border-bottom: 0;
+    }
+
+    /* Tighten the pills so several share a row instead of stacking. */
+    .ls-purpose__tags {
+      gap: 0.4rem;
+    }
+
+    .ls-purpose__tag {
+      padding: 0.35rem 12px;
+      font-size: 0.75rem;
+    }
+  }
+
+  @media screen and (min-width: 750px) {
+    .ls-purpose__cards {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .ls-purpose__info {
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+    }
+
+    .ls-purpose__info-item {
+      border-bottom: 0;
+      border-right: 1px solid var(--ls-pp-border);
+    }
+
+    .ls-purpose__info-item:last-child {
+      border-right: 0;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS Purpose",
+  "tag": "section",
+  "class": "ls-purpose-section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Get started"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "What brings you in today?"
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "font_family",
+      "label": "Font",
+      "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Section background",
+      "default": "#fafafa"
+    },
+    {
+      "type": "color",
+      "id": "eyebrow_color",
+      "label": "Eyebrow",
+      "default": "#c13121"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent (buttons, icons)",
+      "default": "#c13121"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted text",
+      "default": "#6b7280"
+    },
+    {
+      "type": "color",
+      "id": "dark_card_background",
+      "label": "Dark card background",
+      "default": "#141414"
+    },
+    {
+      "type": "color",
+      "id": "light_card_background",
+      "label": "Light card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_border_color",
+      "label": "Card / bar border",
+      "default": "#e5e7eb"
+    },
+    {
+      "type": "header",
+      "content": "Tags",
+      "info": "Applies to the light card. Dark card tags are transparent."
+    },
+    {
+      "type": "color",
+      "id": "tag_background_color",
+      "label": "Tag background",
+      "default": "#f3f4f6"
+    },
+    {
+      "type": "color",
+      "id": "tag_text_color",
+      "label": "Tag text",
+      "default": "#374151"
+    },
+    {
+      "type": "header",
+      "content": "Dark card gradient",
+      "info": "The base linear gradient across the whole dark card."
+    },
+    {
+      "type": "range",
+      "id": "linear_angle",
+      "label": "Angle",
+      "info": "140° ≈ top-left to bottom-right diagonal.",
+      "min": 0,
+      "max": 360,
+      "step": 5,
+      "unit": "deg",
+      "default": 140
+    },
+    {
+      "type": "color",
+      "id": "linear_color_1",
+      "label": "Color 1 (start)",
+      "default": "#1E232C"
+    },
+    {
+      "type": "range",
+      "id": "linear_pos_1",
+      "label": "Color 1 position",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 0
+    },
+    {
+      "type": "color",
+      "id": "linear_color_2",
+      "label": "Color 2 (middle)",
+      "default": "#13161C"
+    },
+    {
+      "type": "range",
+      "id": "linear_pos_2",
+      "label": "Color 2 position",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 55
+    },
+    {
+      "type": "color",
+      "id": "linear_color_3",
+      "label": "Color 3 (end)",
+      "default": "#0B0D11"
+    },
+    {
+      "type": "range",
+      "id": "linear_pos_3",
+      "label": "Color 3 position",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "header",
+      "content": "Dark card glow",
+      "info": "The radial highlight behind the dark audience card."
+    },
+    {
+      "type": "color",
+      "id": "glow_start_color",
+      "label": "Start color",
+      "default": "#D42A1C"
+    },
+    {
+      "type": "range",
+      "id": "glow_start_opacity",
+      "label": "Start opacity",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 27
+    },
+    {
+      "type": "range",
+      "id": "glow_start_pos",
+      "label": "Start position",
+      "info": "Where the start color begins fading.",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 0
+    },
+    {
+      "type": "color",
+      "id": "glow_end_color",
+      "label": "End color",
+      "default": "#D42A1C"
+    },
+    {
+      "type": "range",
+      "id": "glow_end_opacity",
+      "label": "End opacity",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "glow_end_pos",
+      "label": "End position",
+      "info": "Where the glow finishes fading out.",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 70
+    },
+    {
+      "type": "range",
+      "id": "glow_x",
+      "label": "Center X",
+      "info": "0% = left, 100% = right.",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "glow_y",
+      "label": "Center Y",
+      "info": "0% = top, 100% = bottom.",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "glow_x_mobile",
+      "label": "Center X (mobile)",
+      "info": "0% = left, 100% = right.",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "glow_y_mobile",
+      "label": "Center Y (mobile)",
+      "info": "0% = top, 100% = bottom.",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "glow_size_x",
+      "label": "Size (horizontal)",
+      "min": 0,
+      "max": 200,
+      "step": 5,
+      "unit": "%",
+      "default": 70
+    },
+    {
+      "type": "range",
+      "id": "glow_size_y",
+      "label": "Size (vertical)",
+      "min": 0,
+      "max": 200,
+      "step": 5,
+      "unit": "%",
+      "default": 70
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "card_radius",
+      "label": "Corner radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "blocks": [
+    {
+      "type": "card",
+      "name": "Audience card",
+      "settings": [
+        {
+          "type": "select",
+          "id": "style",
+          "label": "Style",
+          "options": [
+            { "value": "dark", "label": "Dark" },
+            { "value": "light", "label": "Light" }
+          ],
+          "default": "dark"
+        },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "truck", "label": "Truck" },
+            { "value": "brush", "label": "Brush" },
+            { "value": "color", "label": "Color / tint" },
+            { "value": "location", "label": "Map pin" },
+            { "value": "guarantee", "label": "Shield" }
+          ],
+          "default": "truck"
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_icon",
+          "label": "Custom icon",
+          "info": "Optional. Overrides the icon above."
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Contractors & pros"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Bulk pricing that beats the box stores"
+        },
+        {
+          "type": "textarea",
+          "id": "description",
+          "label": "Description",
+          "default": "Hit 48 gallons and delivery is free. Set up a contractor account for standing pricing and drop-ship straight to the job site."
+        },
+        {
+          "type": "text",
+          "id": "tag_1",
+          "label": "Tag 1",
+          "default": "48-gal ships free"
+        },
+        {
+          "type": "text",
+          "id": "tag_2",
+          "label": "Tag 2",
+          "default": "Contractor accounts"
+        },
+        {
+          "type": "text",
+          "id": "tag_3",
+          "label": "Tag 3",
+          "default": "Drop-ship to site"
+        },
+        {
+          "type": "text",
+          "id": "primary_label",
+          "label": "Primary button label",
+          "default": "Get bulk pricing"
+        },
+        {
+          "type": "url",
+          "id": "primary_link",
+          "label": "Primary button link"
+        },
+        {
+          "type": "text",
+          "id": "secondary_label",
+          "label": "Secondary button label",
+          "default": "248.598.0311"
+        },
+        {
+          "type": "url",
+          "id": "secondary_link",
+          "label": "Secondary button link",
+          "info": "For a phone number, use a tel: link, e.g. tel:+12485980311"
+        },
+        {
+          "type": "select",
+          "id": "secondary_icon",
+          "label": "Secondary button icon",
+          "options": [
+            { "value": "none", "label": "None" },
+            { "value": "phone", "label": "Phone" }
+          ],
+          "default": "none"
+        }
+      ]
+    },
+    {
+      "type": "info",
+      "name": "Info item",
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "location", "label": "Map pin" },
+            { "value": "truck", "label": "Truck" },
+            { "value": "guarantee", "label": "Shield" },
+            { "value": "brush", "label": "Brush" },
+            { "value": "color", "label": "Color / tint" }
+          ],
+          "default": "location"
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_icon",
+          "label": "Custom icon",
+          "info": "Optional. Overrides the icon above."
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "In-store pickup"
+        },
+        {
+          "type": "text",
+          "id": "subtitle",
+          "label": "Subtitle",
+          "default": "Ready at the counter"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 6,
+  "presets": [
+    {
+      "name": "LS Purpose",
+      "category": "t:categories.banners",
+      "blocks": [
+        {
+          "type": "card",
+          "settings": {
+            "style": "dark",
+            "icon": "truck",
+            "label": "Contractors & pros",
+            "heading": "Bulk pricing that beats the box stores",
+            "description": "Hit 48 gallons and delivery is free. Set up a contractor account for standing pricing and drop-ship straight to the job site.",
+            "tag_1": "48-gal ships free",
+            "tag_2": "Contractor accounts",
+            "tag_3": "Drop-ship to site",
+            "primary_label": "Get bulk pricing",
+            "secondary_label": "248.598.0311",
+            "secondary_icon": "phone"
+          }
+        },
+        {
+          "type": "card",
+          "settings": {
+            "style": "light",
+            "icon": "brush",
+            "label": "DIY & homeowners",
+            "heading": "Not sure of the color? Start with a sample.",
+            "description": "Skip the guesswork. Order peel-&-stick samples, get free color matching, and talk to people who paint for a living.",
+            "tag_1": "$4.99 color samples",
+            "tag_2": "Free color matching",
+            "tag_3": "Expert advice",
+            "primary_label": "Order color samples",
+            "secondary_label": "Explore colors",
+            "secondary_icon": "none"
+          }
+        },
+        {
+          "type": "info",
+          "settings": {
+            "icon": "location",
+            "title": "In-store pickup",
+            "subtitle": "Ready at the counter"
+          }
+        },
+        {
+          "type": "info",
+          "settings": {
+            "icon": "truck",
+            "title": "Free curbside",
+            "subtitle": "Call ahead, we load it"
+          }
+        },
+        {
+          "type": "info",
+          "settings": {
+            "icon": "truck",
+            "title": "Free local delivery",
+            "subtitle": "On 48-gal qualifying orders"
+          }
+        },
+        {
+          "type": "info",
+          "settings": {
+            "icon": "guarantee",
+            "title": "Ships nationwide",
+            "subtitle": "Securely packed & tracked"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

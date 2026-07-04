@@ -136,6 +136,11 @@
      by 50% so the loop is seamless. Even spacing via margin (not gap) keeps the
      two copies perfectly tileable. */
   @media screen and (max-width: 749px) {
+    /* Edge-to-edge on mobile — no horizontal padding. */
+    .ls-features__inner {
+      padding-inline: 0;
+    }
+
     .ls-features__track {
       flex-wrap: nowrap;
       justify-content: flex-start;
