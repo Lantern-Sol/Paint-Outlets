@@ -26,6 +26,21 @@
     aria-hidden="{% if block_index == 0 %}false{% else %}true{% endif %}"
   >
     <p class="announcement-bar__text">
+      <span class="announcement-bar__icon announcement-bar__icon--tag" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/>
+          <circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>
+        </svg>
+      </span>
+      <span class="announcement-bar__icon announcement-bar__icon--truck" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
+          <path d="M15 18H9"/>
+          <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/>
+          <circle cx="17" cy="18" r="2"/>
+          <circle cx="7" cy="18" r="2"/>
+        </svg>
+      </span>
       {{ block.settings.text }}
     </p>
 
@@ -43,6 +58,34 @@
 {%- endunless -%}
 
 {% stylesheet %}
+  /* Delivery icon before the announcement text: tag on desktop, truck on mobile */
+  .announcement-bar__icon {
+    display: none;
+    align-items: center;
+    margin-inline-end: 0.5em;
+    color: #f0a500;
+  }
+
+  .announcement-bar__icon svg {
+    display: block;
+    width: 1.15em;
+    height: 1.15em;
+  }
+
+  @media screen and (min-width: 750px) {
+    .announcement-bar__icon--tag {
+      display: inline-flex;
+      vertical-align: -0.2em;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .announcement-bar__icon--truck {
+      display: inline-flex;
+      vertical-align: -0.2em;
+    }
+  }
+
   .text-block:not(.text-block--full-width).rte,
   .text-block:not(.text-block--full-width).paragraph {
     /* Safari doesn't support pretty, so fallback to balance */

@@ -1,0 +1,615 @@
+{%- doc -%}
+  LS Footer — custom, self-contained footer that matches the Paint Outlets Figma.
+
+  Layout: a brand column on the left (logo, blurb, social icons) followed by up
+  to three menu columns fed by link_list settings, then a divider and a bottom
+  utility bar (copyright + policy links).
+
+  - The three menu columns each take a link_list. The column heading falls back
+    to the menu's own title when the heading field is left blank.
+  - Social links are plain url settings; each renders the theme's shared `icon`
+    snippet (same glyphs Horizon's social-links block uses) and hides itself when
+    its url is empty.
+{%- enddoc -%}
+
+{%- liquid
+  assign brand_font = section.settings.font_family
+  assign brand_font_600 = brand_font | font_modify: 'weight', '600'
+  assign brand_font_700 = brand_font | font_modify: 'weight', '700'
+
+  assign year = 'now' | date: '%Y'
+
+  assign socials = ''
+  assign socials = socials | append: 'facebook:' | append: section.settings.social_facebook | append: ','
+  assign socials = socials | append: 'instagram:' | append: section.settings.social_instagram | append: ','
+  assign socials = socials | append: 'youtube:' | append: section.settings.social_youtube | append: ','
+  assign socials = socials | append: 'tiktok:' | append: section.settings.social_tiktok | append: ','
+  assign socials = socials | append: 'twitter:' | append: section.settings.social_twitter | append: ','
+  assign socials = socials | append: 'linkedin:' | append: section.settings.social_linkedin | append: ','
+  assign socials = socials | append: 'pinterest:' | append: section.settings.social_pinterest
+  assign social_pairs = socials | split: ','
+-%}
+
+{% style %}
+  {{ brand_font | font_face: font_display: 'swap' }}
+  {{ brand_font_600 | font_face: font_display: 'swap' }}
+  {{ brand_font_700 | font_face: font_display: 'swap' }}
+
+  .ls-footer-{{ section.id }} {
+    --ls-footer-font-family: {{ brand_font.family }}, {{ brand_font.fallback_families }};
+    --ls-footer-bg: {{ section.settings.background_color | default: '#1a1a1a' }};
+    --ls-footer-logo: {{ section.settings.logo_color | default: '#ffffff' }};
+    --ls-footer-accent: {{ section.settings.accent_color | default: '#e4322b' }};
+    --ls-footer-blurb: {{ section.settings.blurb_color | default: '#ffffff' }};
+    --ls-footer-heading: {{ section.settings.heading_color | default: '#ffffff' }};
+    --ls-footer-link: {{ section.settings.link_color | default: '#ffffff' }};
+    --ls-footer-social: {{ section.settings.social_color | default: '#ffffff' }};
+    --ls-footer-divider: {{ section.settings.divider_color | default: '#2c2f34' }};
+    --ls-footer-muted: {{ section.settings.muted_color | default: '#ffffff' }};
+  }
+{% endstyle %}
+
+<footer class="ls-footer ls-footer-{{ section.id }}">
+  <div class="ls-footer__inner">
+    <div class="ls-footer__top">
+      {%- comment -%} Brand column {%- endcomment -%}
+      <div class="ls-footer__brand">
+        {%- assign footer_logo = settings.logo_inverse | default: settings.logo -%}
+        <a href="{{ routes.root_url }}" class="ls-footer__logo" aria-label="{{ shop.name | escape }}">
+          {%- if footer_logo != blank -%}
+            {%- assign logo_h = section.settings.logo_height | default: 44 -%}
+            {%- assign logo_w = logo_h | times: footer_logo.aspect_ratio | ceil -%}
+            <img
+              src="{{ footer_logo | image_url: width: 800 }}"
+              alt="{{ shop.name | escape }}"
+              width="{{ logo_w }}"
+              height="{{ logo_h }}"
+              style="--ls-footer-logo-h: {{ logo_h }}px;"
+              loading="lazy"
+            >
+          {%- else -%}
+            <span class="ls-footer__logo-text">{{ shop.name }}</span>
+          {%- endif -%}
+        </a>
+
+        {%- if section.settings.blurb != blank -%}
+          <p class="ls-footer__blurb">{{ section.settings.blurb | newline_to_br }}</p>
+        {%- endif -%}
+
+        <ul class="ls-footer__social" role="list">
+          {%- for pair in social_pairs -%}
+            {%- assign platform = pair | split: ':' | first -%}
+            {%- assign url = pair | remove_first: platform | remove_first: ':' -%}
+            {%- if url != blank -%}
+              <li>
+                <a
+                  href="{{ url }}"
+                  class="ls-footer__social-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="{{ platform | capitalize }}"
+                >
+                  <svg class="ls-footer__social-icon" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    {%- render 'icon', icon: platform -%}
+                  </svg>
+                </a>
+              </li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      </div>
+
+      {%- comment -%} Menu columns {%- endcomment -%}
+      <div class="ls-footer__menus">
+        {%- for i in (1..3) -%}
+          {%- liquid
+            assign menu_key = 'menu_' | append: i
+            assign heading_key = 'menu_' | append: i | append: '_heading'
+            assign menu = linklists[section.settings[menu_key]]
+            assign heading = section.settings[heading_key]
+            if heading == blank
+              assign heading = menu.title
+            endif
+          -%}
+          {%- if menu != blank and menu.links.size > 0 -%}
+            <nav class="ls-footer__col" aria-label="{{ heading | escape }}">
+              {%- if heading != blank -%}
+                <h2 class="ls-footer__col-head">{{ heading }}</h2>
+              {%- endif -%}
+              <ul class="ls-footer__col-list" role="list">
+                {%- for link in menu.links -%}
+                  <li>
+                    <a href="{{ link.url }}" class="ls-footer__col-link"{% if link.current %} aria-current="page"{% endif %}>
+                      {{ link.title }}
+                    </a>
+                  </li>
+                {%- endfor -%}
+              </ul>
+            </nav>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    </div>
+
+    <div class="ls-footer__bottom">
+      <div class="ls-footer__legal">
+        <p class="ls-footer__copyright">
+          {%- if section.settings.copyright != blank -%}
+            &copy; {{ year }} {{ section.settings.copyright }}
+          {%- else -%}
+            &copy; {{ year }} {{ shop.name }}. All rights reserved.
+          {%- endif -%}
+        </p>
+        {%- if section.settings.credit != blank -%}
+          <p class="ls-footer__credit">{{ section.settings.credit }}</p>
+        {%- endif -%}
+      </div>
+
+      <nav class="ls-footer__policies" aria-label="Legal">
+        {%- assign policy_menu = linklists[section.settings.policy_menu] -%}
+        {%- if policy_menu != blank and policy_menu.links.size > 0 -%}
+          {%- for link in policy_menu.links -%}
+            <a href="{{ link.url }}" class="ls-footer__policy-link">{{ link.title }}</a>
+          {%- endfor -%}
+        {%- else -%}
+          {%- comment -%} Fallback to the store's legal policies so the row is never empty {%- endcomment -%}
+          {%- if shop.privacy_policy != blank -%}
+            <a href="{{ shop.privacy_policy.url }}" class="ls-footer__policy-link">Privacy</a>
+          {%- endif -%}
+          {%- if shop.terms_of_service != blank -%}
+            <a href="{{ shop.terms_of_service.url }}" class="ls-footer__policy-link">Terms</a>
+          {%- endif -%}
+          <a href="{{ section.settings.accessibility_link | default: '#' }}" class="ls-footer__policy-link">Accessibility</a>
+        {%- endif -%}
+      </nav>
+    </div>
+  </div>
+</footer>
+
+{% stylesheet %}
+  .ls-footer {
+    font-family: var(--ls-footer-font-family, 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    background: var(--ls-footer-bg, #1a1a1a);
+    color: var(--ls-footer-link, #a5adba);
+  }
+
+  .ls-footer__inner {
+    max-width: var(--page-width, 1200px);
+    margin-inline: auto;
+    padding-block: clamp(2.5rem, 5vw, 3.5rem) clamp(1.5rem, 3vw, 2rem);
+    padding-inline: var(--page-margin, 20px);
+  }
+
+  /* Top: brand column + menu columns */
+  .ls-footer__top {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 2fr);
+    gap: clamp(2rem, 6vw, 5rem);
+  }
+
+  /* Brand */
+  .ls-footer__brand {
+    max-width: 22rem;
+  }
+
+  .ls-footer__logo {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--ls-footer-logo, #fff);
+  }
+
+  .ls-footer__logo img {
+    display: block;
+    width: auto;
+    height: var(--ls-footer-logo-h, 32px);
+  }
+
+  .ls-footer__logo-text {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ls-footer-logo, #fff);
+  }
+
+  .ls-footer__blurb {
+    margin: 1.15rem 0 0;
+    color: var(--ls-footer-blurb, #ffffff);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+
+  .ls-footer__social {
+    display: flex;
+    width: fit-content;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-content: flex-start;
+    gap: 40px;
+    margin: 1.5rem 0 0 8px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ls-footer__social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    color: var(--ls-footer-social, #ffffff);
+    transition: color 0.18s ease, opacity 0.18s ease;
+  }
+
+  .ls-footer__social-link:hover {
+    color: var(--ls-footer-accent, #e4322b);
+  }
+
+  .ls-footer__social-icon {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+  }
+
+  /* Menu columns */
+  .ls-footer__menus {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .ls-footer__col {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .ls-footer__col-head {
+    margin: 0 0 1.1rem;
+    color: var(--ls-footer-heading, #ffffff);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .ls-footer__col-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ls-footer__col-link {
+    color: var(--ls-footer-link, #ffffff);
+    font-size: 1rem;
+    text-decoration: none;
+    transition: opacity 0.18s ease;
+  }
+
+  .ls-footer__col-link:hover {
+    opacity: 0.65;
+  }
+
+  /* Bottom utility bar */
+  .ls-footer__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: clamp(2rem, 5vw, 3rem);
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--ls-footer-divider, #2c2f34);
+  }
+
+  .ls-footer__legal {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .ls-footer__copyright {
+    margin: 0;
+    color: var(--ls-footer-muted, #ffffff);
+    font-size: 0.8125rem;
+  }
+
+  .ls-footer__credit {
+    margin: 0;
+    color: var(--ls-footer-muted, #ffffff);
+    font-size: 0.8125rem;
+  }
+
+  .ls-footer__policies {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .ls-footer__policy-link + .ls-footer__policy-link::before {
+    content: "·";
+    margin-right: 0.5rem;
+    color: var(--ls-footer-muted, #ffffff);
+  }
+
+  .ls-footer__policy-link {
+    color: var(--ls-footer-muted, #ffffff);
+    font-size: 0.8125rem;
+    text-decoration: none;
+    transition: opacity 0.18s ease;
+  }
+
+  .ls-footer__policy-link:hover {
+    opacity: 0.65;
+  }
+
+  /* --- Tablet: brand stacks above the menu columns ------------------ */
+  @media screen and (max-width: 989px) {
+    .ls-footer__top {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+    .ls-footer__brand {
+      max-width: none;
+    }
+  }
+
+  /* --- Mobile: menu columns stack, bottom bar centers --------------- */
+  @media screen and (max-width: 749px) {
+    .ls-footer__inner {
+      padding-inline: 5%;
+    }
+    /* Let the description flow naturally on mobile instead of forcing breaks */
+    .ls-footer__blurb br {
+      display: none;
+    }
+    /* Smaller, tighter social icons on mobile */
+    .ls-footer__social {
+      column-gap: 10px;
+    }
+    .ls-footer__social-link {
+      width: 20px;
+      height: 20px;
+    }
+    .ls-footer__social-icon {
+      width: 20px;
+      height: 20px;
+    }
+    .ls-footer__menus {
+      gap: 2rem 1.5rem;
+    }
+    /* Two menus per row on mobile */
+    .ls-footer__col {
+      flex: 0 1 calc(50% - 0.75rem);
+    }
+    .ls-footer__bottom {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS Footer",
+  "tag": "footer",
+  "class": "ls-footer-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "font_family",
+      "label": "Font",
+      "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Brand",
+      "info": "Uses the theme logo (Settings → Logo). Falls back to the store name."
+    },
+    {
+      "type": "range",
+      "id": "logo_height",
+      "label": "Logo height",
+      "min": 16,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 44
+    },
+    {
+      "type": "textarea",
+      "id": "blurb",
+      "label": "Description",
+      "default": "Independent Benjamin Moore retailer since 2017. Four stores, national shipping, 72+ years of combined paint expertise."
+    },
+    {
+      "type": "header",
+      "content": "Social links",
+      "info": "Leave a field blank to hide that icon."
+    },
+    {
+      "type": "url",
+      "id": "social_facebook",
+      "label": "Facebook"
+    },
+    {
+      "type": "url",
+      "id": "social_instagram",
+      "label": "Instagram"
+    },
+    {
+      "type": "url",
+      "id": "social_youtube",
+      "label": "YouTube"
+    },
+    {
+      "type": "url",
+      "id": "social_tiktok",
+      "label": "TikTok"
+    },
+    {
+      "type": "url",
+      "id": "social_twitter",
+      "label": "X / Twitter"
+    },
+    {
+      "type": "url",
+      "id": "social_linkedin",
+      "label": "LinkedIn"
+    },
+    {
+      "type": "url",
+      "id": "social_pinterest",
+      "label": "Pinterest"
+    },
+    {
+      "type": "header",
+      "content": "Menu column 1"
+    },
+    {
+      "type": "text",
+      "id": "menu_1_heading",
+      "label": "Heading",
+      "info": "Defaults to the menu's own title when blank.",
+      "default": "Shop"
+    },
+    {
+      "type": "link_list",
+      "id": "menu_1",
+      "label": "Menu",
+      "default": "footer"
+    },
+    {
+      "type": "header",
+      "content": "Menu column 2"
+    },
+    {
+      "type": "text",
+      "id": "menu_2_heading",
+      "label": "Heading",
+      "default": "Help"
+    },
+    {
+      "type": "link_list",
+      "id": "menu_2",
+      "label": "Menu"
+    },
+    {
+      "type": "header",
+      "content": "Menu column 3"
+    },
+    {
+      "type": "text",
+      "id": "menu_3_heading",
+      "label": "Heading",
+      "default": "Company"
+    },
+    {
+      "type": "link_list",
+      "id": "menu_3",
+      "label": "Menu"
+    },
+    {
+      "type": "header",
+      "content": "Bottom bar"
+    },
+    {
+      "type": "text",
+      "id": "copyright",
+      "label": "Copyright text",
+      "info": "The year is added automatically. Leave blank to use the store name.",
+      "default": "Paint Outlets. All rights reserved."
+    },
+    {
+      "type": "text",
+      "id": "credit",
+      "label": "Credit line",
+      "default": "Designed by Lantern Sol"
+    },
+    {
+      "type": "link_list",
+      "id": "policy_menu",
+      "label": "Policy links",
+      "info": "Optional. When empty, the store's Privacy & Terms policies plus an Accessibility link are shown."
+    },
+    {
+      "type": "url",
+      "id": "accessibility_link",
+      "label": "Accessibility link",
+      "info": "Used for the fallback Accessibility link."
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "logo_color",
+      "label": "Logo text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent (social hover)",
+      "default": "#e4322b"
+    },
+    {
+      "type": "color",
+      "id": "blurb_color",
+      "label": "Description",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Column headings",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "link_color",
+      "label": "Links",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "social_color",
+      "label": "Social icons",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "divider_color",
+      "label": "Divider",
+      "default": "#2c2f34"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Copyright / policy text",
+      "default": "#ffffff"
+    }
+  ],
+  "presets": [
+    {
+      "name": "LS Footer",
+      "category": "t:categories.other_sections"
+    }
+  ]
+}
+{% endschema %}
