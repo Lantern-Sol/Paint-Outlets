@@ -127,7 +127,8 @@
     endif
   endif
   capture search
-    render 'search', style: search_style, class: search_class, display_style: section.settings.actions_display_style
+    # LS: inline: true renders the pill search (snippets/ls-header-search.liquid)
+    render 'search', style: search_style, class: search_class, display_style: section.settings.actions_display_style, inline: true
   endcapture
 
   # Skip drawer search under specific conditions:

@@ -4,14 +4,19 @@
   @param {string} [style] - The style of the search action.
   @param {string} [class] - Additional classes for the search action.
   @param {string} [display_style] - The display style ('icon' or 'text').
+  @param {boolean} [inline] - LS: render the inline pill search (desktop) alongside the icon (mobile).
 
   @example
   {% render 'search', style: 'default', class: 'custom-class', display_style: 'icon' %}
 {%- enddoc -%}
 
 {% unless style == 'none' %}
+  {%- comment -%} LS: inline pill search for desktop; icon button falls back on mobile. {%- endcomment -%}
+  {% if inline %}
+    {% render 'ls-header-search' %}
+  {% endif %}
   <search-button
-    class="search-action{% if display_style == 'text' %} search-action--text{% endif %}{% if class != blank %} {{ class | strip }}{% endif %}"
+    class="search-action{% if display_style == 'text' %} search-action--text{% endif %}{% if inline %} search-action--mobile-only{% endif %}{% if class != blank %} {{ class | strip }}{% endif %}"
   >
     <button
       on:click="#search-modal/showDialog"

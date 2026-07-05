@@ -1,0 +1,984 @@
+{%- doc -%}
+  LS Header — custom, self-contained header that matches the Paint Outlets Figma.
+  Replaces Horizon's built-in `header` section (wired via sections/header-group.json).
+
+  Dropdowns are pure-CSS hover panels (no JS height measurement / hover-intent
+  timers), so there's no cold-open flicker and switching between items is instant.
+  Nested menus render a mega panel (red column headers + text links + optional
+  promo card); flat menus render a compact, centered dropdown; childless links
+  are plain links.
+
+  Reuses Horizon for the functional bits: the cart slide-out drawer (already
+  rendered globally in layout/theme.liquid) via the `header-actions` snippet,
+  and the inline pill search via `ls-header-search`.
+{%- enddoc -%}
+
+{%- liquid
+  assign menu = linklists[section.settings.menu]
+  assign accent = section.settings.accent_color
+  assign sticky_behavior = section.settings.sticky_behavior | default: 'scroll-up'
+-%}
+
+<ls-header class="ls-header ls-header--{{ sticky_behavior }}" style="--ls-accent: {{ accent }};">
+  <div class="ls-header__inner">
+    {%- comment -%} Mobile menu toggle (hidden on desktop) {%- endcomment -%}
+    {%- if menu != blank -%}
+      <button
+        type="button"
+        class="ls-header__burger"
+        aria-label="Open menu"
+        aria-controls="ls-mobile-menu"
+        aria-expanded="false"
+        data-ls-menu-open
+      >
+        <span></span><span></span><span></span>
+      </button>
+    {%- endif -%}
+
+    {%- comment -%} Logo {%- endcomment -%}
+    <a href="{{ routes.root_url }}" class="ls-header__logo" aria-label="{{ shop.name }}">
+      {%- if settings.logo != blank -%}
+        {%- assign logo_h = settings.logo_height | default: 40 -%}
+        {%- assign logo_w = logo_h | times: settings.logo.aspect_ratio | ceil -%}
+        <img
+          src="{{ settings.logo | image_url: width: 600 }}"
+          alt="{{ shop.name | escape }}"
+          width="{{ logo_w }}"
+          height="{{ logo_h }}"
+          style="--logo-h: {{ logo_h }}px;"
+          loading="eager"
+        >
+      {%- else -%}
+        <span class="ls-header__logo-text">{{ shop.name }}</span>
+      {%- endif -%}
+    </a>
+
+    {%- comment -%} Primary navigation {%- endcomment -%}
+    {%- if menu != blank -%}
+      <nav class="ls-header__nav" aria-label="Primary">
+        <ul class="ls-header__list">
+          {%- for link in menu.links -%}
+            {%- liquid
+              assign has_children = false
+              assign is_nested = false
+              if link.links != blank
+                assign has_children = true
+                for child in link.links
+                  if child.links != blank
+                    assign is_nested = true
+                    break
+                  endif
+                endfor
+              endif
+
+              assign is_accent = false
+              if link.title contains 'Deal' or link.url contains 'deal'
+                assign is_accent = true
+              endif
+
+              assign item_class = 'ls-header__item'
+              if has_children and is_nested
+                assign item_class = item_class | append: ' ls-header__item--mega'
+              elsif has_children
+                assign item_class = item_class | append: ' ls-header__item--simple'
+              endif
+            -%}
+            <li class="{{ item_class }}">
+              <a
+                href="{{ link.url }}"
+                class="ls-header__link{% if is_accent %} ls-header__link--accent{% endif %}"
+                {% if link.current %}aria-current="page"{% endif %}
+              >
+                {%- if is_accent -%}{% render 'ls-icon-bolt' %}{%- endif -%}
+                <span>{{ link.title }}</span>
+                {%- if has_children -%}{% render 'icon-chevron-down' %}{%- endif -%}
+              </a>
+
+              {%- if has_children and is_nested -%}
+                <div class="ls-header__dropdown ls-header__dropdown--mega">
+                  <div class="ls-header__mega">
+                    <div class="ls-header__cols">
+                      {%- for child in link.links -%}
+                        <div class="ls-header__col">
+                          <a href="{{ child.url }}" class="ls-header__col-head">{{ child.title }}</a>
+                          {%- if child.links != blank -%}
+                            <ul>
+                              {%- for grandchild in child.links -%}
+                                <li><a href="{{ grandchild.url }}">{{ grandchild.title }}</a></li>
+                              {%- endfor -%}
+                            </ul>
+                          {%- endif -%}
+                        </div>
+                      {%- endfor -%}
+                    </div>
+
+                    {%- if section.settings.promo_enable and section.settings.promo_heading != blank -%}
+                      <a href="{{ section.settings.promo_button_link }}" class="ls-header__promo">
+                        {%- if section.settings.promo_eyebrow != blank -%}
+                          <span class="ls-header__promo-eyebrow">{{ section.settings.promo_eyebrow }}</span>
+                        {%- endif -%}
+                        <span class="ls-header__promo-heading">{{ section.settings.promo_heading }}</span>
+                        {%- if section.settings.promo_button_label != blank -%}
+                          <span class="ls-header__promo-btn">{{ section.settings.promo_button_label }} →</span>
+                        {%- endif -%}
+                      </a>
+                    {%- endif -%}
+                  </div>
+                </div>
+              {%- elsif has_children -%}
+                <div class="ls-header__dropdown ls-header__dropdown--simple">
+                  <ul class="ls-header__simple">
+                    {%- for child in link.links -%}
+                      <li><a href="{{ child.url }}">{{ child.title }}</a></li>
+                    {%- endfor -%}
+                  </ul>
+                </div>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      </nav>
+    {%- endif -%}
+
+    {%- comment -%} Search pill — centered in the space between the nav and the actions {%- endcomment -%}
+    {% render 'ls-header-search' %}
+
+    {%- comment -%} Right-side actions: account + cart {%- endcomment -%}
+    <div class="ls-header__actions">
+      {% render 'header-actions',
+        section: section,
+        display_style: 'icon',
+        customer_account_menu: section.settings.customer_account_menu
+      %}
+    </div>
+  </div>
+</ls-header>
+
+{%- comment -%} Mobile menu drawer (accordion) {%- endcomment -%}
+{%- if menu != blank -%}
+  <div class="ls-mobile-menu" id="ls-mobile-menu" data-ls-mobile-menu hidden style="--ls-accent: {{ accent }};">
+    <div class="ls-mobile-menu__backdrop" data-ls-menu-close></div>
+    <nav class="ls-mobile-menu__panel" aria-label="Mobile">
+      <div class="ls-mobile-menu__head">
+        <a href="{{ routes.root_url }}" class="ls-mobile-menu__logo" aria-label="{{ shop.name }}">
+          {%- if settings.logo != blank -%}
+            <img src="{{ settings.logo | image_url: width: 480 }}" alt="{{ shop.name | escape }}" loading="lazy">
+          {%- else -%}
+            <span>{{ shop.name }}</span>
+          {%- endif -%}
+        </a>
+        <button type="button" class="ls-mobile-menu__close" aria-label="Close menu" data-ls-menu-close>&times;</button>
+      </div>
+      <ul class="ls-mobile-menu__list">
+        {%- for link in menu.links -%}
+          {%- liquid
+            assign m_accent = false
+            if link.title contains 'Deal' or link.url contains 'deal'
+              assign m_accent = true
+            endif
+          -%}
+          <li class="ls-mobile-menu__item{% if m_accent %} ls-mobile-menu__item--accent{% endif %}">
+            {%- if link.links != blank -%}
+              <details class="ls-mobile-menu__group">
+                <summary>
+                  <span class="ls-mobile-menu__label">{%- if m_accent -%}{% render 'ls-icon-bolt' %}{%- endif -%}{{ link.title }}</span>
+                  {% render 'icon-chevron-down' %}
+                </summary>
+                <ul class="ls-mobile-menu__sub">
+                  {%- for child in link.links -%}
+                    <li>
+                      {%- if child.links != blank -%}
+                        <details class="ls-mobile-menu__group ls-mobile-menu__group--nested">
+                          <summary>
+                            <span>{{ child.title }}</span>
+                            {% render 'icon-chevron-down' %}
+                          </summary>
+                          <ul class="ls-mobile-menu__sub">
+                            {%- for grandchild in child.links -%}
+                              <li><a href="{{ grandchild.url }}">{{ grandchild.title }}</a></li>
+                            {%- endfor -%}
+                          </ul>
+                        </details>
+                      {%- else -%}
+                        <a href="{{ child.url }}">{{ child.title }}</a>
+                      {%- endif -%}
+                    </li>
+                  {%- endfor -%}
+                </ul>
+              </details>
+            {%- else -%}
+              <a class="ls-mobile-menu__top-link" href="{{ link.url }}"><span class="ls-mobile-menu__label">{%- if m_accent -%}{% render 'ls-icon-bolt' %}{%- endif -%}{{ link.title }}</span></a>
+            {%- endif -%}
+          </li>
+        {%- endfor -%}
+      </ul>
+
+      {%- assign quick_menu = linklists[section.settings.quick_links_menu] -%}
+      {%- if quick_menu != blank and quick_menu.links.size > 0 -%}
+        <div class="ls-mobile-menu__quick">
+          <span class="ls-mobile-menu__quick-title">Quick links</span>
+          <ul class="ls-mobile-menu__quick-list">
+            {%- for link in quick_menu.links -%}
+              <li><a href="{{ link.url }}">{{ link.title }}</a></li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endif -%}
+
+      {%- if section.settings.cta_label != blank -%}
+        <div class="ls-mobile-menu__footer">
+          <a class="ls-mobile-menu__cta" href="{{ section.settings.cta_link | default: '#' }}">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M17.5 14.1v2.4a1.6 1.6 0 0 1-1.75 1.6 15.8 15.8 0 0 1-6.9-2.45 15.6 15.6 0 0 1-4.8-4.8A15.8 15.8 0 0 1 1.6 3.9 1.6 1.6 0 0 1 3.2 2.15h2.4a1.6 1.6 0 0 1 1.6 1.38c.1.77.28 1.52.54 2.24a1.6 1.6 0 0 1-.36 1.69l-1.02 1.02a12.8 12.8 0 0 0 4.8 4.8l1.02-1.02a1.6 1.6 0 0 1 1.69-.36c.72.26 1.47.44 2.24.54a1.6 1.6 0 0 1 1.38 1.62z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>{{ section.settings.cta_label }}</span>
+          </a>
+        </div>
+      {%- endif -%}
+    </nav>
+  </div>
+
+  <script>
+    (function () {
+      var root = document.querySelector('[data-ls-mobile-menu]');
+      var burger = document.querySelector('[data-ls-menu-open]');
+      if (!root || !burger) return;
+      var panel = root.querySelector('.ls-mobile-menu__panel');
+      function open() {
+        root.hidden = false;
+        void root.offsetWidth; /* reflow so the transition runs */
+        root.classList.add('is-open');
+        burger.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+      }
+      function close() {
+        if (!root.classList.contains('is-open')) return;
+        root.classList.remove('is-open');
+        burger.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+        var done = false;
+        var finish = function () { if (done) return; done = true; root.hidden = true; };
+        panel.addEventListener('transitionend', function h(e) {
+          if (e.target !== panel || e.propertyName !== 'transform') return;
+          panel.removeEventListener('transitionend', h);
+          finish();
+        });
+        setTimeout(finish, 400); /* fallback */
+      }
+      burger.addEventListener('click', open);
+      root.querySelectorAll('[data-ls-menu-close]').forEach(function (el) {
+        el.addEventListener('click', close);
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') close();
+      });
+      root.querySelectorAll('a[href]').forEach(function (a) {
+        a.addEventListener('click', close);
+      });
+    })();
+  </script>
+{%- endif -%}
+
+{%- if sticky_behavior == 'scroll-up' -%}
+  <script>
+    // Ported from Horizon's own header (assets/header.js). The header lives in
+    // normal flow and scrolls away like a non-sticky element; it only re-pins and
+    // fades in once it has scrolled fully offscreen AND the user scrolls back up.
+    (function () {
+      var header = document.querySelector('.ls-header--scroll-up');
+      if (!header) return;
+
+      // On desktop (>=990px) .page-wrapper is the scroll container; on mobile the
+      // document root scrolls natively. Mirrors assets/scroll-container.js.
+      var DESKTOP = window.matchMedia('(min-width: 990px)');
+      function container() {
+        if (DESKTOP.matches) {
+          return document.querySelector('.page-wrapper') || document.scrollingElement || document.documentElement;
+        }
+        return document.scrollingElement || document.documentElement;
+      }
+      function eventTarget() {
+        return DESKTOP.matches ? (document.querySelector('.page-wrapper') || document) : document;
+      }
+      function intersectionRoot() {
+        return DESKTOP.matches ? (document.querySelector('.page-wrapper') || null) : null;
+      }
+      function scrollTop() { return container().scrollTop; }
+
+      var offscreen = false; // header has scrolled fully out of view
+      var lastScrollTop = scrollTop();
+      var rafId = null;
+      var observer = null;
+      var target = null;
+
+      // Track when the header enters/leaves the viewport. Until it is fully
+      // offscreen we do nothing — it just scrolls away in normal flow.
+      function observe() {
+        if (observer) observer.disconnect();
+        observer = new IntersectionObserver(function (entries) {
+          var entry = entries[0];
+          if (!entry) return;
+          offscreen = !entry.isIntersecting || header.dataset.stickyState === 'active';
+        }, { threshold: 0, root: intersectionRoot() });
+        observer.observe(header);
+      }
+
+      function updateScrollState() {
+        rafId = null;
+        // Leave the header alone while it's still in its natural spot.
+        if (!offscreen) return;
+
+        var t = scrollTop();
+        var isScrollingUp = t < lastScrollTop;
+        var isAtTop = header.getBoundingClientRect().top >= 0;
+
+        if (isScrollingUp) {
+          if (isAtTop) {
+            // Back at its natural position — hand control back to normal flow.
+            offscreen = false;
+            header.dataset.stickyState = 'inactive';
+          } else {
+            // Re-pin at the top and fade in.
+            header.dataset.stickyState = 'active';
+          }
+        } else {
+          // Scrolling down while pinned — fade out.
+          header.dataset.stickyState = 'idle';
+        }
+
+        lastScrollTop = t;
+      }
+
+      function onScroll() {
+        if (rafId !== null) return;
+        rafId = requestAnimationFrame(updateScrollState);
+      }
+
+      function bind() {
+        target = eventTarget();
+        target.addEventListener('scroll', onScroll, { passive: true });
+      }
+
+      observe();
+      bind();
+
+      // The scroll container + observer root swap at the 990px breakpoint — rebind
+      // so cached targets don't go stale after a resize.
+      DESKTOP.addEventListener('change', function () {
+        if (target) target.removeEventListener('scroll', onScroll);
+        bind();
+        observe();
+        lastScrollTop = scrollTop();
+      });
+    })();
+  </script>
+{%- endif -%}
+
+{% stylesheet %}
+  .ls-header {
+    --ls-accent: #e4322b;
+
+    /* fallbacks for vars the built-in header used to define (header-actions relies on them) */
+    --header-height: 64px;
+    --header-group-height: 64px;
+    --transparent-header-offset-boolean: 0;
+    --account-offset-top: 64px;
+
+    /* distance from the viewport edge to the page-width edge (for full-bleed mega) */
+    --ls-gutter: max(var(--page-margin, 20px), calc((100vw - var(--page-width, 1200px)) / 2));
+
+    z-index: 100;
+    display: block;
+    background: var(--color-background, #fff);
+    border-bottom: 1px solid rgb(0 0 0 / 6%);
+  }
+
+  /* --- Sticky behavior (setting-driven) ----------------------------- */
+  /* `position: sticky` is constrained by the element's containing block. The
+     <ls-header> normally sits inside its section wrapper (only as tall as the
+     header) inside #header-group, so it would have no room to stick and would
+     scroll away. Dissolve those two wrappers with `display: contents` so the
+     sticky header is constrained by the real scroll container (.page-wrapper on
+     desktop, the body on mobile) and can stick across the whole page. Mirrors
+     Horizon's own `#header-group { display: contents }` sticky mechanism.
+     Only for sticky modes — `none` keeps the normal box tree. */
+  #header-group:has(.ls-header--always),
+  #header-group:has(.ls-header--scroll-up),
+  .ls-header-section:has(> .ls-header--always),
+  .ls-header-section:has(> .ls-header--scroll-up) {
+    display: contents;
+  }
+
+  .ls-header--always {
+    position: sticky;
+    top: 0;
+  }
+  /* scroll-up mode: NOT sticky by default — the header sits in normal flow and
+     scrolls away with the page, exactly like a header that isn't sticky. It only
+     re-pins once it has scrolled fully offscreen and the user scrolls back up
+     (data-sticky-state='active'), then fades out on the way down. Mirrors
+     Horizon's own header (see assets/header.js #updateScrollState). */
+  .ls-header--scroll-up {
+    position: relative;
+  }
+  .ls-header--scroll-up[data-sticky-state='active'] {
+    position: sticky;
+    /* -1 (not 0) so it stays 1px offscreen while pinned — lets getBoundingClientRect
+       report top < 0 so "scrolling up mid-page" isn't misread as "back at the top". */
+    top: -1px;
+  }
+  .ls-header--scroll-up[data-sticky-state] {
+    transition: opacity 0.3s ease;
+    opacity: 1;
+  }
+  .ls-header--scroll-up[data-sticky-state='idle'] {
+    opacity: 0;
+  }
+  .ls-header--none {
+    position: relative;
+  }
+
+  .ls-header__inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    min-height: 64px;
+    max-width: var(--page-width);
+    margin-inline: auto;
+    padding-inline: var(--page-margin, 20px);
+  }
+
+  /* Logo */
+  .ls-header__logo {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--color-foreground, #1a1a1a);
+    font-weight: 700;
+  }
+  .ls-header__logo img {
+    display: block;
+    width: auto;
+    height: var(--logo-h, 40px);
+  }
+
+  /* Nav sits right next to the logo, links fill the full header height */
+  .ls-header__nav {
+    flex: 0 1 auto;
+    align-self: stretch;
+    display: flex;
+  }
+  .ls-header__list {
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+    gap: 0.9rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ls-header__item {
+    display: flex;
+    align-items: stretch;
+  }
+
+  .ls-header__link {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
+    color: #3a4048;
+  }
+  .ls-header__link .icon-chevron-down {
+    width: 12px;
+    height: auto;
+    color: #9aa0a6; /* chevron grey (svg uses currentColor) */
+    transition: transform 0.18s ease;
+  }
+  .ls-header__item:hover > .ls-header__link .icon-chevron-down,
+  .ls-header__item:focus-within > .ls-header__link .icon-chevron-down {
+    transform: rotate(180deg);
+  }
+  .ls-header__link--accent {
+    color: var(--ls-accent);
+  }
+  .ls-bolt {
+    flex: 0 0 auto;
+    width: 10px;
+    height: 13px;
+  }
+  .ls-mobile-menu__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  /* Right-side actions */
+  .ls-header__actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  /* Cart badge → red */
+  .ls-header .cart-bubble__background {
+    background: var(--ls-accent);
+    border: none;
+  }
+  .ls-header .cart-bubble__text,
+  .ls-header .cart-bubble__text-count {
+    color: #fff;
+  }
+
+  /* ---------- Dropdowns (pure CSS hover, no flicker) ---------------- */
+  .ls-header__dropdown {
+    position: absolute;
+    top: 100%; /* flush against the header bottom — no seam */
+    z-index: 50;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 0.16s ease, transform 0.16s ease, visibility 0s linear 0.16s;
+  }
+  .ls-header__item:hover > .ls-header__dropdown,
+  .ls-header__item:focus-within > .ls-header__dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition: opacity 0.16s ease, transform 0.16s ease;
+  }
+
+  /* Simple (flat) dropdown: compact, centered under its item */
+  .ls-header__item--simple {
+    position: relative;
+  }
+  .ls-header__dropdown--simple {
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+  }
+  .ls-header__item--simple:hover > .ls-header__dropdown--simple,
+  .ls-header__item--simple:focus-within > .ls-header__dropdown--simple {
+    transform: translateX(-50%) translateY(0);
+  }
+  .ls-header__simple {
+    width: max-content;
+    min-width: 200px;
+    margin: 0;
+    padding: 0.5rem 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid rgb(0 0 0 / 8%);
+    border-radius: 0;
+    box-shadow: 0 16px 40px rgb(0 0 0 / 12%);
+  }
+  .ls-header__simple a {
+    display: block;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    text-decoration: none;
+    color: var(--color-foreground, #1a1a1a);
+  }
+  .ls-header__simple a:hover {
+    background: rgb(0 0 0 / 4%);
+    color: var(--ls-accent);
+  }
+
+  /* Mega (nested) dropdown: full-width straight-edge bar spanning the viewport */
+  .ls-header__dropdown--mega {
+    left: calc(-1 * var(--ls-gutter));
+    right: calc(-1 * var(--ls-gutter));
+  }
+  .ls-header__mega {
+    display: flex;
+    gap: 2rem;
+    background: #fff;
+    border-top: 1px solid rgb(0 0 0 / 6%);
+    box-shadow: 0 18px 30px rgb(0 0 0 / 8%);
+    padding-block: 2rem;
+    padding-inline: var(--ls-gutter); /* full-width bg, content aligned to page-width */
+  }
+  .ls-header__cols {
+    flex: 1 1 auto;
+    display: flex;
+    gap: 2.5rem;
+  }
+  .ls-header__col-head {
+    display: block;
+    margin-bottom: 0.85rem;
+    font-size: 0.6875rem; /* ~11px */
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--ls-accent);
+  }
+  .ls-header__col ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ls-header__col a:not(.ls-header__col-head) {
+    font-size: 0.95rem;
+    text-decoration: none;
+    color: var(--color-foreground, #1a1a1a);
+  }
+  .ls-header__col a:not(.ls-header__col-head):hover {
+    color: var(--ls-accent);
+  }
+
+  /* Promo card — rounded, floats inside the full-width panel */
+  .ls-header__promo {
+    flex: 0 0 320px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1.75rem;
+    border-radius: 12px;
+    background: #1a1a1a;
+    color: #fff;
+    text-decoration: none;
+  }
+  .ls-header__promo-eyebrow {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ls-accent);
+  }
+  .ls-header__promo-heading {
+    margin: 0.5rem 0 1.25rem;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+  .ls-header__promo-btn {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1.3rem;
+    border-radius: 999px;
+    background: var(--ls-accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  /* --- Hamburger (mobile menu toggle) ------------------------------- */
+  .ls-header__burger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 40px;
+    height: 40px;
+    padding: 9px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  .ls-header__burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    border-radius: 2px;
+    background: #17191d;
+  }
+
+  /* --- Mobile layout (< 990px): burger · logo · actions / search ---- */
+  @media screen and (max-width: 989px) {
+    .ls-header__inner {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      grid-template-areas:
+        "burger logo actions"
+        "search search search";
+      column-gap: 0.5rem;
+      row-gap: 0.75rem;
+      padding-block: 0.75rem;
+      min-height: 0;
+    }
+    .ls-header__burger { display: flex; grid-area: burger; justify-self: start; }
+    .ls-header__logo { grid-area: logo; justify-self: center; }
+    .ls-header__nav { display: none; }
+    .ls-header-search { grid-area: search; margin: 0; }
+    .ls-header__actions { grid-area: actions; justify-self: end; }
+  }
+
+  /* Show the account icon on mobile (Horizon hides it with .mobile:hidden) */
+  @media screen and (max-width: 749px) {
+    .ls-header__actions .account-button {
+      display: flex !important;
+    }
+  }
+
+  /* --- Mobile menu drawer (accordion) ------------------------------- */
+  .ls-mobile-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+  }
+  .ls-mobile-menu[hidden] {
+    display: none;
+  }
+  .ls-mobile-menu__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgb(0 0 0 / 30%);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .ls-mobile-menu.is-open .ls-mobile-menu__backdrop {
+    opacity: 1;
+  }
+  .ls-mobile-menu__panel {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    display: flex;
+    flex-direction: column;
+    width: min(86vw, 360px);
+    background: #f4f1eb;
+    box-shadow: 0 0 40px rgb(0 0 0 / 20%);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+  }
+  .ls-mobile-menu.is-open .ls-mobile-menu__panel {
+    transform: translateX(0);
+  }
+  .ls-mobile-menu__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    background: #fff;
+    border-bottom: 1px solid #e6e2db;
+  }
+  .ls-mobile-menu__logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #17191d;
+    font-weight: 700;
+  }
+  .ls-mobile-menu__logo img {
+    display: block;
+    width: auto;
+    height: 28px;
+  }
+  .ls-mobile-menu__close {
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    line-height: 1;
+    cursor: pointer;
+    color: #17191d;
+  }
+  .ls-mobile-menu__quick {
+    padding: 1.1rem 1.25rem 0.5rem;
+  }
+  .ls-mobile-menu__quick-title {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: #9aa0a6;
+  }
+  .ls-mobile-menu__quick-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .ls-mobile-menu__quick-list a {
+    display: block;
+    padding: 0.5rem 0;
+    color: #3a4048;
+    font-size: 1rem;
+    text-decoration: none;
+  }
+  .ls-mobile-menu__footer {
+    margin-top: auto;
+    padding: 1.25rem;
+  }
+  .ls-mobile-menu__cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    padding: 0.95rem 1.25rem;
+    border-radius: 999px;
+    background: var(--ls-accent, #c13121);
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .ls-mobile-menu__cta svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+  }
+  .ls-mobile-menu__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .ls-mobile-menu__item {
+    border-bottom: 1px solid rgb(0 0 0 / 8%);
+  }
+  .ls-mobile-menu__list a,
+  .ls-mobile-menu__group > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.9rem 1.25rem;
+    color: #17191d;
+    font-size: 1rem;
+    text-decoration: none;
+  }
+  .ls-mobile-menu__top-link,
+  .ls-mobile-menu__group > summary {
+    font-weight: 700;
+  }
+  .ls-mobile-menu__item--accent > .ls-mobile-menu__group > summary,
+  .ls-mobile-menu__item--accent > .ls-mobile-menu__top-link {
+    color: var(--ls-accent, #e4322b);
+  }
+  .ls-mobile-menu__group > summary {
+    cursor: pointer;
+    list-style: none;
+  }
+  .ls-mobile-menu__group > summary::-webkit-details-marker {
+    display: none;
+  }
+  .ls-mobile-menu__group > summary .icon-chevron-down {
+    width: 12px;
+    height: auto;
+    flex: 0 0 auto;
+    color: #9aa0a6;
+    transition: transform 0.2s ease;
+  }
+  .ls-mobile-menu__group[open] > summary .icon-chevron-down {
+    transform: rotate(180deg);
+  }
+  .ls-mobile-menu__sub {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .ls-mobile-menu__sub a,
+  .ls-mobile-menu__group--nested > summary {
+    padding-inline-start: 2rem;
+  }
+  .ls-mobile-menu__group--nested .ls-mobile-menu__sub a {
+    padding-inline-start: 2.75rem;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS Header",
+  "class": "ls-header-section",
+  "settings": [
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu",
+      "default": "main-menu"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent color",
+      "default": "#e4322b"
+    },
+    {
+      "type": "select",
+      "id": "sticky_behavior",
+      "label": "Sticky header",
+      "options": [
+        { "value": "always", "label": "Always sticky" },
+        { "value": "scroll-up", "label": "Sticky on scroll up" },
+        { "value": "none", "label": "Not sticky" }
+      ],
+      "default": "scroll-up"
+    },
+    {
+      "type": "text",
+      "id": "customer_account_menu",
+      "label": "Account menu handle",
+      "default": "customer-account-main-menu"
+    },
+    {
+      "type": "header",
+      "content": "Mega-menu promo card"
+    },
+    {
+      "type": "checkbox",
+      "id": "promo_enable",
+      "label": "Show promo card",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "promo_eyebrow",
+      "label": "Eyebrow",
+      "default": "PRO SAVER"
+    },
+    {
+      "type": "text",
+      "id": "promo_heading",
+      "label": "Heading",
+      "default": "Save on every gallon"
+    },
+    {
+      "type": "text",
+      "id": "promo_button_label",
+      "label": "Button label",
+      "default": "Activate"
+    },
+    {
+      "type": "url",
+      "id": "promo_button_link",
+      "label": "Button link"
+    },
+    {
+      "type": "header",
+      "content": "Mobile menu"
+    },
+    {
+      "type": "link_list",
+      "id": "quick_links_menu",
+      "label": "Quick links menu"
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "Footer button label",
+      "default": "Call for bulk pricing"
+    },
+    {
+      "type": "text",
+      "id": "cta_link",
+      "label": "Button link",
+      "info": "e.g. tel:+18005551234 or a page URL"
+    }
+  ]
+}
+{% endschema %}

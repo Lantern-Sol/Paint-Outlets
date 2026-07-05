@@ -1,0 +1,147 @@
+/* ------------------------------------------------------------------
+ * LS Header overrides — restyles the built-in Horizon header to match
+ * the Paint Outlets Figma design without forking header.liquid.
+ * Loaded globally from layout/theme.liquid.
+ *
+ * Tweak the tokens below to rebrand; everything else derives from them.
+ * ------------------------------------------------------------------ */
+
+:root {
+  --ls-header-accent: #e4322b;        /* red used for "Deals" + cart badge */
+  --ls-header-search-bg: #f4f1eb;     /* pill fill */
+  --ls-header-search-border: #f4f1eb; /* pill border */
+  --ls-header-search-text: #6b6b70;   /* placeholder / icon */
+}
+
+/* Cart/theme drawer overlays ON TOP of the page (modal + blurred backdrop)
+ * instead of squeezing/shrinking the content. Neutralizes Horizon's squeeze. */
+.page-wrapper--drawer-open {
+  margin-right: 0 !important;
+}
+.page-wrapper--drawer-open shopify-account::part(dialog) {
+  translate: none !important;
+}
+
+/* Remove the drawer's left border on the cart */
+#cart-drawer .theme-drawer__dialog {
+  border-left: none;
+}
+
+/* --- Top-level nav: normal weight, default (title) case ------------ */
+.header .menu-list__link,
+.header .menu-list__link-title {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Red "Deals" treatment. Targets nav links whose URL contains "deal".
+   If your Deals link uses a different handle, change [href*='deal']. */
+.header .menu-list__link[href*="deal" i] .menu-list__link-title {
+  color: var(--ls-header-accent);
+}
+.header .menu-list__link[href*="deal" i] .menu-list__link-title::before {
+  content: "\26A1"; /* ⚡ */
+  margin-inline-end: 0.3em;
+}
+
+/* --- Spacing between the right-side elements ----------------------- */
+.header .header__column--right {
+  gap: 1.25rem;
+  align-items: center;
+}
+
+/* --- Menu sits next to the logo (no centered gap) ----------------- */
+.header .header__columns {
+  --header-left: auto; /* left column shrinks to the logo width */
+}
+.header .header__column--center {
+  justify-content: flex-start;
+}
+
+
+/* --- Mega-menu dropdown: small red uppercase column headers ------- */
+.header .mega-menu__link--parent {
+  color: var(--ls-header-accent);
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 0.6875rem; /* ~11px */
+  letter-spacing: 0.05em;
+}
+/* column headers in the dropdown are labels, not expandable — hide caret */
+.header .mega-menu__link--parent .icon-chevron-down,
+.header .mega-menu__link--parent svg {
+  display: none;
+}
+/* child links: normal weight, default (title) case */
+.header .mega-menu__link:not(.mega-menu__link--parent) {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* --- Inline pill search ------------------------------------------- */
+.ls-header-search {
+  display: flex; /* desktop: inline in the row; mobile: full-width row (placed by the section) */
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 auto; /* extend to fill the space between the nav and the actions */
+  min-inline-size: 220px;
+  padding-inline: 1.1rem;
+  block-size: 44px;
+  border-radius: 999px;
+  background: var(--ls-header-search-bg);
+  border: 1px solid var(--ls-header-search-border);
+}
+
+.ls-header-search__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.ls-header-search__icon {
+  display: inline-flex;
+  color: var(--ls-header-search-text);
+}
+.ls-header-search__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ls-header-search .ls-header-search__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent; /* beats base.css input background (specificity) so it matches the pill */
+  outline: none;
+  font-size: 0.95rem;
+  color: var(--color-foreground);
+}
+.ls-header-search__input::placeholder {
+  color: var(--ls-header-search-text);
+}
+
+@media screen and (min-width: 750px) {
+  .ls-header-search {
+    display: flex;
+  }
+  /* When the inline pill is present, hide the icon-only search button
+     on desktop (search.liquid adds --mobile-only in inline mode). */
+  .search-action--mobile-only {
+    display: none;
+  }
+}
+
+/* --- Cart badge: solid red circle with white count --------------- */
+.header .cart-bubble__background {
+  background: var(--ls-header-accent);
+  border: none;
+}
+.header .cart-bubble__text,
+.header .cart-bubble__text-count {
+  color: #fff;
+}
