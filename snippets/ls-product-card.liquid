@@ -1,0 +1,159 @@
+{%- comment -%}
+  LS Product Card
+  ---------------
+  Reusable storefront product card: vendor pill, wishlist heart, media,
+  star rating, price (range), stock status and add-to-cart. Shared by the
+  LS Featured Products section and the collection grid so the markup stays
+  identical — card styling lives in assets/ls-custom.css (.ls-pcard*), which
+  is loaded globally, so the card renders anywhere with no section CSS/JS.
+
+  Params:
+    card_product          - product to render (required; renders nothing if blank)
+    show_vendor           - show the vendor/brand pill (default true)
+    show_rating           - show the star rating row (default true)
+    show_stock            - show the stock status row (default true)
+    show_wishlist         - show the wishlist heart (default true, pure-CSS toggle)
+    cta_mode              - 'add' direct add-to-cart form, or 'link' to the PDP (default 'add')
+    in_stock_text         - stock line when available (default "In stock · tinted & ready today")
+    out_of_stock_text     - stock line when sold out (default "Currently unavailable")
+    add_to_cart_text      - CTA label when available (default "Add to cart")
+    sold_out_text         - CTA label when sold out (default "Sold out")
+    price_prefix          - label before a varying price (default "From")
+    fallback_rating       - rating shown when the reviews metafield is empty (0 = hide)
+    fallback_review_count - review count shown with the fallback rating
+    image_ratio           - media aspect ratio, e.g. '1 / 1' (default '1 / 1')
+    card_attributes       - optional extra attributes for the <article>
+{%- endcomment -%}
+{%- if card_product != blank -%}
+  {%- liquid
+    assign cp = card_product
+    assign cp_variant = cp.selected_or_first_available_variant
+    assign pc_cta = cta_mode | default: 'add'
+    assign pc_in_stock = in_stock_text | default: 'In stock · tinted & ready today'
+    assign pc_out_stock = out_of_stock_text | default: 'Currently unavailable'
+    assign pc_add = add_to_cart_text | default: 'Add to cart'
+    assign pc_sold = sold_out_text | default: 'Sold out'
+    assign pc_from = price_prefix | default: 'From'
+    assign pc_ratio = image_ratio | default: '1 / 1'
+
+    # Rating: Shopify Product Reviews / Judge.me metafield shape, else fallback.
+    assign pc_rating = 0
+    assign pc_reviews = 0
+    assign rating_mf = cp.metafields.reviews.rating.value
+    if rating_mf != blank
+      assign pc_rating = rating_mf.rating
+      assign pc_reviews = cp.metafields.reviews.rating_count.value | default: 0
+    else
+      assign pc_rating = fallback_rating | default: 0
+      assign pc_reviews = fallback_review_count | default: 0
+    endif
+    assign pc_rating = pc_rating | times: 1
+    assign pc_reviews = pc_reviews | times: 1
+
+    if show_vendor == false
+      assign pc_show_vendor = false
+    else
+      assign pc_show_vendor = true
+    endif
+    if show_rating == false
+      assign pc_show_rating = false
+    else
+      assign pc_show_rating = true
+    endif
+    if show_stock == false
+      assign pc_show_stock = false
+    else
+      assign pc_show_stock = true
+    endif
+    if show_wishlist == false
+      assign pc_show_wishlist = false
+    else
+      assign pc_show_wishlist = true
+    endif
+  -%}
+  <article class="ls-pcard" {{ card_attributes }}>
+    <div class="ls-pcard__media-wrap">
+      {%- if pc_show_vendor and cp.vendor != blank -%}
+        <span class="ls-pcard__vendor">{{ cp.vendor }}</span>
+      {%- endif -%}
+      {%- if pc_show_wishlist -%}
+        <label class="ls-pcard__wishlist">
+          <input type="checkbox" class="ls-pcard__wishlist-input" aria-label="Save {{ cp.title | escape }}">
+          <svg class="ls-pcard__wishlist-icon" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+            <path d="M12 20.5l-1.45-1.32C5.4 14.5 2 11.4 2 7.6 2 5.1 3.98 3.1 6.5 3.1c1.42 0 2.79.66 3.68 1.7l.82.96.82-.96A4.9 4.9 0 0117.5 3.1C20.02 3.1 22 5.1 22 7.6c0 3.8-3.4 6.9-8.55 11.58L12 20.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          </svg>
+        </label>
+      {%- endif -%}
+      <a class="ls-pcard__media" href="{{ cp.url }}" style="--ls-pcard-ratio: {{ pc_ratio }};">
+        {%- if cp.featured_image != blank -%}
+          {{
+            cp.featured_image
+            | image_url: width: 600
+            | image_tag:
+              class: 'ls-pcard__img',
+              widths: '200, 300, 400, 600',
+              sizes: '(min-width: 750px) 300px, 45vw',
+              loading: 'lazy',
+              alt: cp.featured_image.alt | default: cp.title
+          }}
+        {%- else -%}
+          <div class="ls-pcard__img ls-pcard__img--placeholder">
+            {{ 'product-1' | placeholder_svg_tag: 'placeholder-image' }}
+          </div>
+        {%- endif -%}
+      </a>
+    </div>
+
+    <div class="ls-pcard__body">
+      {%- if pc_show_rating and pc_rating > 0 -%}
+        <div class="ls-pcard__rating">
+          <span class="ls-pcard__stars" role="img" aria-label="Rated {{ pc_rating }} out of 5">
+            {%- render 'ls-stars', rating: pc_rating, prefix: 'ls-pcard' -%}
+          </span>
+          <span class="ls-pcard__rating-value">{{ pc_rating }}</span>
+          {%- if pc_reviews > 0 -%}
+            <span class="ls-pcard__rating-count">({{ pc_reviews }})</span>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+
+      <h3 class="ls-pcard__title">
+        <a href="{{ cp.url }}">{{ cp.title }}</a>
+      </h3>
+
+      <div class="ls-pcard__price">
+        {%- if cp.price_varies -%}
+          <span class="ls-pcard__price-from">{{ pc_from }}</span>
+          <span class="ls-pcard__price-amount">{{ cp.price_min | money }} &ndash; {{ cp.price_max | money }}</span>
+        {%- else -%}
+          <span class="ls-pcard__price-amount">{{ cp.price | money }}</span>
+          {%- if cp.compare_at_price_max > cp.price -%}
+            <s class="ls-pcard__price-compare">{{ cp.compare_at_price_max | money }}</s>
+          {%- endif -%}
+        {%- endif -%}
+      </div>
+
+      {%- if pc_show_stock -%}
+        <p class="ls-pcard__stock{% unless cp.available %} ls-pcard__stock--out{% endunless %}">
+          <span class="ls-pcard__stock-dot" aria-hidden="true"></span>
+          {%- if cp.available -%}{{ pc_in_stock }}{%- else -%}{{ pc_out_stock }}{%- endif -%}
+        </p>
+      {%- endif -%}
+
+      {%- if pc_cta == 'link' -%}
+        <a class="ls-pcard__cta" href="{{ cp.url }}">{{ pc_add }}</a>
+      {%- else -%}
+        <product-form-component data-product-id="{{ cp.id }}" on:submit="/handleSubmit" class="ls-pcard__form">
+          <div class="visually-hidden" role="status" aria-live="assertive" aria-atomic="true" ref="liveRegion"></div>
+          {%- form 'product', cp, novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
+            <input type="hidden" name="id" ref="variantId" value="{{ cp_variant.id }}" {% unless cp_variant.available %}disabled{% endunless %}>
+            <input type="hidden" name="quantity" value="1">
+            <button type="submit" name="add" ref="addToCartButton" class="ls-pcard__cta" {% unless cp_variant.available %}disabled{% endunless %}>
+              {%- if cp_variant.available -%}{{ pc_add }}{%- else -%}{{ pc_sold }}{%- endif -%}
+            </button>
+          {%- endform -%}
+        </product-form-component>
+      {%- endif -%}
+    </div>
+  </article>
+{%- endif -%}

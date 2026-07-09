@@ -1,0 +1,57 @@
+{%- comment -%}
+  LS Frequently Paired (data)
+  ---------------------------
+  Card-only render target for the LS Product Detail "Frequently paired" upsell.
+  It is NOT meant to be placed in a template. The PDP section fetches it through
+  the Product Recommendations API + Section Rendering API, e.g.:
+
+    /recommendations/products?section_id=ls-frequently-paired&product_id=123&intent=complementary
+
+  which renders this file with the `recommendations` object populated. The PDP
+  then extracts the .ls-pdp__paired-card elements from .ls-fpaired and injects
+  them into its own track (styling comes from the PDP section CSS on the page).
+
+  Only the `recommendations` object is available here — there is no `product`
+  context — so every card is driven off recommendations.products.
+{%- endcomment -%}
+<div
+  class="ls-fpaired"
+  data-fpaired
+  data-fpaired-intent="{{ recommendations.intent }}"
+  data-fpaired-performed="{{ recommendations.performed }}"
+  data-fpaired-count="{{ recommendations.products_count }}"
+>
+  {%- if recommendations.performed and recommendations.products_count > 0 -%}
+    {%- for reco_product in recommendations.products -%}
+      {%- render 'ls-pdp-paired-card',
+        card_product: reco_product,
+        quick_add_text: section.settings.quick_add_text,
+        sold_out_text: section.settings.sold_out_text
+      -%}
+    {%- endfor -%}
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "LS Paired (data)",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Data-only render target for the LS Product Detail 'Frequently paired' upsell. Don't add this section to a template — it is fetched automatically by the product page."
+    },
+    {
+      "type": "text",
+      "id": "quick_add_text",
+      "label": "Quick add text",
+      "default": "QUICK ADD"
+    },
+    {
+      "type": "text",
+      "id": "sold_out_text",
+      "label": "Sold out text",
+      "default": "Sold out"
+    }
+  ]
+}
+{% endschema %}

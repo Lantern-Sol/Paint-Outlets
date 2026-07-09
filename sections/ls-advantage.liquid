@@ -1,0 +1,446 @@
+{%- comment -%}
+  LS Advantage
+  ------------
+  Dark gradient "why this wins" section: centered eyebrow + heading + subtext,
+  followed by a responsive row of feature cards (icon chip · title · text).
+
+  Everything is customizable — the eyebrow, heading and subtext are section
+  settings; each feature card is a repeatable "feature" block (icon, title,
+  body). Colours, gradient, corner radius and column count are settings too.
+{%- endcomment -%}
+
+{%- liquid
+  assign adv_font = section.settings.font_family
+  assign adv_font_600 = adv_font | font_modify: 'weight', '600'
+  assign adv_font_700 = adv_font | font_modify: 'weight', '700'
+-%}
+
+{% style %}
+  {{ adv_font | font_face: font_display: 'swap' }}
+  {{ adv_font_600 | font_face: font_display: 'swap' }}
+  {{ adv_font_700 | font_face: font_display: 'swap' }}
+
+  .ls-adv-{{ section.id }} {
+    --ls-adv-font: {{ adv_font.family }}, {{ adv_font.fallback_families }};
+    --ls-adv-grad-top: {{ section.settings.gradient_top | default: '#1e232c' }};
+    --ls-adv-grad-mid: {{ section.settings.gradient_mid | default: '#13161c' }};
+    --ls-adv-grad-bottom: {{ section.settings.gradient_bottom | default: '#0b0d11' }};
+    --ls-adv-angle: {{ section.settings.gradient_angle | default: 161 }}deg;
+    --ls-adv-eyebrow: {{ section.settings.eyebrow_color | default: '#e06a5c' }};
+    --ls-adv-heading: {{ section.settings.heading_color | default: '#ffffff' }};
+    --ls-adv-subtext: {{ section.settings.subtext_color | default: 'rgba(255,255,255,0.6)' }};
+    --ls-adv-card-bg: {{ section.settings.card_background | default: 'rgba(255,255,255,0.05)' }};
+    --ls-adv-card-border: {{ section.settings.card_border | default: 'rgba(255,255,255,0.12)' }};
+    --ls-adv-chip-bg: {{ section.settings.icon_chip_background | default: 'rgba(224,106,92,0.16)' }};
+    --ls-adv-icon: {{ section.settings.icon_color | default: '#e06a5c' }};
+    --ls-adv-card-title: {{ section.settings.card_title_color | default: '#ffffff' }};
+    --ls-adv-card-text: {{ section.settings.card_text_color | default: 'rgba(255,255,255,0.58)' }};
+    --ls-adv-radius: {{ section.settings.corner_radius | default: 18 }}px;
+    --ls-adv-cols: {{ section.settings.columns | default: 4 }};
+  }
+{% endstyle %}
+
+<div
+  class="ls-adv ls-adv-{{ section.id }} spacing-style"
+  style="{% render 'spacing-style', settings: section.settings %}"
+>
+  <div class="ls-adv__inner">
+    {%- if section.settings.eyebrow != blank or section.settings.heading != blank or section.settings.subtext != blank -%}
+      <div class="ls-adv__head">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="ls-adv__eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        {%- if section.settings.heading != blank -%}
+          <h2 class="ls-adv__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+        {%- if section.settings.subtext != blank -%}
+          <div class="ls-adv__subtext">{{ section.settings.subtext }}</div>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- if section.blocks.size > 0 -%}
+      <div class="ls-adv__grid">
+        {%- for block in section.blocks -%}
+          <div class="ls-adv__card" {{ block.shopify_attributes }}>
+            <span class="ls-adv__icon" aria-hidden="true">
+              {%- render 'ls-advantage-icon', name: block.settings.icon -%}
+            </span>
+            {%- if block.settings.title != blank -%}
+              <h3 class="ls-adv__card-title">{{ block.settings.title }}</h3>
+            {%- endif -%}
+            {%- if block.settings.text != blank -%}
+              <div class="ls-adv__card-text">{{ block.settings.text }}</div>
+            {%- endif -%}
+          </div>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .ls-adv {
+    font-family: var(--ls-adv-font, 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    background: linear-gradient(
+      var(--ls-adv-angle, 161deg),
+      var(--ls-adv-grad-top) 0%,
+      var(--ls-adv-grad-mid) 55%,
+      var(--ls-adv-grad-bottom) 100%
+    );
+  }
+
+  .ls-adv__inner {
+    max-width: 1240px;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 100px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(2rem, 4vw, 3.125rem);
+  }
+
+  .ls-adv__head {
+    max-width: 680px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .ls-adv__eyebrow {
+    margin: 0;
+    color: var(--ls-adv-eyebrow);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .ls-adv__heading {
+    margin: 0;
+    color: var(--ls-adv-heading);
+    font-weight: 700;
+    font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .ls-adv__subtext {
+    color: var(--ls-adv-subtext);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  .ls-adv__subtext > :first-child { margin-top: 0; }
+  .ls-adv__subtext > :last-child { margin-bottom: 0; }
+
+  .ls-adv__grid {
+    display: grid;
+    grid-template-columns: repeat(var(--ls-adv-cols, 4), minmax(0, 1fr));
+    gap: 20px;
+    width: 100%;
+  }
+
+  .ls-adv__card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 9px;
+    background: var(--ls-adv-card-bg);
+    border: 1px solid var(--ls-adv-card-border);
+    border-radius: var(--ls-adv-radius);
+    padding: 29px 25px;
+  }
+
+  .ls-adv__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    background: var(--ls-adv-chip-bg);
+    color: var(--ls-adv-icon);
+  }
+  .ls-adv__icon svg { width: 24px; height: 24px; }
+
+  .ls-adv__card-title {
+    margin: 12px 0 0;
+    color: var(--ls-adv-card-title);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .ls-adv__card-text {
+    color: var(--ls-adv-card-text);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+  .ls-adv__card-text > :first-child { margin-top: 0; }
+  .ls-adv__card-text > :last-child { margin-bottom: 0; }
+
+  /* Two columns from tablet down to mobile (4 cards → 2 rows). */
+  @media screen and (max-width: 990px) {
+    .ls-adv__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  }
+  @media screen and (max-width: 600px) {
+    .ls-adv__card { padding: 22px 18px; }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS Advantage",
+  "tag": "section",
+  "class": "section section--full-width ls-advantage-section",
+  "settings": [
+    {
+      "type": "font_picker",
+      "id": "font_family",
+      "label": "Font",
+      "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Why this finish wins"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Heading",
+      "default": "The finish of an oil paint, without the oil."
+    },
+    {
+      "type": "richtext",
+      "id": "subtext",
+      "label": "Subtext",
+      "default": "<p>ADVANCE pairs a waterborne formula with alkyd-grade leveling — four reasons it's a go-to for cabinets, doors and trim, whether you're painting one room this weekend or finishing a job site.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "Columns (desktop)",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "corner_radius",
+      "label": "Card corner radius",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 18
+    },
+    {
+      "type": "header",
+      "content": "Background gradient"
+    },
+    {
+      "type": "color",
+      "id": "gradient_top",
+      "label": "Top",
+      "default": "#1e232c"
+    },
+    {
+      "type": "color",
+      "id": "gradient_mid",
+      "label": "Middle",
+      "default": "#13161c"
+    },
+    {
+      "type": "color",
+      "id": "gradient_bottom",
+      "label": "Bottom",
+      "default": "#0b0d11"
+    },
+    {
+      "type": "range",
+      "id": "gradient_angle",
+      "label": "Angle",
+      "min": 0,
+      "max": 360,
+      "step": 5,
+      "unit": "deg",
+      "default": 160
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "eyebrow_color",
+      "label": "Eyebrow",
+      "default": "#e06a5c"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "subtext_color",
+      "label": "Subtext",
+      "default": "#a3a6ab"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#22262e"
+    },
+    {
+      "type": "color",
+      "id": "card_border",
+      "label": "Card border",
+      "default": "#33373f"
+    },
+    {
+      "type": "color",
+      "id": "icon_chip_background",
+      "label": "Icon chip background",
+      "default": "#3a2b2a"
+    },
+    {
+      "type": "color",
+      "id": "icon_color",
+      "label": "Icon",
+      "default": "#e06a5c"
+    },
+    {
+      "type": "color",
+      "id": "card_title_color",
+      "label": "Card title",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_text_color",
+      "label": "Card text",
+      "default": "#9aa0a6"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "default": 64
+    }
+  ],
+  "blocks": [
+    {
+      "type": "feature",
+      "name": "Feature",
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "flow", "label": "Flow / leveling" },
+            { "value": "shield", "label": "Shield" },
+            { "value": "droplet", "label": "Droplet" },
+            { "value": "clock", "label": "Clock" },
+            { "value": "leaf", "label": "Leaf" },
+            { "value": "spray", "label": "Spray can" },
+            { "value": "sparkle", "label": "Sparkle" },
+            { "value": "check", "label": "Check" },
+            { "value": "star", "label": "Star" },
+            { "value": "brush", "label": "Brush" }
+          ],
+          "default": "flow"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Feature title"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "Text",
+          "default": "<p>Describe this feature and why it matters to the shopper.</p>"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 8,
+  "presets": [
+    {
+      "name": "LS Advantage",
+      "blocks": [
+        {
+          "type": "feature",
+          "settings": {
+            "icon": "flow",
+            "title": "Self-leveling, sprayed-smooth finish",
+            "text": "<p>Flows out to erase brush and roller marks, so trim and cabinet doors dry glass-smooth — even brushed by hand.</p>"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "icon": "shield",
+            "title": "Low VOC, low odor — even tinted",
+            "text": "<p>Just 47 g/L after tinting keeps the air comfortable for occupied homes and long days on the job.</p>"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "icon": "droplet",
+            "title": "Soap-and-water cleanup",
+            "text": "<p>A waterborne alkyd, so brushes and sprayers rinse clean at the sink — no mineral spirits, no mess.</p>"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "icon": "clock",
+            "title": "Cures hard and washable",
+            "text": "<p>Builds to a tough, scrubbable surface that holds up to daily wear on cabinets, doors and high-touch trim.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

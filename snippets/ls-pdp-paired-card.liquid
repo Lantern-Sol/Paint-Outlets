@@ -1,0 +1,48 @@
+{%- comment -%}
+  One "Frequently paired" upsell card for the LS Product Detail section.
+  Shared by the PDP's manual paired_product blocks and the dynamic
+  ls-frequently-paired data section so the markup stays identical (the PDP
+  section CSS styles both). Add-to-cart uses the same product-form-component
+  pattern as the main PDP form.
+
+  Params:
+    card_product    - product to render (required; renders nothing if blank)
+    title_override  - optional replacement for the product title
+    quick_add_text  - button label (default "QUICK ADD")
+    sold_out_text   - sold-out label (default "Sold out")
+    card_attributes - optional extra attributes for the <article> (e.g. block.shopify_attributes)
+{%- endcomment -%}
+{%- if card_product != blank -%}
+  {%- assign cp = card_product -%}
+  {%- assign cp_variant = cp.selected_or_first_available_variant -%}
+  {%- assign qa = quick_add_text | default: 'QUICK ADD' -%}
+  {%- assign so = sold_out_text | default: 'Sold out' -%}
+  <article class="ls-pdp__paired-card" {{ card_attributes }}>
+    <a class="ls-pdp__paired-media" href="{{ cp.url }}">
+      {%- if cp.featured_image != blank -%}
+        {{ cp.featured_image | image_url: width: 240 | image_tag: widths: '120, 240', loading: 'lazy', alt: cp.title, class: 'ls-pdp__paired-img' }}
+      {%- else -%}
+        <div class="ls-pdp__paired-img ls-pdp__paired-img--placeholder">{{ 'product-2' | placeholder_svg_tag: 'placeholder-image' }}</div>
+      {%- endif -%}
+    </a>
+    <div class="ls-pdp__paired-body">
+      <a class="ls-pdp__paired-name" href="{{ cp.url }}">{{ title_override | default: cp.title }}</a>
+      <div class="ls-pdp__paired-price">
+        <span>{{ cp_variant.price | money }}</span>
+        {%- if cp_variant.compare_at_price > cp_variant.price -%}
+          <s>{{ cp_variant.compare_at_price | money }}</s>
+        {%- endif -%}
+      </div>
+    </div>
+    <product-form-component data-product-id="{{ cp.id }}" on:submit="/handleSubmit" class="ls-pdp__paired-form">
+      <div class="visually-hidden" role="status" aria-live="assertive" aria-atomic="true" ref="liveRegion"></div>
+      {%- form 'product', cp, novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
+        <input type="hidden" name="id" ref="variantId" value="{{ cp_variant.id }}" {% unless cp_variant.available %}disabled{% endunless %}>
+        <input type="hidden" name="quantity" value="1">
+        <button type="submit" name="add" ref="addToCartButton" class="ls-pdp__paired-add" {% unless cp_variant.available %}disabled{% endunless %}>
+          {%- if cp_variant.available -%}{{ qa }} +{%- else -%}{{ so }}{%- endif -%}
+        </button>
+      {%- endform -%}
+    </product-form-component>
+  </article>
+{%- endif -%}
