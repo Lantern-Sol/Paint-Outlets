@@ -360,6 +360,140 @@
         "padding-block-start": 0,
         "padding-block-end": 0
       }
+    },
+    "ls_faq_cWenpj": {
+      "type": "ls-faq",
+      "blocks": {
+        "faq_8xdjQC": {
+          "type": "faq",
+          "settings": {
+            "question": "How many coats do I need?",
+            "answer": "<p>Two coats give full coverage and the best durability. Allow 16 hours between coats so each fully sets.</p>",
+            "open": true
+          }
+        },
+        "faq_mMWTH7": {
+          "type": "faq",
+          "settings": {
+            "question": "How long until it cures hard?",
+            "answer": "<p>The surface is dry to the touch in a couple of hours, but a full cure takes up to 30 days. Go easy on scrubbing and heavy use until then.</p>",
+            "open": false
+          }
+        },
+        "faq_FDpch9": {
+          "type": "faq",
+          "settings": {
+            "question": "Can I spray it?",
+            "answer": "<p>Yes. Thin per the label for your sprayer and keep a wet edge. A brush or roller works just as well if you'd rather not mask off.</p>",
+            "open": false
+          }
+        },
+        "faq_JbmGyc": {
+          "type": "faq",
+          "settings": {
+            "question": "What's the cleanup?",
+            "answer": "<p>Warm, soapy water while the paint is still wet — these are water-based finishes, so no solvents needed.</p>",
+            "open": false
+          }
+        },
+        "faq_8mxWJK": {
+          "type": "faq",
+          "settings": {
+            "question": "Is it low odor?",
+            "answer": "<p>Yes. Our interior finishes are low-VOC and low-odor, so you can paint and stay in the room comfortably.</p>",
+            "open": false
+          }
+        },
+        "faq_m3cdjb": {
+          "type": "faq",
+          "settings": {
+            "question": "Do you match colors?",
+            "answer": "<p>We do. Bring in a chip, a photo, or a brand name and we'll match it — or order a peel-and-stick sample first.</p>",
+            "open": false
+          }
+        }
+      },
+      "block_order": [
+        "faq_8xdjQC",
+        "faq_mMWTH7",
+        "faq_FDpch9",
+        "faq_JbmGyc",
+        "faq_8mxWJK",
+        "faq_m3cdjb"
+      ],
+      "name": "LS FAQ",
+      "settings": {
+        "eyebrow": "Good to know",
+        "heading": "Questions painters & DIYers ask",
+        "font_family": "outfit_n4",
+        "background_color": "#fafafa",
+        "eyebrow_color": "#c13121",
+        "heading_color": "#1a1a1a",
+        "question_color": "#1a1a1a",
+        "answer_color": "#6b7280",
+        "card_background": "#ffffff",
+        "card_border_color": "#eceef1",
+        "toggle_background": "#f3f4f6",
+        "toggle_icon_color": "#6b7280",
+        "toggle_active_background": "#e0281e",
+        "toggle_active_icon_color": "#ffffff",
+        "content_max_width": 720,
+        "card_gap": 12,
+        "card_radius": 18,
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    },
+    "ls_contact_nBPwmf": {
+      "type": "ls-contact",
+      "name": "LS Contact",
+      "settings": {
+        "font_family": "outfit_n4",
+        "eyebrow": "Talk to a human",
+        "heading": "Ready to start your project?",
+        "subtext": "Our paint experts will help you pick the right product, match your color, and handle bulk pricing — no guesswork.",
+        "phone_number": "248.598.0311",
+        "phone_link": "",
+        "email_label": "Email an expert",
+        "email_link": "mailto:test@gmail.com",
+        "email_open_new_tab": false,
+        "hours": "Mon–Fri 7:30–5:30 · Sat 8–3",
+        "background_color": "#0d0f12",
+        "eyebrow_color": "#e0281e",
+        "heading_color": "#ffffff",
+        "subtext_color": "#ffffff",
+        "hours_color": "#8b93a1",
+        "phone_background": "#ffffff",
+        "phone_text": "#111318",
+        "email_text": "#ffffff",
+        "email_border": "#3a3f47",
+        "email_hover_background": "#ffffff",
+        "email_hover_text": "#111318",
+        "linear_angle": 140,
+        "linear_color_1": "#1e232c",
+        "linear_pos_1": 0,
+        "linear_color_2": "#13161c",
+        "linear_pos_2": 55,
+        "linear_color_3": "#0b0d11",
+        "linear_pos_3": 100,
+        "glow_start_color": "#d42a1c",
+        "glow_start_opacity": 35,
+        "glow_start_pos": 0,
+        "glow_end_color": "#d42a1c",
+        "glow_end_opacity": 0,
+        "glow_end_pos": 70,
+        "glow_x": 93,
+        "glow_y": 32,
+        "glow_x_mobile": 81,
+        "glow_y_mobile": 14,
+        "glow_size_x": 11,
+        "glow_size_y": 11,
+        "glow_size_x_mobile": 25,
+        "glow_size_y_mobile": 25,
+        "card_radius": 20,
+        "padding-block-start": 24,
+        "padding-block-end": 24
+      }
     }
   },
   "order": [
@@ -367,6 +501,8 @@
     "ls_advantage_MG47dM",
     "ls_calculator_C4Awqe",
     "ls_featured_products_pUTaiy",
-    "178358537698754f92"
+    "178358537698754f92",
+    "ls_faq_cWenpj",
+    "ls_contact_nBPwmf"
   ]
 }
