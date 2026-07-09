@@ -1,0 +1,473 @@
+{%- liquid
+  assign faq_font = section.settings.font_family
+  assign faq_font_500 = faq_font | font_modify: 'weight', '500'
+  assign faq_font_600 = faq_font | font_modify: 'weight', '600'
+  assign faq_font_700 = faq_font | font_modify: 'weight', '700'
+-%}
+
+{% style %}
+  {{ faq_font | font_face: font_display: 'swap' }}
+  {{ faq_font_500 | font_face: font_display: 'swap' }}
+  {{ faq_font_600 | font_face: font_display: 'swap' }}
+  {{ faq_font_700 | font_face: font_display: 'swap' }}
+
+  .ls-faq-{{ section.id }} {
+    --ls-faq-font-family: {{ faq_font.family }}, {{ faq_font.fallback_families }};
+    --ls-faq-eyebrow: {{ section.settings.eyebrow_color | default: '#c13121' }};
+    --ls-faq-heading: {{ section.settings.heading_color | default: '#1a1a1a' }};
+    --ls-faq-question: {{ section.settings.question_color | default: '#1a1a1a' }};
+    --ls-faq-answer: {{ section.settings.answer_color | default: '#6b7280' }};
+    --ls-faq-card-bg: {{ section.settings.card_background | default: '#ffffff' }};
+    --ls-faq-card-border: {{ section.settings.card_border_color | default: '#eceef1' }};
+    --ls-faq-toggle-bg: {{ section.settings.toggle_background | default: '#f3f4f6' }};
+    --ls-faq-toggle-icon: {{ section.settings.toggle_icon_color | default: '#6b7280' }};
+    --ls-faq-toggle-active-bg: {{ section.settings.toggle_active_background | default: '#e0281e' }};
+    --ls-faq-toggle-active-icon: {{ section.settings.toggle_active_icon_color | default: '#ffffff' }};
+    --ls-faq-radius: {{ section.settings.card_radius | default: 18 }}px;
+    --ls-faq-gap: {{ section.settings.card_gap | default: 12 }}px;
+    --ls-faq-max-width: {{ section.settings.content_max_width | default: 720 }}px;
+  }
+{% endstyle %}
+
+{%- if section.settings.background_color != blank -%}
+  <div class="section-background" style="background-color: {{ section.settings.background_color }};"></div>
+{%- endif -%}
+<div
+  class="section ls-faq ls-faq-{{ section.id }} spacing-style"
+  style="{% render 'spacing-style', settings: section.settings %}"
+>
+  <div class="ls-faq__inner">
+    {%- if section.settings.eyebrow != blank or section.settings.heading != blank -%}
+      <div class="ls-faq__head">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="ls-faq__eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        {%- if section.settings.heading != blank -%}
+          <h2 class="ls-faq__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- if section.blocks.size > 0 -%}
+      <div class="ls-faq__list">
+        {%- for block in section.blocks -%}
+          <details
+            class="ls-faq__item"
+            {% if block.settings.open %}open{% endif %}
+            {{ block.shopify_attributes }}
+          >
+            <summary class="ls-faq__question">
+              <span class="ls-faq__question-text">{{ block.settings.question }}</span>
+              <span class="ls-faq__toggle" aria-hidden="true">
+                <svg class="ls-faq__chevron" viewBox="0 0 16 16" fill="none" focusable="false">
+                  <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </summary>
+            {%- if block.settings.answer != blank -%}
+              <div class="ls-faq__answer">{{ block.settings.answer }}</div>
+            {%- endif -%}
+          </details>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .ls-faq {
+    font-family: var(--ls-faq-font-family, 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  }
+
+  .ls-faq__inner {
+    width: 100%;
+    min-width: min(100%, var(--ls-faq-max-width, 720px));
+    max-width: var(--ls-faq-max-width, 720px);
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 4vw, 2rem);
+  }
+
+  .ls-faq__head {
+    text-align: center;
+    margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+  }
+
+  .ls-faq__eyebrow {
+    margin: 0 0 0.4rem;
+    color: var(--ls-faq-eyebrow);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .ls-faq__heading {
+    margin: 0;
+    color: var(--ls-faq-heading);
+    font-size: clamp(1.6rem, 3.4vw, 2.35rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .ls-faq__list {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--ls-faq-gap, 12px);
+  }
+
+  .ls-faq__item {
+    width: 100%;
+    background: var(--ls-faq-card-bg);
+    border: 1px solid var(--ls-faq-card-border);
+    border-radius: var(--ls-faq-radius, 18px);
+    box-shadow: 0 1px 2px rgb(16 24 40 / 0.04);
+    overflow: hidden;
+  }
+
+  /* Question row (native <summary>) */
+  .ls-faq__question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: clamp(1rem, 2vw, 1.35rem) clamp(1.1rem, 2.2vw, 1.5rem);
+    cursor: pointer;
+    list-style: none;
+    color: var(--ls-faq-question);
+    font-size: clamp(0.95rem, 1.4vw, 1.0625rem);
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  /* Remove the default disclosure triangle across browsers */
+  .ls-faq__question::-webkit-details-marker {
+    display: none;
+  }
+
+  .ls-faq__question:focus-visible {
+    outline: 2px solid var(--ls-faq-toggle-active-bg);
+    outline-offset: -2px;
+  }
+
+  .ls-faq__question-text {
+    flex: 1 1 auto;
+  }
+
+  .ls-faq__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: 999px;
+    background: var(--ls-faq-toggle-bg);
+    color: var(--ls-faq-toggle-icon);
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .ls-faq__chevron {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.25s ease;
+  }
+
+  .ls-faq__item[open] .ls-faq__toggle {
+    background: var(--ls-faq-toggle-active-bg);
+    color: var(--ls-faq-toggle-active-icon);
+  }
+
+  .ls-faq__item[open] .ls-faq__chevron {
+    transform: rotate(180deg);
+  }
+
+  .ls-faq__answer {
+    padding: 0 clamp(1.1rem, 2.2vw, 1.5rem) clamp(1.1rem, 2.2vw, 1.4rem);
+    color: var(--ls-faq-answer);
+    font-size: clamp(0.9rem, 1.3vw, 1rem);
+    font-weight: 400;
+    line-height: 1.55;
+  }
+
+  .ls-faq__answer > :first-child {
+    margin-top: 0;
+  }
+
+  .ls-faq__answer > :last-child {
+    margin-bottom: 0;
+  }
+
+  .ls-faq__answer a {
+    color: var(--ls-faq-eyebrow);
+    text-decoration: underline;
+  }
+
+  /* Subtle open animation where supported, respecting reduced motion */
+  @media (prefers-reduced-motion: no-preference) {
+    .ls-faq__item[open] .ls-faq__answer {
+      animation: ls-faq-reveal 0.25s ease;
+    }
+  }
+
+  @keyframes ls-faq-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS FAQ",
+  "tag": "section",
+  "class": "ls-faq-section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Good to know"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Questions painters & DIYers ask"
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "font_family",
+      "label": "Font",
+      "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Section background",
+      "default": "#fafafa"
+    },
+    {
+      "type": "color",
+      "id": "eyebrow_color",
+      "label": "Eyebrow",
+      "default": "#c13121"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "question_color",
+      "label": "Question",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "answer_color",
+      "label": "Answer",
+      "default": "#6b7280"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_border_color",
+      "label": "Card border",
+      "default": "#eceef1"
+    },
+    {
+      "type": "header",
+      "content": "Toggle button"
+    },
+    {
+      "type": "color",
+      "id": "toggle_background",
+      "label": "Closed background",
+      "default": "#f3f4f6"
+    },
+    {
+      "type": "color",
+      "id": "toggle_icon_color",
+      "label": "Closed icon",
+      "default": "#6b7280"
+    },
+    {
+      "type": "color",
+      "id": "toggle_active_background",
+      "label": "Open background",
+      "default": "#e0281e"
+    },
+    {
+      "type": "color",
+      "id": "toggle_active_icon_color",
+      "label": "Open icon",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "content_max_width",
+      "label": "Content width",
+      "min": 480,
+      "max": 960,
+      "step": 20,
+      "unit": "px",
+      "default": 720
+    },
+    {
+      "type": "range",
+      "id": "card_gap",
+      "label": "Space between cards",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "card_radius",
+      "label": "Corner radius",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 18
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "blocks": [
+    {
+      "type": "faq",
+      "name": "Question",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Question",
+          "default": "How many coats do I need?"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer",
+          "default": "<p>Two coats give full coverage and the best durability. Allow 16 hours between coats so each fully sets.</p>"
+        },
+        {
+          "type": "checkbox",
+          "id": "open",
+          "label": "Open by default",
+          "default": false
+        }
+      ]
+    }
+  ],
+  "max_blocks": 12,
+  "presets": [
+    {
+      "name": "LS FAQ",
+      "category": "t:categories.text",
+      "blocks": [
+        {
+          "type": "faq",
+          "settings": {
+            "question": "How many coats do I need?",
+            "answer": "<p>Two coats give full coverage and the best durability. Allow 16 hours between coats so each fully sets.</p>",
+            "open": true
+          }
+        },
+        {
+          "type": "faq",
+          "settings": {
+            "question": "How long until it cures hard?",
+            "answer": "<p>The surface is dry to the touch in a couple of hours, but a full cure takes up to 30 days. Go easy on scrubbing and heavy use until then.</p>"
+          }
+        },
+        {
+          "type": "faq",
+          "settings": {
+            "question": "Can I spray it?",
+            "answer": "<p>Yes. Thin per the label for your sprayer and keep a wet edge. A brush or roller works just as well if you'd rather not mask off.</p>"
+          }
+        },
+        {
+          "type": "faq",
+          "settings": {
+            "question": "What's the cleanup?",
+            "answer": "<p>Warm, soapy water while the paint is still wet — these are water-based finishes, so no solvents needed.</p>"
+          }
+        },
+        {
+          "type": "faq",
+          "settings": {
+            "question": "Is it low odor?",
+            "answer": "<p>Yes. Our interior finishes are low-VOC and low-odor, so you can paint and stay in the room comfortably.</p>"
+          }
+        },
+        {
+          "type": "faq",
+          "settings": {
+            "question": "Do you match colors?",
+            "answer": "<p>We do. Bring in a chip, a photo, or a brand name and we'll match it — or order a peel-and-stick sample first.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
