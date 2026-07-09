@@ -1,0 +1,42 @@
+{%- comment -%}
+  LS Sheen Results
+  ----------------
+  Fetched by the LS Product Detail sheen selector via the Section Rendering API:
+    /search?q=AWIAP&type=product&section_id=ls-sheen-results
+
+  Sheens are separate sibling products sharing an all-uppercase line tag (e.g.
+  AWIAP). Each result carries its all-caps line tags (so the combobox can filter
+  to true siblings) and a sheen label parsed from the title (after " - ").
+  Not meant to be added to a template (no presets).
+{%- endcomment -%}
+{%- if search.performed -%}
+  {%- for item in search.results -%}
+    {%- if item.object_type != 'product' -%}{%- continue -%}{%- endif -%}
+    {%- liquid
+      assign lt = '|'
+      for tag in item.tags
+        assign tag_up = tag | upcase
+        assign tag_down = tag | downcase
+        if tag == tag_up and tag != tag_down
+          assign lt = lt | append: tag | append: '|'
+        endif
+      endfor
+      assign sheen = item.title | split: ' - ' | last | strip
+    -%}
+    {%- unless lt == '|' -%}
+      <a
+        class="ls-pdp__sheen-opt"
+        href="{{ item.url }}"
+        data-url="{{ item.url }}"
+        data-linetags="{{ lt }}"
+        data-sheen="{{ sheen | escape }}"
+      >{{ sheen }}</a>
+    {%- endunless -%}
+  {%- endfor -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "LS Sheen Results"
+}
+{% endschema %}

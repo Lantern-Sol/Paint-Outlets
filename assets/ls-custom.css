@@ -8,6 +8,322 @@
    Scoped to #MainContent so the header and footer are unaffected. The padding
    insets both the section content and its absolutely-positioned
    .section-background. */
-#MainContent > .shopify-section:not(.ls-hero-section):not(.ls-features-section):not(.ls-trusted-section) {
+#MainContent > .shopify-section:not(.ls-hero-section):not(.ls-features-section):not(.ls-trusted-section):not(.ls-advantage-section) {
   padding-inline: 2.5%;
+}
+
+/* Never let the page scroll horizontally on any template. `clip` (not `hidden`)
+   contains stray overflow without creating a scroll container, so sticky
+   elements like the header keep working. Intentional inner carousels keep
+   their own overflow-x since this only applies to the root scroll box. */
+html,
+body {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+/* ==========================================================================
+   LS Product Card (.ls-pcard)
+   Reusable card rendered by snippets/ls-product-card.liquid. Shared by the
+   LS Featured Products section and the collection grid, so the styling lives
+   here (globally loaded) rather than in any one section.
+   ========================================================================== */
+.ls-pcard {
+  --ls-pcard-accent: #c13121;
+  --ls-pcard-text: #1a1a1a;
+  --ls-pcard-muted: #6b7280;
+  --ls-pcard-star: #f5a623;
+  --ls-pcard-star-bg: #e3e4e6;
+  --ls-pcard-success: #1e854a;
+  --ls-pcard-surface: #ffffff;
+  --ls-pcard-media-bg: #f5f4f2;
+  --ls-pcard-border: #eceae7;
+  --ls-pcard-radius: 16px;
+
+  display: flex;
+  flex-direction: column;
+  background: var(--ls-pcard-surface);
+  border: 1px solid var(--ls-pcard-border);
+  border-radius: var(--ls-pcard-radius);
+  overflow: hidden;
+  color: var(--ls-pcard-text);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  /* Query container so card text can scale to the card's own width (cqi). */
+  container-type: inline-size;
+}
+
+.ls-pcard:hover {
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.06), 0 12px 28px rgb(0 0 0 / 0.08);
+  transform: translateY(-2px);
+}
+
+.ls-pcard__media-wrap {
+  position: relative;
+  background: var(--ls-pcard-media-bg);
+}
+
+.ls-pcard__vendor {
+  position: absolute;
+  z-index: 2;
+  top: 0.7rem;
+  left: 0.7rem;
+  background: color-mix(in srgb, var(--ls-pcard-accent) 12%, #fff);
+  color: var(--ls-pcard-accent);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+}
+
+.ls-pcard__wishlist {
+  position: absolute;
+  z-index: 2;
+  top: 0.55rem;
+  right: 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.9);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  cursor: pointer;
+  color: var(--ls-pcard-muted);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.ls-pcard__wishlist:hover {
+  color: var(--ls-pcard-accent);
+}
+
+.ls-pcard__wishlist-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.ls-pcard__wishlist-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.ls-pcard__wishlist-input:checked ~ .ls-pcard__wishlist-icon {
+  color: var(--ls-pcard-accent);
+  fill: var(--ls-pcard-accent);
+  stroke: var(--ls-pcard-accent);
+}
+
+.ls-pcard__wishlist-input:focus-visible ~ .ls-pcard__wishlist-icon {
+  outline: 2px solid var(--ls-pcard-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.ls-pcard__media {
+  display: block;
+  aspect-ratio: var(--ls-pcard-ratio, 1 / 1);
+  overflow: hidden;
+}
+
+.ls-pcard__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.35s ease;
+}
+
+.ls-pcard:hover .ls-pcard__img {
+  transform: scale(1.04);
+}
+
+.ls-pcard__img--placeholder {
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.04);
+}
+
+.ls-pcard__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.9rem 1rem 1.1rem;
+  /* Fill the card height so the CTA can be pinned to the bottom regardless of
+     how many lines the title wraps to — keeps buttons aligned across a row. */
+  flex: 1 1 auto;
+}
+
+.ls-pcard__rating {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8125rem;
+}
+
+.ls-pcard__stars {
+  display: inline-flex;
+  gap: 1px;
+}
+
+.ls-pcard__star {
+  position: relative;
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+}
+
+.ls-pcard__star-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.ls-pcard__star-bg {
+  fill: var(--ls-pcard-star-bg);
+}
+
+.ls-pcard__star-fg {
+  fill: var(--ls-pcard-star);
+  clip-path: inset(0 calc(100% - var(--star-fill, 0%)) 0 0);
+}
+
+.ls-pcard__rating-value {
+  font-weight: 700;
+  color: var(--ls-pcard-text);
+}
+
+.ls-pcard__rating-count {
+  color: var(--ls-pcard-muted);
+}
+
+.ls-pcard__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.ls-pcard__title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.ls-pcard__title a:hover {
+  color: var(--ls-pcard-accent);
+}
+
+.ls-pcard__price {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  /* Anchor the price → stock → CTA block to the bottom of the card so it sits
+     at the same position on every card, regardless of title length. */
+  margin-top: auto;
+  white-space: nowrap;
+}
+
+.ls-pcard__price-from {
+  font-size: 0.75rem;
+  color: #17191D;
+}
+
+.ls-pcard__price-amount {
+  /* Scale with the card's width (cqi) so "From $xx – $xx" stays on one row. */
+  font-size: clamp(0.9375rem, 6cqi, 1.25rem);
+  font-weight: 700;
+}
+
+.ls-pcard__price-compare {
+  color: var(--ls-pcard-muted);
+  font-size: 0.8125rem;
+}
+
+.ls-pcard__stock {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e854a;
+  white-space: wrap;
+}
+
+.ls-pcard__stock--out {
+  color: var(--ls-pcard-muted);
+  font-weight: 400;
+}
+
+.ls-pcard__stock-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--ls-pcard-success);
+  flex-shrink: 0;
+}
+
+.ls-pcard__stock--out .ls-pcard__stock-dot {
+  background: var(--ls-pcard-muted);
+}
+
+.ls-pcard__form {
+  display: block;
+  margin-top: 0.35rem;
+}
+
+.ls-pcard__form form {
+  margin: 0;
+}
+
+.ls-pcard__cta {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.7rem 1rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--ls-pcard-accent);
+  color: #fff;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.ls-pcard__form .ls-pcard__cta {
+  margin-top: 0;
+}
+
+.ls-pcard__cta:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ls-pcard-accent) 88%, #000);
+}
+
+.ls-pcard__cta:disabled {
+  background: #c9cacc;
+  cursor: default;
+}
+
+@media screen and (max-width: 749px) {
+  .ls-pcard__body {
+    padding: 0.85rem;
+  }
+
+  .ls-pcard__title {
+    font-size: 0.875rem;
+  }
+
+  .ls-pcard__cta {
+    padding: 0.6rem 0.85rem;
+  }
 }

@@ -1,0 +1,28 @@
+{%- comment -%}
+  Inline stroke icons for the LS Advantage feature cards.
+  Param: name - flow | shield | droplet | clock | leaf | spray | sparkle | check | star | brush
+{%- endcomment -%}
+{%- case name -%}
+  {%- when 'flow' -%}
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 8c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 14c2-2 4-2 6 0s4 2 6 0 4-2 6 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+  {%- when 'shield' -%}
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 2.5v5c0 4.6-3 8.6-7 10-4-1.4-7-5.4-7-10v-5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12l2 2 4-4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {%- when 'droplet' -%}
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3s6 6.5 6 10.5A6 6 0 0 1 6 13.5C6 9.5 12 3 12 3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+  {%- when 'clock' -%}
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {%- when 'leaf' -%}
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 4S6 4 5 14a6 6 0 0 0 6 6c9-1 9-16 9-16z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 15c3-3 6-4 9-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+  {%- when 'spray' -%}
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="7" y="8" width="8" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M9 8V5h4v3M16 5h3M16 8.5h3M17.5 3v.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {%- when 'sparkle' -%}
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9l-4.7 1.3L12 15l-1.8-4.7L5.5 9l4.7-1.3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+  {%- when 'check' -%}
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 12.2l2.4 2.3 4.6-4.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {%- when 'star' -%}
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 17l-5.2 2.6 1-5.8L3.5 9.7l5.9-.9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+  {%- when 'brush' -%}
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 4l6 6-6 4-4-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 10l-4 4c-1.5 1.5-1.5 4 0 4s4-1.5 4-3v-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {%- else -%}
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6"/></svg>
+{%- endcase -%}
