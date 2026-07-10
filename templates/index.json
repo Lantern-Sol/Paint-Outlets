@@ -14,9 +14,9 @@
       "name": "LS Hero",
       "settings": {
         "font_family": "outfit_n4",
-        "heading": "<p>Pro-Quality Paint & Supplies <em>Delivered </em></p><p><em>To Your Door</em></p>",
+        "heading": "<p>Pro-Quality Paint & Supplies Delivered </p><p>To Your Door</p>",
         "subtext": "Shop Benjamin Moore, Festool, Graco, stains, coatings, and pro-grade supplies for weekend projects and job sites alike, backed by 72+ years of paint expertise.",
-        "image": "shopify://shop_images/homepage-hero-current.png",
+        "image": "shopify://shop_images/homepage-hero-v4.png",
         "image_mobile": "shopify://shop_images/hero-mobile-current.png",
         "image_position": "right center",
         "show_rating": true,
@@ -61,8 +61,8 @@
         "heading_accent_color": "#c13121",
         "subtext_color": "#ffffff",
         "section_min_height": 640,
-        "image_width": 1500,
-        "gradient_coverage": 48,
+        "image_width": 1800,
+        "gradient_coverage": 40,
         "gradient_angle": 120,
         "padding-block-start": 0,
         "padding-block-end": 0
