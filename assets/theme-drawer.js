@@ -2,8 +2,10 @@ import { Component } from '@theme/component';
 import { trapFocus, removeTrapFocus } from '@theme/focus';
 import { isClickedOutside, lockScroll, onAnimationEnd, unlockScroll } from '@theme/utilities';
 
-/** Viewport width below which the drawer opens as a modal overlay (no squeeze). */
-const MODAL_BREAKPOINT = 990;
+/** Viewport width below which the drawer opens as a modal overlay (no squeeze).
+ *  LS: raised so the drawer ALWAYS opens as a modal overlay (on top of the page,
+ *  with a backdrop) instead of squeezing/shrinking the page content on desktop. */
+const MODAL_BREAKPOINT = 100000;
 
 /**
  * A drawer that opens from the right side.

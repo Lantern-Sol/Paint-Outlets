@@ -1,0 +1,1136 @@
+{%- comment -%}
+  LS Calculator
+  -------------
+  "How much paint will you need?" sizing calculator for a paint PDP.
+
+  Reads the live `product`. The shopper enters an area (slider) and picks a coat
+  count (1/2/3); the section computes the gallons required as:
+
+      required_sqft = area × coats
+      gallons       = ceil(required_sqft / coverage)
+
+  where `coverage` is the sq ft covered by one gallon (a section setting,
+  overridable per product via the `custom.coverage_sqft` metafield). When the
+  job is small — required_sqft ≤ coverage / 4 — it switches the unit to a quart
+  (a quart covers a quarter of a gallon's area) so the shopper buys the smaller
+  size instead of a whole gallon.
+
+  Sizes map to variants by the product's Size option value name (Gallon / Quart,
+  like ls-product-detail): "Add 2 gallons" adds the Gallon variant × 2, a quart
+  job adds the Quart variant. The Add button reuses product-form-component so it
+  drops into the theme cart drawer exactly like the PDP form. Estimated price =
+  quantity × that variant's price.
+
+  Typical spaces (Bathroom, Bedroom, …) are repeatable "preset" blocks that set
+  the slider to a fixed area.
+{%- endcomment -%}
+
+{%- liquid
+  assign c_font = section.settings.font_family
+  assign c_font_500 = c_font | font_modify: 'weight', '500'
+  assign c_font_600 = c_font | font_modify: 'weight', '600'
+  assign c_font_700 = c_font | font_modify: 'weight', '700'
+
+  assign has_product = false
+  if product != blank and product.id != blank
+    assign has_product = true
+  endif
+
+  # --- Coverage (sq ft per gallon): product metafield wins, else setting ---
+  assign coverage = section.settings.coverage_per_gallon | default: 400
+  assign mf_cov = product.metafields.custom.coverage_sqft.value
+  if mf_cov != blank and mf_cov > 0
+    assign coverage = mf_cov
+  endif
+  assign coverage = coverage | times: 1
+  assign cov_f = coverage | times: 1.0
+  assign quart_cov = cov_f | divided_by: 4.0
+
+  # --- Locate the Size option, then classify variants into gallon / quart ---
+  assign size_name = section.settings.size_option_name | default: 'Size' | downcase
+  assign size_pos = 0
+  for option in product.options_with_values
+    assign on_dc = option.name | downcase
+    if on_dc == size_name
+      assign size_pos = option.position
+      break
+    endif
+  endfor
+
+  assign gal_id = ''
+  assign gal_price = 0
+  assign gal_per = 0
+  assign gal_avail = false
+  assign qt_id = ''
+  assign qt_price = 0
+  assign qt_per = 0
+  assign qt_avail = false
+
+  assign size_idx = size_pos | minus: 1
+  for v in product.variants
+    if size_pos > 0
+      assign sv = v.options[size_idx]
+    else
+      assign sv = v.title
+    endif
+    assign sv_dc = sv | downcase
+    assign num = sv | split: ' ' | first | times: 1
+    if num == 0
+      assign num = 1
+    endif
+    if sv_dc contains 'gallon' or sv_dc contains 'gal'
+      if gal_id == '' or num == 1
+        assign gal_id = v.id
+        assign gal_price = v.price
+        assign gal_per = num
+        assign gal_avail = v.available
+      endif
+    elsif sv_dc contains 'quart' or sv_dc contains 'qt'
+      assign q_per = num | times: 0.25
+      if qt_id == '' or num == 1
+        assign qt_id = v.id
+        assign qt_price = v.price
+        assign qt_per = q_per
+        assign qt_avail = v.available
+      endif
+    endif
+  endfor
+
+  # No size variants matched — treat the default variant as a single gallon.
+  if gal_id == '' and qt_id == '' and has_product
+    assign dv = product.selected_or_first_available_variant
+    assign gal_id = dv.id
+    assign gal_price = dv.price
+    assign gal_per = 1
+    assign gal_avail = dv.available
+  endif
+
+  # --- Server-side initial state (also the no-JS result) ---
+  assign init_area = section.settings.default_area | default: 400 | times: 1
+  assign init_coats = section.settings.default_coats | default: 2 | times: 1
+  assign init_req = init_area | times: init_coats
+
+  # Pick the cheaper unit: price the job in whole gallons and in whole quarts
+  # (each rounded up to cover the area) and take the lower total. Gallon wins
+  # ties, so e.g. 4 quarts (= a gallon's volume) defers to 1 gallon.
+  assign g_unit_cov = gal_per | times: cov_f
+  if g_unit_cov <= 0
+    assign g_unit_cov = cov_f
+  endif
+  assign q_unit_cov = qt_per | times: cov_f
+  if q_unit_cov <= 0
+    assign q_unit_cov = quart_cov
+  endif
+
+  assign gal_qty = init_req | divided_by: g_unit_cov | ceil
+  if gal_qty < 1
+    assign gal_qty = 1
+  endif
+  assign gal_total = gal_qty | times: gal_price
+
+  assign qt_qty = init_req | divided_by: q_unit_cov | ceil
+  if qt_qty < 1
+    assign qt_qty = 1
+  endif
+  assign qt_total = qt_qty | times: qt_price
+
+  assign unit_id = gal_id
+  assign unit_price = gal_price
+  assign unit_per = gal_per
+  assign unit_avail = gal_avail
+  assign unit_label = 'gallon'
+
+  assign use_quart = false
+  if qt_id != '' and gal_id == ''
+    assign use_quart = true
+  elsif qt_id != '' and qt_total < gal_total
+    assign use_quart = true
+  endif
+  if use_quart
+    assign unit_id = qt_id
+    assign unit_price = qt_price
+    assign unit_per = qt_per
+    assign unit_avail = qt_avail
+    assign unit_label = 'quart'
+  endif
+
+  assign unit_cov = unit_per | times: cov_f
+  if unit_cov <= 0
+    assign unit_cov = cov_f
+  endif
+  assign init_qty = init_req | divided_by: unit_cov | ceil
+  if init_qty < 1
+    assign init_qty = 1
+  endif
+  assign init_covers = init_qty | times: unit_cov | round
+  assign init_total = init_qty | times: unit_price
+  assign init_unit_disp = unit_label
+  if init_qty > 1
+    assign init_unit_disp = unit_label | append: 's'
+  endif
+
+  assign area_min = section.settings.area_min | default: 50 | times: 1
+  assign area_max = section.settings.area_max | default: 2000 | times: 1
+  assign area_step = section.settings.area_step | default: 10 | times: 1
+-%}
+
+{% style %}
+  {{ c_font | font_face: font_display: 'swap' }}
+  {{ c_font_500 | font_face: font_display: 'swap' }}
+  {{ c_font_600 | font_face: font_display: 'swap' }}
+  {{ c_font_700 | font_face: font_display: 'swap' }}
+
+  .ls-calc-{{ section.id }} {
+    --ls-calc-font: {{ c_font.family }}, {{ c_font.fallback_families }};
+    --ls-calc-eyebrow: {{ section.settings.eyebrow_color | default: '#c13121' }};
+    --ls-calc-heading: {{ section.settings.heading_color | default: '#1a1a1a' }};
+    --ls-calc-subtext: {{ section.settings.subtext_color | default: '#8a8f98' }};
+    --ls-calc-accent: {{ section.settings.accent_color | default: '#c13121' }};
+    --ls-calc-surface: {{ section.settings.surface_color | default: '#ffffff' }};
+    --ls-calc-border: {{ section.settings.border_color | default: '#e5e7eb' }};
+    --ls-calc-label: {{ section.settings.label_color | default: '#1a1a1a' }};
+    --ls-calc-muted: {{ section.settings.muted_color | default: '#9aa0a6' }};
+    --ls-calc-track: {{ section.settings.track_color | default: '#eceded' }};
+    --ls-calc-chip: {{ section.settings.chip_background | default: '#f4f5f6' }};
+    --ls-calc-result-bg: {{ section.settings.result_background | default: '#17181c' }};
+    --ls-calc-result-text: {{ section.settings.result_text_color | default: '#ffffff' }};
+    --ls-calc-result-muted: {{ section.settings.result_muted_color | default: 'rgba(255,255,255,0.55)' }};
+    --ls-calc-result-accent: {{ section.settings.result_accent_color | default: '#e0685c' }};
+    --ls-calc-radius: {{ section.settings.corner_radius | default: 20 }}px;
+  }
+{% endstyle %}
+
+<div
+  class="ls-calc ls-calc-{{ section.id }} spacing-style"
+  style="{% render 'spacing-style', settings: section.settings %}"
+>
+  <div class="ls-calc__inner">
+    {%- if section.settings.eyebrow != blank or section.settings.heading != blank or section.settings.subtext != blank -%}
+      <div class="ls-calc__head">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="ls-calc__eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        {%- if section.settings.heading != blank -%}
+          <h2 class="ls-calc__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+        {%- if section.settings.subtext != blank -%}
+          <div class="ls-calc__subtext">{{ section.settings.subtext }}</div>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- unless has_product -%}
+      <p class="ls-calc__empty">This section renders on a product page. Preview a paint product to see the calculator.</p>
+    {%- else -%}
+      <product-form-component
+        data-section-id="{{ section.id }}"
+        data-product-id="{{ product.id }}"
+        on:submit="/handleSubmit"
+        class="ls-calc__card"
+        data-ls-calc
+        data-coverage="{{ coverage }}"
+        data-currency="{{ cart.currency.iso_code | default: shop.currency }}"
+        data-gallon='{% if gal_id != blank %}{"id":{{ gal_id | json }},"price":{{ gal_price }},"per":{{ gal_per }},"avail":{{ gal_avail }}}{% else %}null{% endif %}'
+        data-quart='{% if qt_id != blank %}{"id":{{ qt_id | json }},"price":{{ qt_price }},"per":{{ qt_per }},"avail":{{ qt_avail }}}{% else %}null{% endif %}'
+      >
+        <div class="visually-hidden" role="status" aria-live="assertive" aria-atomic="true" ref="liveRegion"></div>
+        {%- form 'product', product, novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
+          {%- comment -%} ================= Controls ================= {%- endcomment -%}
+          <div class="ls-calc__panel ls-calc__panel--controls">
+            <div class="ls-calc__field">
+              <div class="ls-calc__field-head">
+                <span class="ls-calc__field-label">{{ section.settings.area_label | default: 'Area to cover' }}</span>
+                <span class="ls-calc__area">
+                  <span class="ls-calc__area-val" data-area-val>{{ init_area }}</span>
+                  <span class="ls-calc__area-unit">sq ft</span>
+                </span>
+              </div>
+              <input
+                type="range"
+                class="ls-calc__slider"
+                data-area
+                min="{{ area_min }}"
+                max="{{ area_max }}"
+                step="{{ area_step }}"
+                value="{{ init_area }}"
+                aria-label="{{ section.settings.area_label | default: 'Area to cover' | escape }} in square feet"
+              >
+              <div class="ls-calc__scale">
+                <span>{{ area_min }} sq ft</span>
+                <span>{{ area_max }}+ sq ft</span>
+              </div>
+            </div>
+
+            {%- if section.blocks.size > 0 -%}
+              <div class="ls-calc__presets">
+                <span class="ls-calc__mini-label">{{ section.settings.presets_label | default: 'Or start from a typical space' }}</span>
+                <div class="ls-calc__preset-grid">
+                  {%- for block in section.blocks -%}
+                    {%- if block.type == 'preset' -%}
+                      <button
+                        type="button"
+                        class="ls-calc__preset"
+                        data-preset="{{ block.settings.area | times: 1 }}"
+                        {{ block.shopify_attributes }}
+                      >
+                        <span class="ls-calc__preset-name">{{ block.settings.label }}</span>
+                        <span class="ls-calc__preset-area">{{ block.settings.area | times: 1 }} sq ft</span>
+                      </button>
+                    {%- endif -%}
+                  {%- endfor -%}
+                </div>
+              </div>
+            {%- endif -%}
+
+            <div class="ls-calc__coats">
+              <span class="ls-calc__mini-label">{{ section.settings.coats_label | default: 'Coats' }}</span>
+              <div class="ls-calc__seg" role="radiogroup" aria-label="{{ section.settings.coats_label | default: 'Coats' | escape }}">
+                {%- for n in (1..3) -%}
+                  <button
+                    type="button"
+                    class="ls-calc__seg-btn{% if n == init_coats %} is-active{% endif %}"
+                    data-coats="{{ n }}"
+                    role="radio"
+                    aria-checked="{% if n == init_coats %}true{% else %}false{% endif %}"
+                  >
+                    {{ n }} coat{% if n > 1 %}s{% endif %}
+                  </button>
+                {%- endfor -%}
+              </div>
+            </div>
+          </div>
+
+          {%- comment -%} ================= Result ================= {%- endcomment -%}
+          <div class="ls-calc__panel ls-calc__panel--result">
+            <span class="ls-calc__result-label">{{ section.settings.result_label | default: "You'll need about" }}</span>
+            <p class="ls-calc__result-amount">
+              <span class="ls-calc__result-qty" data-qty>{{ init_qty }}</span>
+              <span class="ls-calc__result-unit" data-unit>{{ init_unit_disp }}</span>
+            </p>
+            <p class="ls-calc__result-meta">
+              Covers up to <span data-covers>{{ init_covers }}</span> sq ft &middot;
+              estimated <strong data-total>{{ init_total | money }}</strong>
+            </p>
+
+            <hr class="ls-calc__divider">
+
+            <input type="hidden" name="id" ref="variantId" data-variant-id value="{{ unit_id }}"{% unless unit_avail %} disabled{% endunless %}>
+            <input type="hidden" name="quantity" data-quantity value="{{ init_qty }}">
+
+            <button
+              type="submit"
+              name="add"
+              ref="addToCartButton"
+              class="ls-calc__add"
+              data-add
+              {% unless unit_avail %}disabled{% endunless %}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 3h2l1.2 9.2a1 1 0 0 0 1 .8h7.6a1 1 0 0 0 1-.8L18 6H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="17" r="1.2" fill="currentColor"/><circle cx="15" cy="17" r="1.2" fill="currentColor"/></svg>
+              <span data-add-label>
+                {%- if unit_avail -%}
+                  {{ section.settings.add_prefix | default: 'Add' }} {{ init_qty }} {{ init_unit_disp }}
+                {%- else -%}
+                  {{ section.settings.unavailable_text | default: 'Currently unavailable' }}
+                {%- endif -%}
+              </span>
+            </button>
+
+            <p class="ls-calc__footnote">Based on ~<span data-cov>{{ coverage }}</span> sq ft per gallon</p>
+          </div>
+        {%- endform -%}
+      </product-form-component>
+    {%- endunless -%}
+  </div>
+</div>
+
+{%- if has_product -%}
+  <script>
+    (function () {
+      var root = document.querySelector('.ls-calc-{{ section.id }} [data-ls-calc]');
+      if (!root) return;
+
+      function parseUnit(raw, label) {
+        try {
+          var u = JSON.parse(raw);
+          if (!u) return null;
+          u.label = label;
+          return u;
+        } catch (e) { return null; }
+      }
+
+      var coverage = parseFloat(root.getAttribute('data-coverage')) || 400;
+      var currency = root.getAttribute('data-currency') || 'USD';
+      var gallon = parseUnit(root.getAttribute('data-gallon'), 'gallon');
+      var quart = parseUnit(root.getAttribute('data-quart'), 'quart');
+
+      var slider = root.querySelector('[data-area]');
+      var areaVal = root.querySelector('[data-area-val]');
+      var qtyEl = root.querySelector('[data-qty]');
+      var unitEl = root.querySelector('[data-unit]');
+      var coversEl = root.querySelector('[data-covers]');
+      var totalEl = root.querySelector('[data-total]');
+      var idInput = root.querySelector('[data-variant-id]');
+      var qtyInput = root.querySelector('[data-quantity]');
+      var addBtn = root.querySelector('[data-add]');
+      var addLabel = root.querySelector('[data-add-label]');
+      var presets = Array.prototype.slice.call(root.querySelectorAll('[data-preset]'));
+      var coatBtns = Array.prototype.slice.call(root.querySelectorAll('[data-coats]'));
+
+      var addPrefix = {{ section.settings.add_prefix | default: 'Add' | json }};
+      var unavailableText = {{ section.settings.unavailable_text | default: 'Currently unavailable' | json }};
+
+      var money;
+      try {
+        var fmt = new Intl.NumberFormat(undefined, { style: 'currency', currency: currency });
+        money = function (cents) { return fmt.format((cents || 0) / 100); };
+      } catch (e) {
+        money = function (cents) { return '$' + ((cents || 0) / 100).toFixed(2); };
+      }
+
+      var coats = {{ init_coats }};
+
+      function fillSlider() {
+        if (!slider) return;
+        var min = parseFloat(slider.min) || 0;
+        var max = parseFloat(slider.max) || 100;
+        var pct = ((parseFloat(slider.value) - min) / (max - min)) * 100;
+        slider.style.setProperty('--ls-calc-pct', pct + '%');
+      }
+
+      function update() {
+        var area = slider ? parseFloat(slider.value) || 0 : 0;
+        var max = slider ? parseFloat(slider.max) || 0 : 0;
+        var req = area * coats;
+
+        if (areaVal) {
+          areaVal.textContent = area.toLocaleString() + (area >= max ? '+' : '');
+        }
+        fillSlider();
+
+        // Choose the cheaper unit: price the job in whole gallons and in whole
+        // quarts (each rounded up to cover the area) and take the lower total.
+        // Gallon wins ties, so 4 quarts (a gallon's volume) defers to 1 gallon.
+        function option(u, fallbackPer) {
+          if (!u) return null;
+          var cov = (u.per > 0 ? u.per : fallbackPer) * coverage;
+          var q = Math.max(1, Math.ceil(req / cov));
+          return { unit: u, qty: q, total: q * (u.price || 0) };
+        }
+        var gOpt = option(gallon, 1);
+        var qOpt = option(quart, 0.25);
+        var pick;
+        if (gOpt && qOpt) {
+          pick = qOpt.total < gOpt.total ? qOpt : gOpt;
+        } else {
+          pick = gOpt || qOpt;
+        }
+        if (!pick) {
+          if (addBtn) { addBtn.disabled = true; }
+          if (addLabel) { addLabel.textContent = unavailableText; }
+          return;
+        }
+
+        var unit = pick.unit;
+        var qty = pick.qty;
+        var unitCov = (unit.per > 0 ? unit.per : 1) * coverage; // sq ft one unit covers
+        var covers = Math.round(qty * unitCov);
+        var total = qty * (unit.price || 0);
+        var noun = unit.label + (qty > 1 ? 's' : '');
+
+        if (qtyEl) qtyEl.textContent = qty;
+        if (unitEl) unitEl.textContent = noun;
+        if (coversEl) coversEl.textContent = covers.toLocaleString();
+        if (totalEl) totalEl.textContent = money(total);
+        if (idInput) {
+          idInput.value = unit.id;
+          if (unit.avail) { idInput.removeAttribute('disabled'); } else { idInput.setAttribute('disabled', ''); }
+        }
+        if (qtyInput) qtyInput.value = qty;
+        if (addBtn) addBtn.disabled = !unit.avail;
+        if (addLabel) {
+          addLabel.textContent = unit.avail ? (addPrefix + ' ' + qty + ' ' + noun) : unavailableText;
+        }
+      }
+
+      if (slider) {
+        slider.addEventListener('input', update);
+        slider.addEventListener('change', update);
+      }
+
+      presets.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (!slider) return;
+          var v = parseFloat(btn.getAttribute('data-preset'));
+          if (isNaN(v)) return;
+          var min = parseFloat(slider.min) || 0;
+          var max = parseFloat(slider.max) || v;
+          slider.value = Math.min(Math.max(v, min), max);
+          presets.forEach(function (p) { p.classList.remove('is-active'); });
+          btn.classList.add('is-active');
+          update();
+        });
+      });
+
+      coatBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          coats = parseInt(btn.getAttribute('data-coats'), 10) || 1;
+          coatBtns.forEach(function (b) {
+            var on = b === btn;
+            b.classList.toggle('is-active', on);
+            b.setAttribute('aria-checked', on ? 'true' : 'false');
+          });
+          update();
+        });
+      });
+
+      // Clear the preset highlight once the shopper drags the slider itself.
+      if (slider) {
+        slider.addEventListener('input', function () {
+          presets.forEach(function (p) { p.classList.remove('is-active'); });
+        });
+      }
+
+      update();
+    })();
+  </script>
+{%- endif -%}
+
+{% stylesheet %}
+  .ls-calc {
+    font-family: var(--ls-calc-font, 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    background: var(--ls-calc-page-bg, transparent);
+  }
+
+  .ls-calc__inner {
+    max-width: 1160px;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 80px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(1.75rem, 3.5vw, 2.5rem);
+  }
+
+  .ls-calc__head {
+    max-width: 620px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .ls-calc__eyebrow {
+    margin: 0;
+    color: var(--ls-calc-eyebrow);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .ls-calc__heading {
+    margin: 0;
+    color: var(--ls-calc-heading);
+    font-weight: 700;
+    font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .ls-calc__subtext {
+    color: var(--ls-calc-subtext);
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+  .ls-calc__subtext > :first-child { margin-top: 0; }
+  .ls-calc__subtext > :last-child { margin-bottom: 0; }
+
+  .ls-calc__empty {
+    color: var(--ls-calc-muted);
+    font-size: 0.95rem;
+    text-align: center;
+  }
+
+  /* ---------- Card ---------- */
+  .ls-calc__card {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    width: 100%;
+    border-radius: var(--ls-calc-radius);
+    overflow: hidden;
+    background: var(--ls-calc-surface);
+    border: 1px solid var(--ls-calc-border);
+    box-shadow: 0 30px 60px -40px rgba(17, 24, 39, 0.35);
+  }
+  /* The Shopify product form wraps our two panels; let them join the grid. */
+  .ls-calc__card > form {
+    display: contents;
+  }
+
+  .ls-calc__panel {
+    padding: clamp(1.5rem, 2.6vw, 2.25rem);
+  }
+
+  .ls-calc__panel--controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* ---------- Area field ---------- */
+  .ls-calc__field-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .ls-calc__field-label {
+    color: var(--ls-calc-label);
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  .ls-calc__area {
+    color: var(--ls-calc-heading);
+    font-weight: 700;
+    font-size: 1.5rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .ls-calc__area-unit {
+    color: var(--ls-calc-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    margin-left: 2px;
+  }
+
+  /* Range input — filled track up to the thumb via --ls-calc-pct. */
+  .ls-calc__slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background:
+      linear-gradient(var(--ls-calc-accent), var(--ls-calc-accent)) no-repeat,
+      var(--ls-calc-track);
+    background-size: var(--ls-calc-pct, 0%) 100%;
+    cursor: pointer;
+    outline-offset: 4px;
+  }
+  .ls-calc__slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--ls-calc-accent);
+    border: 3px solid var(--ls-calc-surface);
+    box-shadow: 0 2px 6px rgba(17, 24, 39, 0.3);
+    cursor: pointer;
+  }
+  .ls-calc__slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--ls-calc-accent);
+    border: 3px solid var(--ls-calc-surface);
+    box-shadow: 0 2px 6px rgba(17, 24, 39, 0.3);
+    cursor: pointer;
+  }
+  .ls-calc__slider::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--ls-calc-track);
+  }
+  .ls-calc__slider::-moz-range-progress {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--ls-calc-accent);
+  }
+
+  .ls-calc__scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.6rem;
+    color: var(--ls-calc-muted);
+    font-size: 0.75rem;
+  }
+
+  .ls-calc__mini-label {
+    display: block;
+    margin-bottom: 0.65rem;
+    color: var(--ls-calc-label);
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  /* ---------- Presets ---------- */
+  .ls-calc__preset-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .ls-calc__preset {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    padding: 12px 14px;
+    text-align: left;
+    background: var(--ls-calc-surface);
+    border: 1px solid var(--ls-calc-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .ls-calc__preset:hover {
+    border-color: var(--ls-calc-accent);
+  }
+  .ls-calc__preset.is-active {
+    border-color: var(--ls-calc-accent);
+    box-shadow: inset 0 0 0 1px var(--ls-calc-accent);
+  }
+  .ls-calc__preset-name {
+    color: var(--ls-calc-label);
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+  .ls-calc__preset-area {
+    color: var(--ls-calc-muted);
+    font-size: 0.8125rem;
+  }
+
+  /* ---------- Coats segmented control ---------- */
+  .ls-calc__seg {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 5px;
+    background: var(--ls-calc-chip);
+    border-radius: 12px;
+  }
+  .ls-calc__seg-btn {
+    padding: 10px 8px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ls-calc-label);
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .ls-calc__seg-btn:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+  .ls-calc__seg-btn.is-active {
+    background: var(--ls-calc-accent);
+    color: #fff;
+    box-shadow: 0 2px 8px -2px rgba(193, 49, 33, 0.55);
+  }
+
+  /* ---------- Result panel ---------- */
+  .ls-calc__panel--result {
+    display: flex;
+    flex-direction: column;
+    background: var(--ls-calc-result-bg);
+    color: var(--ls-calc-result-text);
+  }
+
+  .ls-calc__result-label {
+    color: var(--ls-calc-result-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .ls-calc__result-amount {
+    margin: 0.35rem 0 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .ls-calc__result-qty {
+    font-size: clamp(2.75rem, 6vw, 3.5rem);
+  }
+  .ls-calc__result-unit {
+    color: var(--ls-calc-result-accent);
+    font-size: clamp(1.5rem, 3vw, 1.875rem);
+    font-weight: 700;
+  }
+
+  .ls-calc__result-meta {
+    margin: 0.85rem 0 0;
+    color: var(--ls-calc-result-muted);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+  .ls-calc__result-meta strong {
+    color: var(--ls-calc-result-text);
+    font-weight: 700;
+  }
+
+  .ls-calc__divider {
+    height: 1px;
+    border: 0;
+    background: rgba(255, 255, 255, 0.12);
+    margin: clamp(1.25rem, 2.4vw, 1.75rem) 0;
+  }
+
+  .ls-calc__add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    width: 100%;
+    padding: 16px 20px;
+    border: none;
+    border-radius: 12px;
+    background: var(--ls-calc-accent);
+    color: #fff;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.05s ease;
+  }
+  .ls-calc__add svg { width: 20px; height: 20px; }
+  .ls-calc__add:hover { filter: brightness(1.06); }
+  .ls-calc__add:active { transform: translateY(1px); }
+  .ls-calc__add:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .ls-calc__footnote {
+    margin: 0.85rem 0 0;
+    text-align: center;
+    color: var(--ls-calc-result-muted);
+    font-size: 0.8125rem;
+  }
+
+  /* Push the button block to the bottom of the dark panel on tall layouts. */
+  .ls-calc__panel--result .ls-calc__divider { margin-top: auto; }
+
+  /* ---------- Responsive ---------- */
+  @media screen and (max-width: 820px) {
+    .ls-calc__card {
+      grid-template-columns: 1fr;
+    }
+    .ls-calc__panel--result .ls-calc__divider { margin-top: clamp(1.25rem, 2.4vw, 1.75rem); }
+  }
+  @media screen and (max-width: 480px) {
+    .ls-calc__preset-grid { grid-template-columns: 1fr; }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS Calculator",
+  "tag": "section",
+  "class": "section section--full-width ls-calculator-section",
+  "settings": [
+    {
+      "type": "font_picker",
+      "id": "font_family",
+      "label": "Font",
+      "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Plan your project"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Heading",
+      "default": "How much paint will you need?"
+    },
+    {
+      "type": "richtext",
+      "id": "subtext",
+      "label": "Subtext",
+      "default": "<p>Tell us the area and coats — we'll size the order so you buy once and never run short mid-wall.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Coverage & sizing"
+    },
+    {
+      "type": "number",
+      "id": "coverage_per_gallon",
+      "label": "Coverage per gallon (sq ft)",
+      "info": "Falls back to the product's custom.coverage_sqft metafield when set. A quart is assumed to cover a quarter of this.",
+      "default": 400
+    },
+    {
+      "type": "text",
+      "id": "size_option_name",
+      "label": "Size option name",
+      "info": "The variant option that holds Gallon / Quart (matched by value name).",
+      "default": "Size"
+    },
+    {
+      "type": "header",
+      "content": "Area slider"
+    },
+    {
+      "type": "number",
+      "id": "area_min",
+      "label": "Minimum area (sq ft)",
+      "default": 50
+    },
+    {
+      "type": "number",
+      "id": "area_max",
+      "label": "Maximum area (sq ft)",
+      "default": 2000
+    },
+    {
+      "type": "number",
+      "id": "area_step",
+      "label": "Slider step (sq ft)",
+      "default": 10
+    },
+    {
+      "type": "number",
+      "id": "default_area",
+      "label": "Default area (sq ft)",
+      "default": 400
+    },
+    {
+      "type": "select",
+      "id": "default_coats",
+      "label": "Default coats",
+      "options": [
+        { "value": "1", "label": "1 coat" },
+        { "value": "2", "label": "2 coats" },
+        { "value": "3", "label": "3 coats" }
+      ],
+      "default": "2"
+    },
+    {
+      "type": "header",
+      "content": "Labels"
+    },
+    {
+      "type": "text",
+      "id": "area_label",
+      "label": "Area label",
+      "default": "Area to cover"
+    },
+    {
+      "type": "text",
+      "id": "presets_label",
+      "label": "Presets label",
+      "default": "Or start from a typical space"
+    },
+    {
+      "type": "text",
+      "id": "coats_label",
+      "label": "Coats label",
+      "default": "Coats"
+    },
+    {
+      "type": "text",
+      "id": "result_label",
+      "label": "Result label",
+      "default": "You'll need about"
+    },
+    {
+      "type": "text",
+      "id": "add_prefix",
+      "label": "Add button prefix",
+      "info": "Followed by the quantity and unit, e.g. \"Add 2 gallons\".",
+      "default": "Add"
+    },
+    {
+      "type": "text",
+      "id": "unavailable_text",
+      "label": "Unavailable button text",
+      "default": "Currently unavailable"
+    },
+    {
+      "type": "header",
+      "content": "Typography colors"
+    },
+    {
+      "type": "color",
+      "id": "eyebrow_color",
+      "label": "Eyebrow",
+      "default": "#c13121"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "subtext_color",
+      "label": "Subtext",
+      "default": "#8a8f98"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent (slider, active states, button)",
+      "default": "#c13121"
+    },
+    {
+      "type": "header",
+      "content": "Controls panel"
+    },
+    {
+      "type": "color",
+      "id": "surface_color",
+      "label": "Panel background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Borders",
+      "default": "#e5e7eb"
+    },
+    {
+      "type": "color",
+      "id": "label_color",
+      "label": "Labels",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted text",
+      "default": "#9aa0a6"
+    },
+    {
+      "type": "color",
+      "id": "track_color",
+      "label": "Slider track",
+      "default": "#eceded"
+    },
+    {
+      "type": "color",
+      "id": "chip_background",
+      "label": "Coats control background",
+      "default": "#f4f5f6"
+    },
+    {
+      "type": "header",
+      "content": "Result panel"
+    },
+    {
+      "type": "color",
+      "id": "result_background",
+      "label": "Background",
+      "default": "#17181c"
+    },
+    {
+      "type": "color",
+      "id": "result_text_color",
+      "label": "Text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "result_muted_color",
+      "label": "Muted text",
+      "default": "#8b8d94"
+    },
+    {
+      "type": "color",
+      "id": "result_accent_color",
+      "label": "Unit accent",
+      "default": "#e0685c"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "corner_radius",
+      "label": "Card corner radius",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "default": 64
+    }
+  ],
+  "blocks": [
+    {
+      "type": "preset",
+      "name": "Typical space",
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Bathroom"
+        },
+        {
+          "type": "number",
+          "id": "area",
+          "label": "Area (sq ft)",
+          "default": 90
+        }
+      ]
+    }
+  ],
+  "max_blocks": 6,
+  "presets": [
+    {
+      "name": "LS Calculator",
+      "blocks": [
+        { "type": "preset", "settings": { "label": "Bathroom", "area": 90 } },
+        { "type": "preset", "settings": { "label": "Bedroom", "area": 150 } },
+        { "type": "preset", "settings": { "label": "Living room", "area": 350 } },
+        { "type": "preset", "settings": { "label": "Whole floor", "area": 1200 } }
+      ]
+    }
+  ]
+}
+{% endschema %}

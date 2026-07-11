@@ -36,6 +36,9 @@
     {% endif %}
 
     {{ content_for_header }}
+
+    {%- comment -%} LS: header restyle to match Figma (see assets/ls-header.css) {%- endcomment -%}
+    {{ 'ls-header.css' | asset_url | stylesheet_tag }}
   </head>
 
   <body class="page-width-{{ settings.page_width }} card-hover-effect-{{ settings.card_hover_effect }}">

@@ -1,0 +1,343 @@
+{%- comment -%}
+  LS Featured Products
+  --------------------
+  "Products you may like" grid of product cards. Each card is rendered by the
+  reusable snippets/ls-product-card.liquid (also used on the collection grid),
+  so card styling comes from assets/ls-custom.css (.ls-pcard*). This section
+  only owns the header + grid layout.
+
+  Source: a manual product list, or fall back to a collection's products.
+{%- endcomment -%}
+{%- liquid
+  assign fp_font = section.settings.font_family
+  assign fp_font_600 = fp_font | font_modify: 'weight', '600'
+  assign fp_font_700 = fp_font | font_modify: 'weight', '700'
+
+  assign fp_products = section.settings.product_list
+  if fp_products == blank or fp_products.count == 0
+    assign fp_products = section.settings.collection.products
+    assign fp_use_collection = true
+  endif
+  assign fp_limit = section.settings.max_products
+-%}
+
+{% style %}
+  {{ fp_font | font_face: font_display: 'swap' }}
+  {{ fp_font_600 | font_face: font_display: 'swap' }}
+  {{ fp_font_700 | font_face: font_display: 'swap' }}
+
+  .ls-featprod-{{ section.id }} {
+    --ls-fp-font-family: {{ fp_font.family }}, {{ fp_font.fallback_families }};
+    --ls-fp-eyebrow: {{ section.settings.eyebrow_color | default: '#c13121' }};
+    --ls-fp-heading: {{ section.settings.heading_color | default: '#1a1a1a' }};
+    --ls-fp-columns: {{ section.settings.columns | default: 4 }};
+  }
+{% endstyle %}
+
+{%- if section.settings.background_color != blank -%}
+  <div class="section-background" style="background-color: {{ section.settings.background_color }};"></div>
+{%- endif -%}
+<div
+  class="section ls-featprod ls-featprod-{{ section.id }} spacing-style"
+  style="{% render 'spacing-style', settings: section.settings %}"
+>
+  <div class="ls-featprod__inner">
+    {%- if section.settings.eyebrow != blank or section.settings.heading != blank -%}
+      <header class="ls-featprod__header">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="ls-featprod__eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        {%- if section.settings.heading != blank -%}
+          <h2 class="ls-featprod__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+      </header>
+    {%- endif -%}
+
+    {%- if fp_products != blank and fp_products.count > 0 -%}
+      <div class="ls-featprod__grid">
+        {%- for fp_product in fp_products limit: fp_limit -%}
+          {%- render 'ls-product-card',
+            card_product: fp_product,
+            show_vendor: section.settings.show_vendor,
+            show_rating: section.settings.show_rating,
+            show_stock: section.settings.show_stock,
+            show_wishlist: section.settings.show_wishlist,
+            cta_mode: section.settings.cta_mode,
+            in_stock_text: section.settings.in_stock_text,
+            out_of_stock_text: section.settings.out_of_stock_text,
+            add_to_cart_text: section.settings.add_to_cart_text,
+            sold_out_text: section.settings.sold_out_text,
+            fallback_rating: section.settings.fallback_rating,
+            fallback_review_count: section.settings.fallback_review_count
+          -%}
+        {%- endfor -%}
+      </div>
+    {%- else -%}
+      <p class="ls-featprod__empty">Select a collection or products to display.</p>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .ls-featprod__inner {
+    font-family: var(--ls-fp-font-family, 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  }
+
+  .ls-featprod__header {
+    margin-bottom: 1.5rem;
+  }
+
+  .ls-featprod__eyebrow {
+    margin: 0 0 0.35rem;
+    color: var(--ls-fp-eyebrow);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .ls-featprod__heading {
+    margin: 0;
+    color: var(--ls-fp-heading);
+    font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+
+  .ls-featprod__grid {
+    display: grid;
+    grid-template-columns: repeat(var(--ls-fp-columns, 4), minmax(0, 1fr));
+    gap: clamp(0.85rem, 1.6vw, 1.25rem);
+  }
+
+  .ls-featprod__empty {
+    color: #6b7280;
+    padding: 1.5rem 0;
+  }
+
+  /* Wrap to fewer columns on smaller screens — never scroll horizontally. */
+  @media screen and (max-width: 989px) {
+    .ls-featprod__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .ls-featprod__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.85rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS Featured Products",
+  "tag": "section",
+  "class": "ls-featprod-section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "font_family",
+      "label": "Font",
+      "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Header"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Paint Outlets"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Products you may like"
+    },
+    {
+      "type": "header",
+      "content": "Products"
+    },
+    {
+      "type": "product_list",
+      "id": "product_list",
+      "label": "Products",
+      "info": "Hand-pick products to feature. Leave empty to pull from the collection below.",
+      "limit": 12
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection",
+      "info": "Used only when no products are hand-picked above."
+    },
+    {
+      "type": "range",
+      "id": "max_products",
+      "label": "Max products",
+      "min": 2,
+      "max": 12,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "Columns (desktop)",
+      "min": 2,
+      "max": 5,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "header",
+      "content": "Card"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_vendor",
+      "label": "Show vendor / brand pill",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_rating",
+      "label": "Show rating",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_stock",
+      "label": "Show stock status",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_wishlist",
+      "label": "Show wishlist heart",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "cta_mode",
+      "label": "Add to cart button",
+      "options": [
+        { "value": "add", "label": "Add first variant to cart" },
+        { "value": "link", "label": "Link to product page" }
+      ],
+      "default": "add",
+      "info": "Paint products with size/color options are usually better linked to the product page."
+    },
+    {
+      "type": "text",
+      "id": "add_to_cart_text",
+      "label": "Add to cart text",
+      "default": "Add to cart"
+    },
+    {
+      "type": "text",
+      "id": "sold_out_text",
+      "label": "Sold out text",
+      "default": "Sold out"
+    },
+    {
+      "type": "text",
+      "id": "in_stock_text",
+      "label": "In stock text",
+      "default": "In stock · tinted & ready today"
+    },
+    {
+      "type": "text",
+      "id": "out_of_stock_text",
+      "label": "Out of stock text",
+      "default": "Currently unavailable"
+    },
+    {
+      "type": "header",
+      "content": "Fallback rating",
+      "info": "Shown when a product has no reviews metafield."
+    },
+    {
+      "type": "range",
+      "id": "fallback_rating",
+      "label": "Rating",
+      "min": 0,
+      "max": 5,
+      "step": 0.1,
+      "default": 4.9
+    },
+    {
+      "type": "text",
+      "id": "fallback_review_count",
+      "label": "Review count",
+      "default": "312"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Section background"
+    },
+    {
+      "type": "color",
+      "id": "eyebrow_color",
+      "label": "Eyebrow",
+      "default": "#c13121"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "LS Featured Products",
+      "category": "t:categories.product"
+    }
+  ]
+}
+{% endschema %}

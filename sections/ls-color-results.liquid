@@ -1,0 +1,63 @@
+{%- comment -%}
+  LS Color Results
+  ----------------
+  Utility section fetched by the LS Product Detail color combobox via the
+  Section Rendering API, e.g.:
+    /search?q=oc*&type=product&section_id=ls-color-results
+
+  Renders <li> color options for search results that are color-swatch products.
+  A product is treated as a color if its product type is "Color" OR it carries a
+  family tag (color_collection_* or colorcollection_*). Family is parsed from
+  that tag so the combobox can filter to the paint's supported families.
+  Not meant to be added to a template (no presets).
+{%- endcomment -%}
+{%- if search.performed -%}
+  {%- for item in search.results -%}
+    {%- if item.object_type != 'product' -%}{%- continue -%}{%- endif -%}
+    {%- liquid
+      assign cfam = ''
+      for tag in item.tags
+        assign ct = tag | downcase
+        if ct contains 'color_collection_'
+          assign cfam = ct | remove: 'color_collection_' | strip
+        elsif ct contains 'colorcollection_'
+          assign cfam = ct | remove: 'colorcollection_' | strip
+        endif
+      endfor
+
+      assign is_color = false
+      assign ptype = item.type | downcase
+      if ptype == 'color' or cfam != blank
+        assign is_color = true
+      endif
+
+      assign _code = item.title | split: ' ' | first
+      assign _name = item.title | remove_first: _code | strip
+      if _name == blank
+        assign _dispname = item.title
+        assign _code = ''
+      else
+        assign _dispname = _name
+      endif
+    -%}
+    {%- if is_color -%}
+      <li class="ls-pdp__combo-opt" role="option" data-value="{{ item.title | escape }}" data-search="{{ item.title | downcase | escape }}" data-family="{{ cfam }}" data-code="{{ _code | escape }}" data-name="{{ _dispname | escape }}">
+        {%- if item.featured_image != blank -%}
+          <span class="ls-pdp__combo-swatch" style="background-image:url('{{ item.featured_image | image_url: width: 48 }}')"></span>
+        {%- else -%}
+          <span class="ls-pdp__combo-swatch"></span>
+        {%- endif -%}
+        <span class="ls-pdp__combo-opttext">
+          <span class="ls-pdp__combo-optname">{{ _dispname }}</span>
+          {%- if _code != blank -%}<span class="ls-pdp__combo-optcode">{{ _code }}</span>{%- endif -%}
+        </span>
+      </li>
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "LS Color Results"
+}
+{% endschema %}

@@ -1,0 +1,31 @@
+{%- doc -%}
+  LS custom inline pill search for the header (matches the Figma design).
+
+  Rendered by snippets/search.liquid when `inline: true` is passed from
+  sections/header.liquid. Submits a standard GET request to the search
+  results page, so it works without any JS. Styling lives in
+  assets/ls-header.css (.ls-header-search*).
+{%- enddoc -%}
+
+<form action="{{ routes.search_url }}" method="get" role="search" class="ls-header-search">
+  <label for="ls-header-search-input" class="ls-header-search__label">
+    {{ 'content.search' | t }}
+  </label>
+
+  <span class="ls-header-search__icon svg-wrapper" aria-hidden="true">
+    {{ 'icon-search.svg' | inline_asset_content }}
+  </span>
+
+  <input
+    id="ls-header-search-input"
+    class="ls-header-search__input"
+    type="search"
+    name="q"
+    value="{{ search.terms | escape }}"
+    placeholder="Search..."
+    autocomplete="off"
+  >
+
+  {%- comment -%} Limit search to products; drop this line to search everything. {%- endcomment -%}
+  <input type="hidden" name="type" value="product">
+</form>

@@ -10,405 +10,499 @@
 {
   "sections": {
     "main": {
-      "type": "product-information",
+      "type": "ls-product-detail",
       "blocks": {
-        "media-gallery": {
-          "type": "_product-media-gallery",
-          "static": true,
+        "assurance_delivery": {
+          "type": "assurance",
           "settings": {
-            "media_presentation": "grid",
-            "media_columns": "two",
-            "image_gap": 4,
-            "large_first_image": false,
-            "icons_style": "none",
-            "slideshow_controls_style": "counter",
-            "slideshow_mobile_controls_style": "dots",
-            "thumbnail_position": "right",
-            "thumbnail_width": 44,
-            "aspect_ratio": "adapt",
-            "constrain_to_viewport": true,
-            "media_fit": "contain",
-            "media_radius": 0,
-            "extend_media": false,
-            "zoom": true,
-            "video_loop": false,
-            "hide_variants": true,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {}
+            "icon": "truck",
+            "title": "Free local delivery",
+            "subtitle": "On 48-gal orders"
+          }
         },
-        "product-details": {
-          "type": "_product-details",
-          "static": true,
+        "assurance_pickup": {
+          "type": "assurance",
           "settings": {
-            "width": "fill",
-            "custom_width": 100,
-            "width_mobile": "fill",
-            "custom_width_mobile": 100,
-            "height": "fit",
-            "details_position": "flex-start",
-            "gap": 28,
-            "sticky_details_desktop": true,
-            "background_media": "none",
-            "video_position": "cover",
-            "background_image_position": "cover",
-            "border": "none",
-            "border_width": 1,
-            "border_opacity": 100,
-            "border_radius": 0,
-            "padding-block-start": 24,
-            "padding-block-end": 24,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {
-            "group_icgrde": {
-              "type": "group",
-              "name": "Header",
-              "settings": {
-                "content_direction": "column",
-                "vertical_on_mobile": true,
-                "horizontal_alignment": "flex-start",
-                "vertical_alignment": "center",
-                "align_baseline": false,
-                "horizontal_alignment_flex_direction_column": "flex-start",
-                "vertical_alignment_flex_direction_column": "center",
-                "gap": 12,
-                "width": "fill",
-                "custom_width": 100,
-                "width_mobile": "fill",
-                "custom_width_mobile": 100,
-                "height": "fit",
-                "custom_height": 100,
-                "background_media": "none",
-                "video_position": "cover",
-                "background_image_position": "cover",
-                "toggle_overlay": false,
-                "overlay_color": "#00000026",
-                "overlay_style": "solid",
-                "gradient_direction": "to top",
-                "border": "none",
-                "border_width": 1,
-                "border_opacity": 100,
-                "border_radius": 0,
-                "link": "",
-                "open_in_new_tab": false,
-                "placeholder": "",
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {
-                "text_xrnftG": {
-                  "type": "text",
-                  "name": "Product title",
-                  "settings": {
-                    "text": "<h1>{{ closest.product.title }}</h1>",
-                    "width": "100%",
-                    "max_width": "normal",
-                    "alignment": "left",
-                    "type_preset": "h3",
-                    "font": "var(--font-primary--family)",
-                    "font_size": "",
-                    "line_height": "normal",
-                    "letter_spacing": "normal",
-                    "case": "none",
-                    "wrap": "pretty",
-                    "background": false,
-                    "background_color": "#00000026",
-                    "corner_radius": 0,
-                    "padding-block-start": 0,
-                    "padding-block-end": 0,
-                    "padding-inline-start": 0,
-                    "padding-inline-end": 0
-                  },
-                  "blocks": {}
-                },
-                "price_tVjtKg": {
-                  "type": "price",
-                  "settings": {
-                    "show_sale_price_first": true,
-                    "show_installments": true,
-                    "show_tax_info": true,
-                    "type_preset": "paragraph",
-                    "width": "100%",
-                    "alignment": "left",
-                    "font": "var(--font-body--family)",
-                    "font_size": "1rem",
-                    "line_height": "normal",
-                    "letter_spacing": "normal",
-                    "case": "none",
-                    "padding-block-start": 4,
-                    "padding-block-end": 0,
-                    "padding-inline-start": 0,
-                    "padding-inline-end": 0
-                  },
-                  "blocks": {}
-                }
-              },
-              "block_order": [
-                "text_xrnftG",
-                "price_tVjtKg"
-              ]
-            },
-            "divider_VJhene": {
-              "type": "_divider",
-              "name": "t:names.divider",
-              "settings": {
-                "thickness": 1,
-                "corner_radius": "square",
-                "divider_color": "{{ settings.color_palette.color3 }}",
-                "width_percent": 100,
-                "padding-block-start": 0,
-                "padding-block-end": 0
-              },
-              "blocks": {}
-            },
-            "variant_picker_R3rGDr": {
-              "type": "variant-picker",
-              "settings": {
-                "variant_style": "buttons",
-                "show_swatches": false,
-                "alignment": "left",
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            },
-            "buy_buttons_eYQEYi": {
-              "type": "buy-buttons",
-              "settings": {
-                "stacking": true,
-                "show_pickup_availability": false,
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {
-                "quantity": {
-                  "type": "quantity",
-                  "static": true,
-                  "settings": {},
-                  "blocks": {}
-                },
-                "add-to-cart": {
-                  "type": "add-to-cart",
-                  "static": true,
-                  "settings": {
-                    "style_class": "button"
-                  },
-                  "blocks": {}
-                },
-                "accelerated-checkout": {
-                  "type": "accelerated-checkout",
-                  "static": true,
-                  "settings": {},
-                  "blocks": {}
-                }
-              },
-              "block_order": []
-            },
-            "text_aEtTtq": {
-              "type": "text",
-              "name": "Product description",
-              "settings": {
-                "text": "{{ closest.product.description }}",
-                "width": "100%",
-                "max_width": "normal",
-                "alignment": "left",
-                "type_preset": "rte",
-                "font": "var(--font-primary--family)",
-                "font_size": "",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "wrap": "pretty",
-                "background": false,
-                "background_color": "#00000026",
-                "corner_radius": 0,
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            }
-          },
-          "block_order": [
-            "group_icgrde",
-            "divider_VJhene",
-            "variant_picker_R3rGDr",
-            "buy_buttons_eYQEYi",
-            "text_aEtTtq"
-          ]
+            "icon": "pickup",
+            "title": "Curbside pickup",
+            "subtitle": "Ready in ~2 hrs"
+          }
         },
-        "disclosures": {
-          "type": "disclosures",
+        "assurance_returns": {
+          "type": "assurance",
           "settings": {
-            "padding-block-start": 0,
-            "padding-block-end": 0
-          },
-          "blocks": {}
+            "icon": "returns",
+            "title": "30-day returns",
+            "subtitle": "Hassle-free"
+          }
+        },
+        "accordion_details": {
+          "type": "accordion",
+          "settings": {
+            "title": "Details",
+            "use_description": true,
+            "description_section": "",
+            "content": "<ul><li>Available Colors: All Colors, Ready Mix White, Ready Mix Black</li><li>Sheen (or Gloss): Satin</li><li>Cleanup: Soap and Water</li><li>Resin Type: Water Reducible Alkyd</li><li>Recommended Use: Interior</li><li>VOC Level: 47.0</li></ul>",
+            "open_by_default": true
+          }
+        },
+        "accordion_features": {
+          "type": "accordion",
+          "settings": {
+            "title": "Features",
+            "use_description": true,
+            "description_section": "Features",
+            "content": "<p>Add product features here.</p>",
+            "open_by_default": false
+          }
+        },
+        "accordion_datasheets": {
+          "type": "accordion",
+          "settings": {
+            "title": "Data Sheets",
+            "use_description": true,
+            "description_section": "Data Sheets",
+            "content": "<p>Link technical data sheets here.</p>",
+            "open_by_default": false
+          }
         }
       },
       "block_order": [
-        "disclosures"
+        "assurance_delivery",
+        "assurance_pickup",
+        "assurance_returns",
+        "accordion_details",
+        "accordion_features",
+        "accordion_datasheets"
       ],
       "settings": {
-        "content_width": "content-center-aligned",
-        "desktop_media_position": "left",
-        "equal_columns": false,
-        "limit_details_width": false,
-        "gap": 48,
+        "font_family": "outfit_n4",
+        "show_breadcrumbs": true,
+        "show_rating": true,
+        "rating_source": "metafield",
+        "manual_rating": 4.5,
+        "manual_review_count": "233",
+        "show_stock": true,
+        "in_stock_text": "In stock · ships in 1-2 business days",
+        "out_of_stock_text": "Currently unavailable",
+        "price_suffix": "Price per Gallon",
+        "size_option_name": "Size",
+        "popular_size": "Gallon",
+        "popular_label": "Popular",
+        "best_value_size": "5 Gallon",
+        "best_value_label": "Best value",
+        "color_option_name": "Color",
+        "hidden_option_names": "Material ID",
+        "show_sheen": true,
+        "sheen_label": "Sheen",
+        "show_color_field": true,
+        "require_color": false,
+        "color_source_mode": "by_family_tags",
+        "color_label": "Color",
+        "color_placeholder": "Search & select a color",
+        "color_required_text": "Select a color to continue",
+        "color_search_placeholder": "Type a color name or code…",
+        "paint_family_tag_prefix": "colorcollection_",
+        "family_collection_prefix": "",
+        "family_collection_suffix": "",
+        "color_source_collection": "",
+        "color_family_tag_prefix": "color_collection_",
+        "color_property_key": "Color",
+        "color_options_limit": 50,
+        "show_custom_color": true,
+        "custom_color_label": "Custom color / code",
+        "custom_color_toggle_text": "Enter custom color",
+        "custom_color_property_key": "Custom Color",
+        "show_additional_details": false,
+        "additional_details_label": "Additional details",
+        "additional_details_property_key": "Additional Details",
+        "additional_details_placeholder": "Anything the mixing team should know…",
+        "add_to_cart_text": "Add to Cart",
+        "sold_out_text": "Sold out",
+        "unavailable_text": "Unavailable",
+        "show_dynamic_checkout": true,
+        "secure_note": "Secure checkout · 100% satisfaction guarantee",
+        "paired_heading": "Frequently paired with this",
+        "quick_add_text": "Quick add",
+        "paired_source": "recommendations",
+        "paired_limit": 6,
+        "description_heading_tag": "h2",
+        "heading_color": "#1a1a1a",
+        "text_color": "#1a1a1a",
+        "muted_color": "#989898",
+        "accent_color": "#c13121",
+        "icon_chip_background": "#ffeae7",
+        "success_color": "#1e854a",
+        "surface_color": "#ffffff",
+        "media_tile_background": "#f5f4f2",
+        "border_color": "#e5e7eb",
+        "corner_radius": 16,
+        "padding-block-start": 40,
+        "padding-block-end": 40,
+        "use_mobile_padding": false,
+        "padding-block-start-mobile": 24,
+        "padding-block-end-mobile": 24
+      }
+    },
+    "ls_advantage_MG47dM": {
+      "type": "ls-advantage",
+      "blocks": {
+        "feature_gKWGHG": {
+          "type": "feature",
+          "settings": {
+            "icon": "flow",
+            "title": "Self-leveling, sprayed-smooth finish",
+            "text": "<p>Flows out to erase brush and roller marks, so trim and cabinet doors dry glass-smooth — even brushed by hand.</p>"
+          }
+        },
+        "feature_DRQK4h": {
+          "type": "feature",
+          "settings": {
+            "icon": "shield",
+            "title": "Low VOC, low odor — even tinted",
+            "text": "<p>Just 47 g/L after tinting keeps the air comfortable for occupied homes and long days on the job.</p>"
+          }
+        },
+        "feature_wneYd7": {
+          "type": "feature",
+          "settings": {
+            "icon": "droplet",
+            "title": "Soap-and-water cleanup",
+            "text": "<p>A waterborne alkyd, so brushes and sprayers rinse clean at the sink — no mineral spirits, no mess.</p>"
+          }
+        },
+        "feature_xqe6r6": {
+          "type": "feature",
+          "settings": {
+            "icon": "clock",
+            "title": "Cures hard and washable",
+            "text": "<p>Builds to a tough, scrubbable surface that holds up to daily wear on cabinets, doors and high-touch trim.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "feature_gKWGHG",
+        "feature_DRQK4h",
+        "feature_wneYd7",
+        "feature_xqe6r6"
+      ],
+      "name": "LS Advantage",
+      "settings": {
+        "font_family": "outfit_n4",
+        "eyebrow": "Why this finish wins",
+        "heading": "The finish of an oil paint, without the oil.",
+        "subtext": "<p>ADVANCE pairs a waterborne formula with alkyd-grade leveling — four reasons it's a go-to for cabinets, doors and trim, whether you're painting one room this weekend or finishing a job site.</p>",
+        "columns": 4,
+        "corner_radius": 18,
+        "gradient_top": "#1e232c",
+        "gradient_mid": "#13161c",
+        "gradient_bottom": "#0b0d11",
+        "gradient_angle": 160,
+        "eyebrow_color": "#e06a5c",
+        "heading_color": "#ffffff",
+        "subtext_color": "#a3a6ab",
+        "card_background": "#22262e",
+        "card_border": "#33373f",
+        "icon_chip_background": "#3a2b2a",
+        "icon_color": "#e06a5c",
+        "card_title_color": "#ffffff",
+        "card_text_color": "#9aa0a6",
+        "padding-block-start": 64,
+        "padding-block-end": 64
+      }
+    },
+    "ls_calculator_C4Awqe": {
+      "type": "ls-calculator",
+      "blocks": {
+        "preset_EmfcPz": {
+          "type": "preset",
+          "settings": {
+            "label": "Bathroom",
+            "area": 90
+          }
+        },
+        "preset_NCwYEK": {
+          "type": "preset",
+          "settings": {
+            "label": "Bedroom",
+            "area": 150
+          }
+        },
+        "preset_JLTBEm": {
+          "type": "preset",
+          "settings": {
+            "label": "Living room",
+            "area": 350
+          }
+        },
+        "preset_6Ceazg": {
+          "type": "preset",
+          "settings": {
+            "label": "Whole floor",
+            "area": 1200
+          }
+        }
+      },
+      "block_order": [
+        "preset_EmfcPz",
+        "preset_NCwYEK",
+        "preset_JLTBEm",
+        "preset_6Ceazg"
+      ],
+      "name": "LS Calculator",
+      "settings": {
+        "font_family": "outfit_n4",
+        "eyebrow": "Plan your project",
+        "heading": "How much paint will you need?",
+        "subtext": "<p>Tell us the area and coats — we'll size the order so you buy once and never run short mid-wall.</p>",
+        "coverage_per_gallon": 400,
+        "size_option_name": "Size",
+        "area_min": 50,
+        "area_max": 2000,
+        "area_step": 10,
+        "default_area": 400,
+        "default_coats": "2",
+        "area_label": "Area to cover",
+        "presets_label": "Or start from a typical space",
+        "coats_label": "Coats",
+        "result_label": "You'll need about",
+        "add_prefix": "Add",
+        "unavailable_text": "Currently unavailable",
+        "eyebrow_color": "#c13121",
+        "heading_color": "#1a1a1a",
+        "subtext_color": "#8a8f98",
+        "accent_color": "#c13121",
+        "surface_color": "#ffffff",
+        "border_color": "#e5e7eb",
+        "label_color": "#1a1a1a",
+        "muted_color": "#9aa0a6",
+        "track_color": "#eceded",
+        "chip_background": "#f4f5f6",
+        "result_background": "#17181c",
+        "result_text_color": "#ffffff",
+        "result_muted_color": "#8b8d94",
+        "result_accent_color": "#e0685c",
+        "corner_radius": 20,
+        "padding-block-start": 64,
+        "padding-block-end": 64
+      }
+    },
+    "ls_featured_products_pUTaiy": {
+      "type": "ls-featured-products",
+      "name": "LS Featured Products",
+      "settings": {
+        "font_family": "outfit_n4",
+        "eyebrow": "Paint Outlets",
+        "heading": "Products you may like",
+        "product_list": [],
+        "collection": "paints",
+        "max_products": 4,
+        "columns": 4,
+        "show_vendor": true,
+        "show_rating": true,
+        "show_stock": true,
+        "show_wishlist": true,
+        "cta_mode": "link",
+        "add_to_cart_text": "Add to cart",
+        "sold_out_text": "Sold out",
+        "in_stock_text": "In stock · tinted & ready today",
+        "out_of_stock_text": "Currently unavailable",
+        "fallback_rating": 4.9,
+        "fallback_review_count": "312",
+        "background_color": "",
+        "eyebrow_color": "#c13121",
+        "heading_color": "#1a1a1a",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    },
+    "178358537698754f92": {
+      "type": "_blocks",
+      "blocks": {
+        "judge_me_reviews_review_widget_UhakcP": {
+          "type": "shopify://apps/judge-me-reviews/blocks/review_widget/61ccd3b1-a9f2-4160-9fe9-4fec8413e5d8",
+          "settings": {
+            "review_data": "real_data",
+            "max_width": 1200,
+            "show_shop_reviews": false,
+            "empty_state": "empty_widget"
+          }
+        }
+      },
+      "block_order": [
+        "judge_me_reviews_review_widget_UhakcP"
+      ],
+      "settings": {
+        "content_direction": "column",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "center",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 12,
+        "section_width": "page-width",
+        "section_height": "",
+        "section_height_custom": 50,
+        "background_media": "none",
+        "background_color": "",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_color": "",
+        "border_radius": 0,
         "padding-block-start": 0,
         "padding-block-end": 0
       }
     },
-    "product_recommendations_qggXJq": {
-      "type": "product-recommendations",
+    "ls_faq_cWenpj": {
+      "type": "ls-faq",
       "blocks": {
-        "text_cbcgyb": {
-          "type": "text",
-          "name": "t:names.header",
+        "faq_8xdjQC": {
+          "type": "faq",
           "settings": {
-            "text": "<h2>You may also like </h2>",
-            "width": "fit-content",
-            "max_width": "normal",
-            "alignment": "left",
-            "type_preset": "h4",
-            "font": "var(--font-primary--family)",
-            "font_size": "",
-            "line_height": "normal",
-            "letter_spacing": "normal",
-            "case": "none",
-            "wrap": "pretty",
-            "background": false,
-            "background_color": "#00000026",
-            "corner_radius": 0,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {}
+            "question": "How many coats do I need?",
+            "answer": "<p>Two coats give full coverage and the best durability. Allow 16 hours between coats so each fully sets.</p>",
+            "open": true
+          }
         },
-        "static-product-card": {
-          "type": "_product-card",
-          "name": "t:names.product_card",
-          "static": true,
+        "faq_mMWTH7": {
+          "type": "faq",
           "settings": {
-            "product_card_gap": 8,
-            "border": "none",
-            "border_width": 1,
-            "border_opacity": 100,
-            "border_radius": 0,
-            "padding-block-start": 0,
-            "padding-block-end": 8,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {
-            "product_card_gallery_DNizbJ": {
-              "type": "_product-card-gallery",
-              "name": "t:names.product_card_media",
-              "settings": {
-                "image_ratio": "adapt",
-                "border": "none",
-                "border_width": 1,
-                "border_opacity": 100,
-                "border_radius": 0,
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            },
-            "product_title_M7MJkb": {
-              "type": "product-title",
-              "name": "t:names.product_title",
-              "settings": {
-                "width": "100%",
-                "max_width": "normal",
-                "alignment": "left",
-                "type_preset": "paragraph",
-                "font": "var(--font-body--family)",
-                "font_size": "1rem",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "wrap": "pretty",
-                "background": false,
-                "background_color": "#00000026",
-                "corner_radius": 0,
-                "padding-block-start": 4,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            },
-            "price_gLWgA6": {
-              "type": "price",
-              "settings": {
-                "show_sale_price_first": true,
-                "show_installments": false,
-                "show_tax_info": false,
-                "type_preset": "h6",
-                "width": "100%",
-                "alignment": "left",
-                "font": "var(--font-body--family)",
-                "font_size": "1rem",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            }
-          },
-          "block_order": [
-            "product_card_gallery_DNizbJ",
-            "product_title_M7MJkb",
-            "price_gLWgA6"
-          ]
+            "question": "How long until it cures hard?",
+            "answer": "<p>The surface is dry to the touch in a couple of hours, but a full cure takes up to 30 days. Go easy on scrubbing and heavy use until then.</p>",
+            "open": false
+          }
+        },
+        "faq_FDpch9": {
+          "type": "faq",
+          "settings": {
+            "question": "Can I spray it?",
+            "answer": "<p>Yes. Thin per the label for your sprayer and keep a wet edge. A brush or roller works just as well if you'd rather not mask off.</p>",
+            "open": false
+          }
+        },
+        "faq_JbmGyc": {
+          "type": "faq",
+          "settings": {
+            "question": "What's the cleanup?",
+            "answer": "<p>Warm, soapy water while the paint is still wet — these are water-based finishes, so no solvents needed.</p>",
+            "open": false
+          }
+        },
+        "faq_8mxWJK": {
+          "type": "faq",
+          "settings": {
+            "question": "Is it low odor?",
+            "answer": "<p>Yes. Our interior finishes are low-VOC and low-odor, so you can paint and stay in the room comfortably.</p>",
+            "open": false
+          }
+        },
+        "faq_m3cdjb": {
+          "type": "faq",
+          "settings": {
+            "question": "Do you match colors?",
+            "answer": "<p>We do. Bring in a chip, a photo, or a brand name and we'll match it — or order a peel-and-stick sample first.</p>",
+            "open": false
+          }
         }
       },
       "block_order": [
-        "text_cbcgyb"
+        "faq_8xdjQC",
+        "faq_mMWTH7",
+        "faq_FDpch9",
+        "faq_JbmGyc",
+        "faq_8mxWJK",
+        "faq_m3cdjb"
       ],
-      "name": "t:names.product_recommendations",
+      "name": "LS FAQ",
       "settings": {
-        "product": "{{ closest.product }}",
-        "recommendation_type": "related",
-        "layout_type": "grid",
-        "carousel_on_mobile": false,
-        "max_products": 4,
-        "columns": 4,
-        "mobile_columns": "2",
-        "columns_gap": 12,
-        "rows_gap": 24,
-        "icons_style": "arrow",
-        "icons_shape": "none",
-        "section_width": "page-width",
-        "gap": 28,
+        "eyebrow": "Good to know",
+        "heading": "Questions painters & DIYers ask",
+        "font_family": "outfit_n4",
+        "background_color": "#fafafa",
+        "eyebrow_color": "#c13121",
+        "heading_color": "#1a1a1a",
+        "question_color": "#1a1a1a",
+        "answer_color": "#6b7280",
+        "card_background": "#ffffff",
+        "card_border_color": "#eceef1",
+        "toggle_background": "#f3f4f6",
+        "toggle_icon_color": "#6b7280",
+        "toggle_active_background": "#e0281e",
+        "toggle_active_icon_color": "#ffffff",
+        "content_max_width": 960,
+        "card_gap": 12,
+        "card_radius": 18,
         "padding-block-start": 48,
         "padding-block-end": 48
+      }
+    },
+    "ls_contact_nBPwmf": {
+      "type": "ls-contact",
+      "name": "LS Contact",
+      "settings": {
+        "font_family": "outfit_n4",
+        "eyebrow": "Talk to a human",
+        "heading": "Ready to start your project?",
+        "subtext": "Our paint experts will help you pick the right product, match your color, and handle bulk pricing — no guesswork.",
+        "phone_number": "248.598.0311",
+        "phone_link": "",
+        "email_label": "Email an expert",
+        "email_link": "mailto:test@gmail.com",
+        "email_open_new_tab": false,
+        "hours": "Mon–Fri 7:30–5:30 · Sat 8–3",
+        "background_color": "#0d0f12",
+        "eyebrow_color": "#e0281e",
+        "heading_color": "#ffffff",
+        "subtext_color": "#ffffff",
+        "hours_color": "#8b93a1",
+        "phone_background": "#ffffff",
+        "phone_text": "#111318",
+        "email_text": "#ffffff",
+        "email_border": "#3a3f47",
+        "email_hover_background": "#ffffff",
+        "email_hover_text": "#111318",
+        "linear_angle": 140,
+        "linear_color_1": "#1e232c",
+        "linear_pos_1": 0,
+        "linear_color_2": "#13161c",
+        "linear_pos_2": 55,
+        "linear_color_3": "#0b0d11",
+        "linear_pos_3": 100,
+        "glow_start_color": "#d42a1c",
+        "glow_start_opacity": 35,
+        "glow_start_pos": 0,
+        "glow_end_color": "#d42a1c",
+        "glow_end_opacity": 0,
+        "glow_end_pos": 70,
+        "glow_x": 93,
+        "glow_y": 32,
+        "glow_x_mobile": 81,
+        "glow_y_mobile": 14,
+        "glow_size_x": 11,
+        "glow_size_y": 11,
+        "glow_size_x_mobile": 25,
+        "glow_size_y_mobile": 25,
+        "card_radius": 20,
+        "padding-block-start": 24,
+        "padding-block-end": 24
       }
     }
   },
   "order": [
     "main",
-    "product_recommendations_qggXJq"
+    "ls_advantage_MG47dM",
+    "ls_calculator_C4Awqe",
+    "ls_featured_products_pUTaiy",
+    "178358537698754f92",
+    "ls_faq_cWenpj",
+    "ls_contact_nBPwmf"
   ]
 }

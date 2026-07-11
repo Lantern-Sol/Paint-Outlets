@@ -161,26 +161,43 @@
           {%- endif -%}
 
           <div class="ls-deal__actions">
-            <form method="post" action="{{ routes.cart_add_url }}" class="ls-deal__form" novalidate>
-              <input type="hidden" name="id" value="{{ variant.id }}">
-              <input type="hidden" name="quantity" value="1">
-              <button
-                type="submit"
-                class="ls-deal__btn ls-deal__btn--primary"
-                {% unless variant.available %}disabled{% endunless %}
-              >
-                {% if variant.available %}
-                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                    <path d="M3 3h2l1.2 9.2a1 1 0 0 0 1 .8h7.6a1 1 0 0 0 1-.8L18 6H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <circle cx="8" cy="17" r="1.2" fill="currentColor"/>
-                    <circle cx="15" cy="17" r="1.2" fill="currentColor"/>
-                  </svg>
-                  {{ section.settings.add_label | default: 'Add to cart' }}
-                {% else %}
-                  {{ section.settings.sold_out_label | default: 'Sold out' }}
-                {% endif %}
-              </button>
-            </form>
+            {%- assign ls_deal_form_id = 'ls-deal-form-' | append: section.id -%}
+            <product-form-component
+              data-section-id="{{ section.id }}"
+              data-product-id="{{ product.id }}"
+              on:submit="/handleSubmit"
+              class="ls-deal__form"
+            >
+              <div class="visually-hidden" role="status" aria-live="assertive" aria-atomic="true" ref="liveRegion"></div>
+              {%- form 'product', product, id: ls_deal_form_id, novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
+                <input
+                  type="hidden"
+                  name="id"
+                  ref="variantId"
+                  value="{{ variant.id }}"
+                  {% unless variant.available %}disabled{% endunless %}
+                >
+                <input type="hidden" name="quantity" value="1">
+                <button
+                  type="submit"
+                  name="add"
+                  ref="addToCartButton"
+                  class="ls-deal__btn ls-deal__btn--primary"
+                  {% unless variant.available %}disabled{% endunless %}
+                >
+                  {% if variant.available %}
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                      <path d="M3 3h2l1.2 9.2a1 1 0 0 0 1 .8h7.6a1 1 0 0 0 1-.8L18 6H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="8" cy="17" r="1.2" fill="currentColor"/>
+                      <circle cx="15" cy="17" r="1.2" fill="currentColor"/>
+                    </svg>
+                    {{ section.settings.add_label | default: 'Add to cart' }}
+                  {% else %}
+                    {{ section.settings.sold_out_label | default: 'Sold out' }}
+                  {% endif %}
+                </button>
+              {%- endform -%}
+            </product-form-component>
 
             {%- if section.settings.secondary_label != blank -%}
               <a

@@ -1,0 +1,25 @@
+{%- comment -%}
+  One color option row for the LS Product Detail color combobox.
+  Param: cprod - a color-swatch product
+  Renders a round swatch + two lines (name bold, BM code muted). data-code /
+  data-name also feed the toggle's two-line label when chosen.
+{%- endcomment -%}
+{%- assign _code = cprod.title | split: ' ' | first -%}
+{%- assign _name = cprod.title | remove_first: _code | strip -%}
+{%- if _name == blank -%}
+  {%- assign _dispname = cprod.title -%}
+  {%- assign _code = '' -%}
+{%- else -%}
+  {%- assign _dispname = _name -%}
+{%- endif -%}
+<li class="ls-pdp__combo-opt" role="option" data-value="{{ cprod.title | escape }}" data-search="{{ cprod.title | downcase | escape }}" data-code="{{ _code | escape }}" data-name="{{ _dispname | escape }}">
+  {%- if cprod.featured_image != blank -%}
+    <span class="ls-pdp__combo-swatch" style="background-image:url('{{ cprod.featured_image | image_url: width: 48 }}')"></span>
+  {%- else -%}
+    <span class="ls-pdp__combo-swatch"></span>
+  {%- endif -%}
+  <span class="ls-pdp__combo-opttext">
+    <span class="ls-pdp__combo-optname">{{ _dispname }}</span>
+    {%- if _code != blank -%}<span class="ls-pdp__combo-optcode">{{ _code }}</span>{%- endif -%}
+  </span>
+</li>
