@@ -33,33 +33,61 @@
     assign savings = compare | minus: price
   endif
 
+  # The "Price per Gallon" suffix only makes sense when the product is actually
+  # sold by the gallon. Detect a gallon among the variants (any option position),
+  # falling back to the title for single-variant products sold as one gallon.
+  assign has_gallon = false
+  for gv in product.variants
+    assign gv_title = gv.title | downcase
+    if gv_title contains 'gallon'
+      assign has_gallon = true
+      break
+    endif
+  endfor
+  if has_gallon == false and product.variants.size <= 1
+    assign gp_title = product.title | downcase
+    if gp_title contains 'gallon'
+      assign has_gallon = true
+    endif
+  endif
+
   # --- Which option renders as color / size ---
   assign color_name = section.settings.color_option_name | default: 'Color' | downcase
   assign size_name = section.settings.size_option_name | default: 'Size' | downcase
   # Variant options never shown to the consumer (e.g. internal Material ID).
   assign hidden_names = section.settings.hidden_option_names | default: 'Material ID' | downcase | replace: ', ', ',' | split: ','
 
-  # Sheen is modelled as sibling products sharing an all-uppercase line tag
-  # (e.g. AWIAP). Collect the product's all-caps tags and derive its own sheen
-  # label from the title (the part after " - ", e.g. "High Gloss Finish 794").
-  assign sheen_query = ''
-  assign sheen_linetags = '|'
-  for tag in product.tags
-    assign tag_up = tag | upcase
-    assign tag_down = tag | downcase
-    if tag == tag_up and tag != tag_down
-      assign sheen_linetags = sheen_linetags | append: tag | append: '|'
-      if sheen_query == ''
-        assign sheen_query = tag
-      endif
+  # Sheen/grit siblings are modelled the way the live store does it: each finish
+  # (or grit) is a separate product, and the whole set shares one
+  # productfamily_* collection (e.g. productfamily_rswip = Regal Select Interior,
+  # whose members are Flat/Matte/Eggshell/Satin/Semi-Gloss). Find the first such
+  # collection this product belongs to; its members are the siblings, rendered
+  # directly from the collection (no search needed). Each sibling's finish/grit
+  # label is the title after " - " (e.g. "Semi-Gloss N551").
+  assign family_prefix = section.settings.family_collection_handle_prefix | default: 'productfamily' | downcase
+  assign family_col = null
+  for fam_c in product.collections
+    if fam_c.handle contains family_prefix
+      assign family_col = fam_c
+      break
     endif
   endfor
-  assign sheen_current = product.title | split: ' - ' | last | strip
+  assign family_current = product.title | split: ' - ' | last | strip
 
-  # Sheen picker only applies to paint/primer products.
-  assign sheen_allowed = false
-  if product.tags contains 'use_paint' or product.tags contains 'use_primer'
-    assign sheen_allowed = true
+  # Show only when a family collection with 2+ members is found.
+  assign family_show = false
+  if family_col != blank and family_col.all_products_count > 1
+    assign family_show = true
+  endif
+
+  # Field label: "Sheen" by default, "Grit" for sanding/abrasive products
+  # (matched by product type). Once grit families exist as productfamily_*
+  # collections they light up automatically with the right label.
+  assign family_label = section.settings.sheen_label | default: 'Sheen'
+  assign grit_types = section.settings.grit_product_types | default: 'Sanding' | downcase | replace: ', ', ',' | split: ','
+  assign product_type_dc = product.type | downcase | strip
+  if product_type_dc != '' and grit_types contains product_type_dc
+    assign family_label = section.settings.grit_label | default: 'Grit'
   endif
 
   # Color picker only applies to products that belong to a color family
@@ -73,6 +101,25 @@
       break
     endif
   endfor
+
+  # --- Color-sample products ---
+  # A swatch/sample product declares its own colour family via a
+  # color_collection_<fam> tag (never a colorcollection_* tag — those live on
+  # paints). Detect it so the PDP can offer "Shop this color in <paint>" links
+  # that carry the colour to a full-size paint via ?color=<code>. The code is
+  # the leading token of the title (e.g. "OC-150 White Down" -> "OC-150").
+  assign swatch_fam_prefix = section.settings.color_family_tag_prefix | default: 'color_collection_' | downcase
+  assign is_color_swatch = false
+  assign swatch_family = ''
+  for tag in product.tags
+    assign tag_dc = tag | downcase
+    if tag_dc contains swatch_fam_prefix
+      assign is_color_swatch = true
+      assign swatch_family = tag_dc | remove: swatch_fam_prefix | strip
+      break
+    endif
+  endfor
+  assign swatch_code = product.title | split: ' ' | first
 
   # When enabled (require_color) and the colour selector is shown, a colour (or
   # custom colour/code) is required before checkout — used to disable
@@ -264,7 +311,7 @@
                 </span>
               </span>
             {%- endif -%}
-            {%- if section.settings.price_suffix != blank -%}
+            {%- if section.settings.price_suffix != blank and has_gallon -%}
               <span class="ls-pdp__price-suffix">{{ section.settings.price_suffix }}</span>
             {%- endif -%}
           </div>
@@ -291,25 +338,30 @@
 
             <div class="ls-pdp__selectors" data-selectors>
               {%- comment -%}
-                Sheen — sibling products sharing this product's all-uppercase line
-                tag (e.g. AWIAP). The pills are populated on load by fetching
-                ls-sheen-results; each links to that sheen's product page.
+                Sheen / grit — sibling products sharing a productfamily_*
+                collection. Rendered server-side straight from the collection's
+                members (each links to that sibling's product page); clicks are
+                intercepted for an AJAX swap that preserves the shopper's state.
               {%- endcomment -%}
-              {%- if section.settings.show_sheen and sheen_query != blank and sheen_allowed -%}
+              {%- if section.settings.show_sheen and family_show -%}
                 <div
                   class="ls-pdp__selector ls-pdp__selector--sheen"
                   data-sheen
-                  data-search-url="{{ routes.search_url }}"
-                  data-query="{{ sheen_query | escape }}"
-                  data-linetags="{{ sheen_linetags }}"
                   data-current-url="{{ product.url }}"
                 >
                   <div class="ls-pdp__selector-head">
-                    <span class="ls-pdp__selector-label">Select {{ section.settings.sheen_label | default: 'Sheen' }}</span>
-                    <span class="ls-pdp__selector-value" data-sheen-selected>{{ sheen_current }}</span>
+                    <span class="ls-pdp__selector-label">Select {{ family_label }}</span>
+                    <span class="ls-pdp__selector-value" data-sheen-selected>{{ family_current }}</span>
                   </div>
                   <div class="ls-pdp__pills" data-sheen-pills>
-                    <a class="ls-pdp__pill is-active" href="{{ product.url }}" aria-current="true">{{ sheen_current }}</a>
+                    {%- comment -%} Active sheen (this product) renders first so it leads the row. {%- endcomment -%}
+                    <a class="ls-pdp__pill is-active" href="{{ product.url }}" aria-current="true">{{ family_current }}</a>
+                    {%- for sib in family_col.products -%}
+                      {%- if sib.id == product.id -%}{%- continue -%}{%- endif -%}
+                      {%- unless sib.available -%}{%- continue -%}{%- endunless -%}
+                      {%- assign sib_label = sib.title | split: ' - ' | last | strip -%}
+                      <a class="ls-pdp__pill" href="{{ sib.url }}">{{ sib_label }}</a>
+                    {%- endfor -%}
                   </div>
                 </div>
               {%- endif -%}
@@ -676,6 +728,60 @@
         {%- endif -%}
 
         {%- comment -%}
+          =============== Shop this color in (color-sample products) ===============
+          On a swatch/sample PDP, offer the same colour in every full-size paint
+          line that supports it. Auto-discovered: loop the store's paint-line
+          collections (handle contains the productfamily prefix), keep those with
+          at least one product tagged for this swatch's family (colorcollection_<fam>),
+          and link to that line's first supporting product with ?color=<code> so
+          the paint PDP auto-selects the colour. No merchant setup required.
+        {%- endcomment -%}
+        {%- if is_color_swatch and swatch_family != blank -%}
+          {%- assign shop_color_tag = section.settings.paint_family_tag_prefix | default: 'colorcollection_' | downcase | append: swatch_family -%}
+          {%- assign shop_color_seen = '|' -%}
+          {%- capture shop_color_html -%}
+            {%- for c in collections -%}
+              {%- unless c.handle contains family_prefix -%}{%- continue -%}{%- endunless -%}
+              {%- assign rep = null -%}
+              {%- for cp in c.products -%}
+                {%- for ptag in cp.tags -%}
+                  {%- assign ptag_dc = ptag | downcase -%}
+                  {%- if ptag_dc == shop_color_tag -%}{%- assign rep = cp -%}{%- break -%}{%- endif -%}
+                {%- endfor -%}
+                {%- if rep -%}{%- break -%}{%- endif -%}
+              {%- endfor -%}
+              {%- if rep -%}
+                {%- assign ckey = '|' | append: c.id | append: '|' -%}
+                {%- unless shop_color_seen contains ckey -%}
+                  {%- assign shop_color_seen = shop_color_seen | append: c.id | append: '|' -%}
+                  <a class="ls-pdp__shop-color-link" href="{{ rep.url }}?color={{ swatch_code | url_encode }}">
+                    <span class="ls-pdp__shop-color-name">{{ c.title }}</span>
+                    <span class="ls-pdp__shop-color-price">{{ rep.price_min | money }}{% if rep.price_varies %}+{% endif %}</span>
+                    <svg class="ls-pdp__shop-color-arrow" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 5l5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </a>
+                {%- endunless -%}
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endcapture -%}
+          {%- if shop_color_html contains 'ls-pdp__shop-color-link' -%}
+            <div class="ls-pdp__shop-color" data-shopcolor data-shopcolor-page-size="3">
+              <div class="ls-pdp__shop-color-headrow">
+                <span class="ls-pdp__shop-color-head">{{ section.settings.shop_color_heading | default: 'Shop this color in' }}</span>
+                <div class="ls-pdp__shop-color-nav" data-shopcolor-nav hidden>
+                  <button type="button" class="ls-pdp__shop-color-arrow-btn" data-shopcolor-prev aria-label="Previous">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button type="button" class="ls-pdp__shop-color-arrow-btn" data-shopcolor-next aria-label="Next">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="ls-pdp__shop-color-list" data-shopcolor-list>{{ shop_color_html }}</div>
+            </div>
+          {%- endif -%}
+        {%- endif -%}
+
+        {%- comment -%}
           =============== Frequently paired ===============
           Manual `paired_product` blocks always win (merchant override). With no
           manual blocks and paired_source = 'recommendations', the track is left
@@ -797,7 +903,6 @@
           var ad = root.querySelector('.ls-pdp__prop-field textarea');
           var qi = root.querySelector('[data-qty-input]');
           var activeSize = root.querySelector('.ls-pdp__size-card.is-active');
-          var sp = root.querySelector('[data-sheen-pills]');
           return {
             colorValue: cv ? cv.value : '',
             colorName: cl && cl.classList.contains('is-filled') ? cl.textContent : '',
@@ -806,8 +911,7 @@
             custom: ci ? ci.value : '',
             details: ad ? ad.value : '',
             qty: qi ? qi.value : '',
-            size: activeSize ? activeSize.getAttribute('data-value') : '',
-            sheenHTML: sp ? sp.innerHTML : ''
+            size: activeSize ? activeSize.getAttribute('data-value') : ''
           };
         }
 
@@ -988,6 +1092,9 @@
         var colorRequired = {{ color_required | json }};
         var colorValInput = root.querySelector('[data-color-value]');
         var customColorInput = root.querySelector('.ls-pdp__custom-input');
+        // Assigned inside the combobox block below; clears the picked swatch so a
+        // typed custom colour and a selected swatch are mutually exclusive.
+        var clearColorSelection = null;
 
         var texts = {
           addToCart: {{ section.settings.add_to_cart_text | json }},
@@ -1163,7 +1270,12 @@
         });
 
         // Re-evaluate the colour gate as the shopper types a custom colour / code.
-        if (customColorInput) customColorInput.addEventListener('input', onSelect);
+        // A typed custom colour clears any picked swatch — the two are mutually
+        // exclusive ways to name one colour.
+        if (customColorInput) customColorInput.addEventListener('input', function () {
+          if (customColorInput.value.trim() !== '' && clearColorSelection) clearColorSelection();
+          onSelect();
+        });
 
         // Establish the initial state (price + colour gate) on load.
         onSelect();
@@ -1205,6 +1317,18 @@
           var comboFoot = combo.querySelector('[data-combo-foot]');
           var colorValueInput = root.querySelector('[data-color-value]');
           var colorSelected = root.querySelector('[data-color-selected]');
+          // Placeholder text to fall back to when the selection is cleared.
+          var comboPlaceholder = comboLabel ? comboLabel.textContent : '';
+
+          // Reset the combobox to its unselected state (used when a custom colour
+          // is typed). Hoisted to the outer scope via clearColorSelection.
+          clearColorSelection = function () {
+            if (colorValueInput) colorValueInput.value = '';
+            if (comboLabel) { comboLabel.textContent = comboPlaceholder; comboLabel.classList.remove('is-filled'); }
+            if (comboCode) { comboCode.textContent = ''; comboCode.hidden = true; }
+            if (comboChip) comboChip.style.backgroundImage = '';
+            if (colorSelected) colorSelected.textContent = '';
+          };
 
           var searchUrl = combo.getAttribute('data-search-url') || '/search';
           var families = (combo.getAttribute('data-families') || '').split('|').filter(Boolean);
@@ -1251,7 +1375,7 @@
           }
 
           var reqToken = 0;
-          function liveSearch(term) {
+          function liveSearch(term, done) {
             var token = ++reqToken;
             if (comboFoot) comboFoot.hidden = true; // starter-list footer doesn't apply to results
             setStatus('Searching…');
@@ -1277,6 +1401,7 @@
                 empty.textContent = 'No colors match “' + term + '”.';
                 empty.hidden = found.length !== 0;
                 comboList.appendChild(empty);
+                if (done) done();
               })
               .catch(function () {
                 if (token === reqToken) setStatus('Search unavailable — try again.');
@@ -1330,37 +1455,43 @@
           combo.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') openCombo(false);
           });
+
+          // Autopopulate from ?color=<code> (e.g. arriving from a color-sample
+          // page). Prefer an already-rendered starter option; otherwise run the
+          // same live search and pick the exact code match. Skip if the shopper
+          // already has a colour (e.g. one restored from an AJAX sheen swap).
+          (function () {
+            var incoming = '';
+            try { incoming = new URLSearchParams(window.location.search).get('color') || ''; } catch (e) {}
+            incoming = incoming.trim();
+            if (!incoming) return;
+            if (colorValueInput && colorValueInput.value.trim() !== '') return;
+            function optByCode(code) {
+              var lc = code.toLowerCase();
+              var opts = Array.prototype.slice.call(comboList.querySelectorAll('.ls-pdp__combo-opt'));
+              // Exact code match first, then a value that starts with the code.
+              return opts.filter(function (li) { return (li.getAttribute('data-code') || '').toLowerCase() === lc; })[0]
+                  || opts.filter(function (li) { return (li.getAttribute('data-value') || '').toLowerCase().indexOf(lc) === 0; })[0]
+                  || null;
+            }
+            var hit = optByCode(incoming);
+            if (hit) { chooseColor(hit); return; }
+            liveSearch(incoming, function () {
+              var m = optByCode(incoming);
+              if (m) chooseColor(m);
+              else { comboList.innerHTML = initialHTML; filterVisible(''); } // no match — restore starter list
+            });
+          })();
         }
 
-        /* ---------- Sheen (sibling products by line tag) ---------- */
+        /* ---------- Sheen / grit (sibling products via productfamily collection) ---------- */
+        // Pills are sibling-product links rendered server-side (correct active
+        // state included). We only intercept clicks to AJAX-swap the product
+        // instead of a full navigation, so color/size/qty state carries over.
         var sheen = root.querySelector('[data-sheen]');
         if (sheen) {
           var sheenPills = sheen.querySelector('[data-sheen-pills]');
-          var sheenSelected = sheen.querySelector('[data-sheen-selected]');
-          var sheenUrl = sheen.getAttribute('data-search-url') || '/search';
-          var sheenQuery = sheen.getAttribute('data-query') || '';
-          var sheenLineTags = (sheen.getAttribute('data-linetags') || '').split('|').filter(Boolean);
-          var currentUrl = sheen.getAttribute('data-current-url');
-
-          function pathOf(u) {
-            try { return new URL(u, window.location.origin).pathname; } catch (e) { return u || ''; }
-          }
-          function sharesLineTag(el) {
-            var tags = (el.getAttribute('data-linetags') || '').split('|').filter(Boolean);
-            return tags.some(function (t) { return sheenLineTags.indexOf(t) !== -1; });
-          }
-
-          function markActiveSheen() {
-            var curPath = pathOf(currentUrl);
-            Array.prototype.slice.call(sheenPills.querySelectorAll('a.ls-pdp__pill')).forEach(function (a) {
-              var p = pathOf(a.getAttribute('href'));
-              if (p === curPath) { a.classList.add('is-active'); a.setAttribute('aria-current', 'true'); }
-              else { a.classList.remove('is-active'); a.removeAttribute('aria-current'); }
-            });
-          }
-
           if (sheenPills) {
-            // Intercept sheen link clicks → AJAX swap instead of full navigation.
             sheenPills.addEventListener('click', function (e) {
               var a = e.target.closest ? e.target.closest('a.ls-pdp__pill') : null;
               if (!a) return;
@@ -1369,60 +1500,88 @@
               ajaxSwitchProduct(a.getAttribute('href'));
             });
           }
+        }
 
-          var pending = window.__lsPdpPendingState;
-          if (pending && pending.sheenHTML && sheenPills) {
-            // Carried over from an AJAX switch — reuse the pills, don't refetch
-            // (avoids the reset flash); just move the active state.
-            sheenPills.innerHTML = pending.sheenHTML;
-            markActiveSheen();
-          } else if (sheenQuery && sheenPills) {
-            fetch(sheenUrl + '?q=' + encodeURIComponent(sheenQuery) + '&type=product&section_id=ls-sheen-results')
-              .then(function (r) { return r.text(); })
-              .then(function (html) {
-                var tmp = document.createElement('div');
-                tmp.innerHTML = html;
-                var opts = Array.prototype.slice
-                  .call(tmp.querySelectorAll('.ls-pdp__sheen-opt'))
-                  .filter(sharesLineTag);
+        /* ---------- Drag-to-swipe pill rows (sheen + variant options) ---------- */
+        // Native overflow-x handles touch/trackpad; on desktop a mouse drag just
+        // grabs the link, so add pointer drag-to-scroll for mouse/pen and swallow
+        // the click that ends a real drag (so it scrolls instead of navigating).
+        Array.prototype.slice.call(
+          root.querySelectorAll('.ls-pdp__selector--sheen .ls-pdp__pills, .ls-pdp__selector--buttons .ls-pdp__pills')
+        ).forEach(function (row) {
+          var isDown = false, moved = false, startX = 0, startScroll = 0, suppressClick = false;
+          row.addEventListener('pointerdown', function (e) {
+            if (e.pointerType === 'touch') return; // let native scroll handle touch
+            if (e.button != null && e.button !== 0) return;
+            isDown = true; moved = false; suppressClick = false;
+            startX = e.clientX; startScroll = row.scrollLeft;
+          });
+          row.addEventListener('pointermove', function (e) {
+            if (!isDown) return;
+            var dx = e.clientX - startX;
+            if (!moved && Math.abs(dx) > 4) {
+              moved = true;
+              row.classList.add('is-dragging');
+              try { row.setPointerCapture(e.pointerId); } catch (err) {}
+            }
+            if (moved) { row.scrollLeft = startScroll - dx; e.preventDefault(); }
+          });
+          function endDrag() {
+            if (!isDown) return;
+            isDown = false;
+            suppressClick = moved; // a real drag just happened → eat the next click
+            row.classList.remove('is-dragging');
+          }
+          row.addEventListener('pointerup', endDrag);
+          row.addEventListener('pointercancel', endDrag);
+          row.addEventListener('click', function (e) {
+            if (suppressClick) { e.preventDefault(); e.stopPropagation(); suppressClick = false; }
+          }, true);
+          // Plain vertical wheel scrolls the row horizontally while hovering it.
+          row.addEventListener('wheel', function (e) {
+            var raw = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+            if (!raw) return;
+            // Normalise line/page-based wheels (deltaMode 1/2) to pixels so mice
+            // that report small line counts still move a sensible distance.
+            var unit = e.deltaMode === 1 ? 16 : (e.deltaMode === 2 ? row.clientWidth : 1);
+            var delta = raw * unit;
+            var maxScroll = row.scrollWidth - row.clientWidth;
+            if (maxScroll <= 0) return; // nothing to scroll
+            var atStart = row.scrollLeft <= 0;
+            var atEnd = row.scrollLeft >= maxScroll - 1;
+            // Let the page scroll when we're already at the edge in that direction.
+            if ((delta < 0 && atStart) || (delta > 0 && atEnd)) return;
+            row.scrollLeft += delta;
+            e.preventDefault();
+          }, { passive: false });
+        });
 
-                // Collect unique siblings; make sure the current product is in.
-                var byPath = {};
-                var list = [];
-                function add(url, label) {
-                  var p = pathOf(url);
-                  if (byPath[p]) return;
-                  byPath[p] = 1;
-                  list.push({ url: url, label: label });
-                }
-                opts.forEach(function (a) {
-                  add(a.getAttribute('href'), a.getAttribute('data-sheen') || a.textContent);
-                });
-                add(currentUrl, sheenSelected ? sheenSelected.textContent : '');
+        /* ---------- "Shop this color in" pager (3 lines per page) ---------- */
+        var shopColor = root.querySelector('[data-shopcolor]');
+        if (shopColor) {
+          var scList = shopColor.querySelector('[data-shopcolor-list]');
+          var scNav = shopColor.querySelector('[data-shopcolor-nav]');
+          var scPrev = shopColor.querySelector('[data-shopcolor-prev]');
+          var scNext = shopColor.querySelector('[data-shopcolor-next]');
+          var scItems = scList ? Array.prototype.slice.call(scList.querySelectorAll('.ls-pdp__shop-color-link')) : [];
+          var scSize = parseInt(shopColor.getAttribute('data-shopcolor-page-size'), 10) || 3;
+          var scPages = Math.ceil(scItems.length / scSize);
+          var scPage = 0;
 
-                if (list.length <= 1) return; // no siblings to switch between
+          function scRender() {
+            scItems.forEach(function (el, i) {
+              var onPage = Math.floor(i / scSize) === scPage;
+              if (onPage) { el.removeAttribute('hidden'); } else { el.setAttribute('hidden', ''); }
+            });
+            if (scPrev) scPrev.disabled = scPage <= 0;
+            if (scNext) scNext.disabled = scPage >= scPages - 1;
+          }
 
-                // Stable order: by the trailing finish number, descending
-                // (e.g. 794, 793, 792) — the active pill stays in place.
-                function finishNum(label) {
-                  var m = (label || '').match(/(\d+)\s*$/);
-                  return m ? parseInt(m[1], 10) : -1;
-                }
-                list.sort(function (a, b) { return finishNum(b.label) - finishNum(a.label); });
-
-                var frag = document.createDocumentFragment();
-                list.forEach(function (it) {
-                  var pill = document.createElement('a');
-                  pill.className = 'ls-pdp__pill';
-                  pill.href = it.url;
-                  pill.textContent = it.label;
-                  frag.appendChild(pill);
-                });
-                sheenPills.innerHTML = '';
-                sheenPills.appendChild(frag);
-                markActiveSheen();
-              })
-              .catch(function () {});
+          if (scPages > 1) {
+            if (scNav) scNav.hidden = false;
+            if (scPrev) scPrev.addEventListener('click', function () { if (scPage > 0) { scPage--; scRender(); } });
+            if (scNext) scNext.addEventListener('click', function () { if (scPage < scPages - 1) { scPage++; scRender(); } });
+            scRender();
           }
         }
 
@@ -1501,7 +1660,8 @@
   .ls-pdp__details { min-width: 0; }
 
   /* ---------- Media column ---------- */
-  /* No panel background — the gallery sits directly on the page. */
+  /* Mobile: no panel background — the gallery sits directly on the page.
+     The gray preview panel is applied desktop-only (see Desktop block). */
 
   /* ---------- Gallery ---------- */
   .ls-pdp__stage {
@@ -1663,6 +1823,9 @@
   /* ---------- Selectors ---------- */
   .ls-pdp__form { margin: 0; }
   .ls-pdp__selectors { display: flex; flex-direction: column; gap: 1.15rem; }
+  /* min-width:0 lets a selector shrink below its content so the swipeable pill
+     rows below overflow-x:auto instead of stretching the whole column wide. */
+  .ls-pdp__selector { min-width: 0; }
   .ls-pdp__selector-head { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.55rem; }
   .ls-pdp__selector-label { font-size: 0.85rem; font-weight: 600; color: var(--ls-pd-heading); }
   .ls-pdp__selector-value { font-size: 0.8rem; color: var(--ls-pd-muted); }
@@ -1693,22 +1856,33 @@
   /* Sheen pills are links to sibling products. */
   a.ls-pdp__pill { display: inline-flex; align-items: center; text-decoration: none; }
 
-  /* Sheen: swipeable single row instead of wrapping. */
-  .ls-pdp__selector--sheen .ls-pdp__pills {
+  /* Sheen + variant-option pills: swipeable single row instead of wrapping. */
+  .ls-pdp__selector--sheen .ls-pdp__pills,
+  .ls-pdp__selector--buttons .ls-pdp__pills {
     flex-wrap: nowrap;
     overflow-x: auto;
-    scroll-snap-type: x proximity;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    cursor: grab;
     /* room so the scrolled pills aren't flush against the edge */
     padding-bottom: 2px;
   }
-  .ls-pdp__selector--sheen .ls-pdp__pills::-webkit-scrollbar { display: none; }
-  .ls-pdp__selector--sheen .ls-pdp__pill {
+  .ls-pdp__selector--sheen .ls-pdp__pills::-webkit-scrollbar,
+  .ls-pdp__selector--buttons .ls-pdp__pills::-webkit-scrollbar { display: none; }
+  .ls-pdp__selector--sheen .ls-pdp__pill,
+  .ls-pdp__selector--buttons .ls-pdp__pill {
     flex-shrink: 0;
-    scroll-snap-align: start;
     white-space: nowrap;
   }
+  /* Mouse drag-to-scroll affordance (JS handles the actual scroll). */
+  .ls-pdp__selector--sheen .ls-pdp__pills.is-dragging,
+  .ls-pdp__selector--buttons .ls-pdp__pills.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  /* Stop the browser from ghost-dragging the sheen links during a swipe. */
+  .ls-pdp__selector--sheen a.ls-pdp__pill { -webkit-user-drag: none; }
 
   /* ---------- Color combobox (searchable) ---------- */
   .ls-pdp__color-row { display: flex; align-items: stretch; gap: 0.6rem; }
@@ -2080,6 +2254,62 @@
 
   .ls-pdp__secure svg { width: 17px; height: 17px; flex-shrink: 0; }
 
+  /* ---------- Shop this color in (color-sample products) ---------- */
+  .ls-pdp__shop-color { margin-top: 1.5rem; }
+  .ls-pdp__shop-color-headrow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+  }
+  .ls-pdp__shop-color-head {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ls-pd-heading);
+  }
+  .ls-pdp__shop-color-nav { display: flex; gap: 0.4rem; }
+  .ls-pdp__shop-color-nav[hidden] { display: none; }
+  .ls-pdp__shop-color-arrow-btn {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    border: 1px solid var(--ls-pd-border);
+    background: var(--ls-pd-surface);
+    color: var(--ls-pd-text);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  }
+  .ls-pdp__shop-color-arrow-btn:hover:not(:disabled) { color: var(--ls-pd-accent); border-color: var(--ls-pd-accent); }
+  .ls-pdp__shop-color-arrow-btn:disabled { opacity: 0.35; cursor: default; }
+  .ls-pdp__shop-color-arrow-btn svg { width: 18px; height: 18px; }
+  .ls-pdp__shop-color-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .ls-pdp__shop-color-link[hidden] { display: none; }
+  .ls-pdp__shop-color-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border: 1.5px solid var(--ls-pd-border);
+    border-radius: 14px;
+    background: var(--ls-pd-surface);
+    color: var(--ls-pd-text);
+    text-decoration: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .ls-pdp__shop-color-link:hover {
+    border-color: var(--ls-pd-accent);
+    box-shadow: 0 2px 4px rgba(20, 22, 26, 0.06), 0 6px 14px rgba(20, 22, 26, 0.07);
+  }
+  .ls-pdp__shop-color-name { font-weight: 500; flex: 1 1 auto; min-width: 0; }
+  .ls-pdp__shop-color-price { font-weight: 600; color: var(--ls-pd-heading); white-space: nowrap; }
+  .ls-pdp__shop-color-arrow { width: 18px; height: 18px; flex-shrink: 0; color: var(--ls-pd-muted); }
+  .ls-pdp__shop-color-link:hover .ls-pdp__shop-color-arrow { color: var(--ls-pd-accent); }
+
   /* ---------- Frequently paired ---------- */
   .ls-pdp__paired { margin-top: 1.75rem; }
   .ls-pdp__paired[hidden] { display: none; }
@@ -2258,7 +2488,13 @@
   /* ---------- Desktop ---------- */
   @media screen and (min-width: 750px) {
     .ls-pdp__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3rem; align-items: start; }
-    .ls-pdp__media-col { position: sticky; top: 1.5rem; }
+    .ls-pdp__media-col {
+      position: sticky;
+      top: 1.5rem;
+      background: #eeeeee;
+      border-radius: var(--ls-pd-radius);
+      padding: 1.5rem;
+    }
     .ls-pdp__title { font-size: clamp(1.9rem, 2.4vw, 2.4rem); }
   }
 {% endstylesheet %}
@@ -2349,6 +2585,7 @@
       "type": "text",
       "id": "price_suffix",
       "label": "Price suffix",
+      "info": "Only shown when the product has a gallon variant (e.g. 'Price per Gallon'). Hidden for products with no gallon size.",
       "default": "Price per Gallon"
     },
     {
@@ -2404,23 +2641,47 @@
     },
     {
       "type": "header",
-      "content": "Sheen (sibling products)"
+      "content": "Sheen / grit (sibling products)"
     },
     {
       "type": "paragraph",
-      "content": "Each sheen is a separate product; siblings share an all-uppercase line tag (e.g. AWIAP). The selector lists those siblings (found via live search on that tag) and links to each. The label is parsed from the product title after ' - '."
+      "content": "Each sheen (or grit) is a separate product, and the whole set shares one productfamily_* collection (e.g. productfamily_rswip). The selector lists that collection's members and links to each; the label per sibling is the product title after ' - '. The field label is 'Sheen' by default and switches to 'Grit' for the product types below. Grit families only appear once they exist as productfamily_* collections in Shopify admin."
     },
     {
       "type": "checkbox",
       "id": "show_sheen",
-      "label": "Show sheen selector",
+      "label": "Show sheen / grit selector",
       "default": true
     },
     {
       "type": "text",
       "id": "sheen_label",
-      "label": "Sheen field label",
+      "label": "Default field label",
       "default": "Sheen",
+      "visible_if": "{{ section.settings.show_sheen }}"
+    },
+    {
+      "type": "text",
+      "id": "grit_label",
+      "label": "Grit field label",
+      "default": "Grit",
+      "info": "Used instead of the default label for the product types below.",
+      "visible_if": "{{ section.settings.show_sheen }}"
+    },
+    {
+      "type": "text",
+      "id": "grit_product_types",
+      "label": "Grit product types",
+      "default": "Sanding",
+      "info": "Comma-separated product types that should use the grit label (e.g. Sanding).",
+      "visible_if": "{{ section.settings.show_sheen }}"
+    },
+    {
+      "type": "text",
+      "id": "family_collection_handle_prefix",
+      "label": "Family collection handle prefix",
+      "default": "productfamily",
+      "info": "Sibling sets are grouped by a collection whose handle contains this prefix.",
       "visible_if": "{{ section.settings.show_sheen }}"
     },
     {
@@ -2516,9 +2777,22 @@
       "type": "text",
       "id": "color_family_tag_prefix",
       "label": "Color family tag prefix",
-      "info": "Single-collection mode: prefix of the tags on color-swatch products that declare their family, e.g. color_collection_",
-      "default": "color_collection_",
-      "visible_if": "{{ section.settings.show_color_field }}"
+      "info": "Prefix of the tags on color-swatch products that declare their family, e.g. color_collection_. Also used to detect color-sample pages for the \"Shop this color in\" links below.",
+      "default": "color_collection_"
+    },
+    {
+      "type": "header",
+      "content": "Color-sample products"
+    },
+    {
+      "type": "paragraph",
+      "content": "On a swatch / color-sample product page, offer the same color in every full-size paint line that supports it. A sample is detected by the color family tag above; paint lines are auto-discovered from collections whose handle contains the sheen family prefix (see Sheen settings), so no setup is needed. Each link opens the paint with the color preselected via ?color=."
+    },
+    {
+      "type": "text",
+      "id": "shop_color_heading",
+      "label": "\"Shop this color in\" heading",
+      "default": "Shop this color in"
     },
     {
       "type": "text",
