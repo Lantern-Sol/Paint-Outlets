@@ -1,0 +1,931 @@
+{%- comment -%}
+  LS Collection
+  -------------
+  Self-contained collection (category) page matching the Figma layout:
+  breadcrumb · title + count + assurance pills · sidebar facets (native Shopify
+  filtering) · quick-filter pills + sort · 4-up product-card grid · load more.
+
+  Reads the live `collection` object. Filtering uses Shopify's storefront
+  filters (`collection.filters`, configured in Search & Discovery): the sidebar
+  is a GET <form> that reloads the collection with the chosen facets — so it is
+  fully functional, not a visual shell. Sort uses `collection.sort_options`.
+  Load more paginates server-side and appends the next page via the Section
+  Rendering API. Product cards reuse the shared `ls-product-card` snippet.
+{%- endcomment -%}
+
+{%- liquid
+  assign co_font = section.settings.font_family
+  assign co_font_500 = co_font | font_modify: 'weight', '500'
+  assign co_font_600 = co_font | font_modify: 'weight', '600'
+  assign co_font_700 = co_font | font_modify: 'weight', '700'
+
+  assign ppp = section.settings.products_per_page | default: 12
+  assign noun = section.settings.item_noun | default: 'paints'
+  assign total_all = collection.all_products_count
+  assign total_filtered = collection.products_count
+
+  assign current_sort = collection.sort_by | default: collection.default_sort_by
+
+  # Count active facet values so "Clear all" only shows when something is applied.
+  assign active_facets = 0
+  for filter in collection.filters
+    assign active_facets = active_facets | plus: filter.active_values.size
+    if filter.type == 'price_range'
+      if filter.min_value.value != blank or filter.max_value.value != blank
+        assign active_facets = active_facets | plus: 1
+      endif
+    endif
+  endfor
+-%}
+
+{% style %}
+  {{ co_font | font_face: font_display: 'swap' }}
+  {{ co_font_500 | font_face: font_display: 'swap' }}
+  {{ co_font_600 | font_face: font_display: 'swap' }}
+  {{ co_font_700 | font_face: font_display: 'swap' }}
+
+  .ls-col-{{ section.id }} {
+    --ls-col-font-family: {{ co_font.family }}, {{ co_font.fallback_families }};
+    --ls-col-heading: {{ section.settings.heading_color | default: '#17181b' }};
+    --ls-col-text: {{ section.settings.text_color | default: '#17181b' }};
+    --ls-col-muted: {{ section.settings.muted_color | default: '#6c7178' }};
+    --ls-col-accent: {{ section.settings.accent_color | default: '#c13121' }};
+    --ls-col-success: {{ section.settings.success_color | default: '#1e854a' }};
+    --ls-col-surface: {{ section.settings.surface_color | default: '#ffffff' }};
+    --ls-col-border: {{ section.settings.border_color | default: '#e6e2db' }};
+    --ls-col-chip: {{ section.settings.chip_background | default: '#fcf2f0' }};
+    --ls-col-radius: {{ section.settings.corner_radius | default: 16 }}px;
+  }
+{% endstyle %}
+
+<div
+  class="section section--page-width ls-col ls-col-{{ section.id }} spacing-style"
+  style="{% render 'spacing-style', settings: section.settings %}"
+>
+  {%- comment -%} ---------------- Breadcrumbs ---------------- {%- endcomment -%}
+  {%- if section.settings.show_breadcrumbs -%}
+    <nav class="ls-col__crumbs" aria-label="Breadcrumb">
+      <a href="{{ routes.root_url }}">Home</a>
+      <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4.5 2.5l3 3.5-3 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span aria-current="page">{{ collection.title }}</span>
+    </nav>
+  {%- endif -%}
+
+  {%- comment -%} ---------------- Header ---------------- {%- endcomment -%}
+  <div class="ls-col__header">
+    <div class="ls-col__titles">
+      <h1 class="ls-col__title">{{ collection.title }}</h1>
+      {%- if total_all > 0 -%}
+        <p class="ls-col__subtitle">
+          <span class="ls-col__count">{{ total_all }}</span> {{ noun }}{% if section.settings.subtitle_suffix != blank %}, {{ section.settings.subtitle_suffix }}{% endif %}
+        </p>
+      {%- endif -%}
+    </div>
+
+    {%- if section.settings.assurance_1 != blank or section.settings.assurance_2 != blank -%}
+      <div class="ls-col__assurances">
+        {%- if section.settings.assurance_1 != blank -%}
+          <span class="ls-col__assurance">
+            <span class="ls-col__assurance-dot" aria-hidden="true"></span>
+            {{ section.settings.assurance_1 }}
+          </span>
+        {%- endif -%}
+        {%- if section.settings.assurance_2 != blank -%}
+          <span class="ls-col__assurance">
+            <svg class="ls-col__assurance-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M1.5 5.5h9v7h-9zM10.5 8h3l2.5 2.5v2h-5.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="5" cy="14" r="1.6" stroke="currentColor" stroke-width="1.3"/><circle cx="13.5" cy="14" r="1.6" stroke="currentColor" stroke-width="1.3"/></svg>
+            {{ section.settings.assurance_2 }}
+          </span>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  </div>
+
+  {%- comment -%} ---------------- Body: filters + results ---------------- {%- endcomment -%}
+  {%- comment -%}
+    Single GET <form> wraps the whole body, so the sidebar facets AND the sort
+    <select> (in the toolbar) submit together — a facet change preserves sort and
+    vice versa, with no duplicate params.
+  {%- endcomment -%}
+  <form class="ls-col__body" data-filter-form method="get" action="{{ collection.url }}">
+    {%- comment -%} =============== Sidebar facets =============== {%- endcomment -%}
+    <aside class="ls-col__sidebar" data-sidebar>
+      <div class="ls-col__sidebar-head">
+        <span class="ls-col__sidebar-title">
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 5h14M6 10h8M9 15h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          {{ section.settings.filters_label | default: 'Filters' }}
+        </span>
+        {%- if total_filtered > 0 -%}
+          <span class="ls-col__sidebar-count">{{ total_filtered }} items</span>
+        {%- endif -%}
+      </div>
+
+      {%- if collection.filters.size > 0 -%}
+        {%- for filter in collection.filters -%}
+          {%- case filter.type -%}
+            {%- when 'price_range' -%}
+              <details class="ls-col__facet" open>
+                <summary class="ls-col__facet-summary">
+                  {{ filter.label }}
+                  <span class="ls-col__facet-chevron" aria-hidden="true"></span>
+                </summary>
+                <div class="ls-col__facet-body ls-col__price">
+                  {%- assign cur_min = filter.min_value.value -%}
+                  {%- assign cur_max = filter.max_value.value -%}
+                  <label class="ls-col__price-field">
+                    <span>{{ cart.currency.symbol }}</span>
+                    <input type="number" inputmode="decimal" name="{{ filter.min_value.param_name }}" value="{{ cur_min }}" placeholder="0" min="0" max="{{ filter.range_max | money_without_currency | replace: ',', '' }}">
+                  </label>
+                  <span class="ls-col__price-dash">–</span>
+                  <label class="ls-col__price-field">
+                    <span>{{ cart.currency.symbol }}</span>
+                    <input type="number" inputmode="decimal" name="{{ filter.max_value.param_name }}" value="{{ cur_max }}" placeholder="{{ filter.range_max | money_without_currency | replace: ',', '' }}" min="0" max="{{ filter.range_max | money_without_currency | replace: ',', '' }}">
+                  </label>
+                </div>
+              </details>
+
+            {%- else -%}
+              {%- assign is_swatch = false -%}
+              {%- if filter.presentation == 'swatch' -%}{%- assign is_swatch = true -%}{%- endif -%}
+              <details class="ls-col__facet"{% if is_swatch or filter.active_values.size > 0 %} open{% endif %}>
+                <summary class="ls-col__facet-summary">
+                  {{ filter.label }}
+                  <span class="ls-col__facet-chevron" aria-hidden="true"></span>
+                </summary>
+                {%- if is_swatch -%}
+                  <div class="ls-col__facet-body ls-col__swatches">
+                    {%- for value in filter.values -%}
+                      <label class="ls-col__swatch{% if value.active %} is-active{% endif %}{% if value.count == 0 and value.active == false %} is-disabled{% endif %}" title="{{ value.label | escape }} ({{ value.count }})">
+                        <input type="checkbox" name="{{ value.param_name }}" value="{{ value.value }}"{% if value.active %} checked{% endif %}{% if value.count == 0 and value.active == false %} disabled{% endif %}>
+                        <span class="ls-col__swatch-dot"{% if value.swatch.image %} style="background-image:url({{ value.swatch.image | image_url: width: 60 }})"{% elsif value.swatch.color %} style="background:{{ value.swatch.color }}"{% endif %} aria-hidden="true"></span>
+                        <span class="visually-hidden">{{ value.label }}</span>
+                      </label>
+                    {%- endfor -%}
+                  </div>
+                {%- else -%}
+                  <div class="ls-col__facet-body ls-col__options">
+                    {%- for value in filter.values -%}
+                      <label class="ls-col__option{% if value.count == 0 and value.active == false %} is-disabled{% endif %}">
+                        <input type="checkbox" name="{{ value.param_name }}" value="{{ value.value }}"{% if value.active %} checked{% endif %}{% if value.count == 0 and value.active == false %} disabled{% endif %}>
+                        <span class="ls-col__option-box" aria-hidden="true"></span>
+                        <span class="ls-col__option-label">{{ value.label }}</span>
+                        <span class="ls-col__option-count">{{ value.count }}</span>
+                      </label>
+                    {%- endfor -%}
+                  </div>
+                {%- endif -%}
+              </details>
+          {%- endcase -%}
+        {%- endfor -%}
+
+        <div class="ls-col__sidebar-foot">
+          <button type="submit" class="ls-col__apply" data-apply>Apply filters</button>
+          {%- if active_facets > 0 -%}
+            <a class="ls-col__clear" href="{{ collection.url }}?sort_by={{ current_sort }}">Clear all</a>
+          {%- endif -%}
+        </div>
+      {%- else -%}
+        <p class="ls-col__no-facets">No filters are configured for this collection. Enable storefront filters in Search &amp; Discovery.</p>
+      {%- endif -%}
+    </aside>
+
+    {%- comment -%} =============== Results =============== {%- endcomment -%}
+    <div class="ls-col__main">
+      <div class="ls-col__toolbar">
+        <button type="button" class="ls-col__filters-toggle" data-filters-toggle aria-expanded="false">
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 5h14M6 10h8M9 15h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          {{ section.settings.filters_label | default: 'Filters' }}
+        </button>
+
+        {%- if section.blocks.size > 0 -%}
+          <div class="ls-col__pills" role="list">
+            {%- for block in section.blocks -%}
+              {%- if block.type == 'quick_filter' and block.settings.label != blank -%}
+                <a class="ls-col__pill" href="{{ block.settings.link | default: '#' }}" role="listitem" {{ block.shopify_attributes }}>{{ block.settings.label }}</a>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+
+        {%- if collection.sort_options.size > 0 -%}
+          <label class="ls-col__sort">
+            <span class="ls-col__sort-label">{{ section.settings.sort_label | default: 'Sort:' }}</span>
+            <select name="sort_by" data-sort>
+              {%- for option in collection.sort_options -%}
+                <option value="{{ option.value }}"{% if option.value == current_sort %} selected{% endif %}>{{ option.name }}</option>
+              {%- endfor -%}
+            </select>
+            <svg class="ls-col__sort-caret" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M4 5.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </label>
+        {%- endif -%}
+      </div>
+
+      {%- paginate collection.products by ppp -%}
+        {%- assign shown = paginate.current_offset | plus: collection.products.size -%}
+        <p class="ls-col__showing">
+          {{ section.settings.showing_label | default: 'Showing' }}
+          <span data-shown>{{ shown }}</span> of <span data-total>{{ total_filtered }}</span> {{ noun }}
+        </p>
+
+        {%- if collection.products.size > 0 -%}
+          <div class="ls-col__grid" data-grid>
+            {%- for product in collection.products -%}
+              {%- render 'ls-product-card',
+                card_product: product,
+                fallback_rating: section.settings.fallback_rating,
+                fallback_review_count: section.settings.fallback_review_count
+              -%}
+            {%- endfor -%}
+          </div>
+
+          {%- if paginate.next -%}
+            <div class="ls-col__loadmore-wrap">
+              <a class="ls-col__loadmore" href="{{ paginate.next.url }}" data-loadmore>
+                {{ section.settings.load_more_label | default: 'Load more products' }}
+              </a>
+            </div>
+          {%- endif -%}
+        {%- else -%}
+          <p class="ls-col__empty">{{ section.settings.empty_text | default: 'No products match these filters.' }}</p>
+        {%- endif -%}
+      {%- endpaginate -%}
+    </div>
+  </form>
+</div>
+
+<script>
+  (function () {
+    function init() {
+      var root = document.querySelector('.ls-col-{{ section.id }}');
+      if (!root) return;
+      root.classList.add('ls-col--js');
+      var SECTION_ID = {{ section.id | json }};
+
+      /* ---------- Auto-submit facets + sort ---------- */
+      var form = root.querySelector('[data-filter-form]');
+      if (form) {
+        // Keep the hidden sort mirror in step with the visible <select> so a
+        // facet submit preserves the chosen sort.
+        var sortSelect = form.querySelector('[data-sort]');
+        if (sortSelect) {
+          // The select is inside the form, so its value submits with the facets.
+          sortSelect.addEventListener('change', function () { form.submit(); });
+        }
+        // Checkbox facets submit immediately; price inputs submit on change.
+        Array.prototype.slice.call(form.querySelectorAll('input[type="checkbox"]')).forEach(function (cb) {
+          cb.addEventListener('change', function () { form.submit(); });
+        });
+        Array.prototype.slice.call(form.querySelectorAll('.ls-col__price input')).forEach(function (inp) {
+          inp.addEventListener('change', function () { form.submit(); });
+        });
+      }
+
+      /* ---------- Mobile filters toggle ---------- */
+      var toggle = root.querySelector('[data-filters-toggle]');
+      var sidebar = root.querySelector('[data-sidebar]');
+      if (toggle && sidebar) {
+        toggle.addEventListener('click', function () {
+          var open = sidebar.classList.toggle('is-open');
+          toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+      }
+
+      /* ---------- Load more (Section Rendering API) ---------- */
+      var grid = root.querySelector('[data-grid]');
+      var shownEl = root.querySelector('[data-shown]');
+      function bindLoadMore() {
+        var btn = root.querySelector('[data-loadmore]');
+        if (!btn) return;
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          if (btn.classList.contains('is-loading')) return;
+          btn.classList.add('is-loading');
+          var url = btn.getAttribute('href');
+          var sep = url.indexOf('?') > -1 ? '&' : '?';
+          fetch(url + sep + 'section_id=' + encodeURIComponent(SECTION_ID))
+            .then(function (r) { return r.text(); })
+            .then(function (html) {
+              var doc = new DOMParser().parseFromString(html, 'text/html');
+              var newGrid = doc.querySelector('[data-grid]');
+              var newBtn = doc.querySelector('[data-loadmore]');
+              if (newGrid && grid) {
+                var added = 0;
+                Array.prototype.slice.call(newGrid.children).forEach(function (card) {
+                  grid.appendChild(card);
+                  added++;
+                });
+                if (shownEl) shownEl.textContent = (parseInt(shownEl.textContent, 10) || 0) + added;
+              }
+              var wrap = btn.closest('.ls-col__loadmore-wrap');
+              if (newBtn) {
+                btn.setAttribute('href', newBtn.getAttribute('href'));
+                btn.classList.remove('is-loading');
+              } else if (wrap) {
+                wrap.parentNode.removeChild(wrap); // no more pages
+              }
+            })
+            .catch(function () {
+              btn.classList.remove('is-loading');
+              window.location = btn.getAttribute('href'); // fall back to a full navigation
+            });
+        });
+      }
+      bindLoadMore();
+    }
+
+    init();
+    document.addEventListener('shopify:section:load', function (e) {
+      if (!e.detail || e.detail.sectionId === '{{ section.id }}') init();
+    });
+  })();
+</script>
+
+{% stylesheet %}
+  .ls-col {
+    font-family: var(--ls-col-font-family, 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    color: var(--ls-col-text);
+    overflow-x: clip;
+  }
+
+  /* ---------- Breadcrumbs ---------- */
+  .ls-col__crumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8125rem;
+    color: var(--ls-col-muted);
+    margin-bottom: 1.1rem;
+  }
+  .ls-col__crumbs a { color: inherit; text-decoration: none; }
+  .ls-col__crumbs a:hover { color: var(--ls-col-accent); }
+  .ls-col__crumbs svg { width: 12px; height: 12px; flex-shrink: 0; }
+  .ls-col__crumbs span[aria-current] { color: var(--ls-col-heading); }
+
+  /* ---------- Header ---------- */
+  .ls-col__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.75rem;
+  }
+  .ls-col__title {
+    margin: 0;
+    font-size: clamp(1.9rem, 3vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ls-col-heading);
+    line-height: 1.05;
+  }
+  .ls-col__subtitle {
+    margin: 0.5rem 0 0;
+    font-size: 0.9rem;
+    color: var(--ls-col-muted);
+  }
+  .ls-col__count { font-weight: 700; color: var(--ls-col-heading); }
+  .ls-col__assurances { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+  .ls-col__assurance {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ls-col-heading);
+  }
+  .ls-col__assurance-dot {
+    width: 7px; height: 7px; border-radius: 999px;
+    background: var(--ls-col-success);
+  }
+  .ls-col__assurance-icon { width: 16px; height: 16px; color: var(--ls-col-heading); }
+
+  /* ---------- Body layout ---------- */
+  .ls-col__body {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .ls-col__sidebar {
+    background: var(--ls-col-surface);
+    border: 1px solid var(--ls-col-border);
+    border-radius: var(--ls-col-radius);
+    padding: 1.1rem 1.25rem 1.25rem;
+    box-shadow: 0 1px 2px rgba(20, 22, 26, 0.03), 0 8px 24px rgba(20, 22, 26, 0.04);
+  }
+  .ls-col__sidebar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-bottom: 0.9rem;
+  }
+  .ls-col__sidebar-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ls-col-heading);
+  }
+  .ls-col__sidebar-title svg { width: 18px; height: 18px; color: var(--ls-col-accent); }
+  .ls-col__sidebar-count { font-size: 0.8rem; color: var(--ls-col-muted); }
+
+  .ls-col__facet {
+    border-top: 1px solid var(--ls-col-border);
+    padding: 0.9rem 0;
+  }
+  .ls-col__facet-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    cursor: pointer;
+    list-style: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ls-col-heading);
+  }
+  .ls-col__facet-summary::-webkit-details-marker { display: none; }
+  .ls-col__facet-chevron {
+    width: 9px; height: 9px; flex-shrink: 0;
+    border-right: 1.6px solid var(--ls-col-muted);
+    border-bottom: 1.6px solid var(--ls-col-muted);
+    transform: rotate(45deg);
+    transition: transform 0.15s ease;
+    margin-bottom: 3px;
+  }
+  .ls-col__facet[open] .ls-col__facet-chevron { transform: rotate(-135deg); margin-bottom: -2px; }
+  .ls-col__facet-body { padding-top: 0.85rem; }
+
+  /* Color swatches */
+  .ls-col__swatches {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+  }
+  .ls-col__swatch { position: relative; cursor: pointer; aspect-ratio: 1 / 1; }
+  .ls-col__swatch input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .ls-col__swatch-dot {
+    display: block;
+    width: 100%; height: 100%;
+    border-radius: 10px;
+    background: #ddd center/cover no-repeat;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+  }
+  .ls-col__swatch:hover .ls-col__swatch-dot { transform: scale(1.04); }
+  .ls-col__swatch.is-active .ls-col__swatch-dot {
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 0 0 2px var(--ls-col-accent);
+  }
+  .ls-col__swatch.is-disabled { opacity: 0.35; pointer-events: none; }
+
+  /* Checkbox options */
+  .ls-col__options { display: flex; flex-direction: column; gap: 0.6rem; }
+  .ls-col__option {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--ls-col-text);
+  }
+  .ls-col__option input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .ls-col__option-box {
+    width: 18px; height: 18px; flex-shrink: 0;
+    border: 1.5px solid var(--ls-col-border);
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+  .ls-col__option input:checked ~ .ls-col__option-box {
+    background: var(--ls-col-accent);
+    border-color: var(--ls-col-accent);
+  }
+  .ls-col__option input:checked ~ .ls-col__option-box::after {
+    content: '';
+    width: 5px; height: 9px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg) translate(-1px, -1px);
+  }
+  .ls-col__option input:focus-visible ~ .ls-col__option-box { outline: 2px solid var(--ls-col-accent); outline-offset: 1px; }
+  .ls-col__option-label { flex: 1 1 auto; min-width: 0; }
+  .ls-col__option-count { color: var(--ls-col-muted); font-size: 0.8rem; }
+  .ls-col__option.is-disabled { opacity: 0.4; cursor: default; }
+
+  /* Price */
+  .ls-col__price { display: flex; align-items: center; gap: 0.5rem; }
+  .ls-col__price-field {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1 1 0;
+    min-width: 0;
+    border: 1.5px solid var(--ls-col-border);
+    border-radius: 8px;
+    padding: 0.4rem 0.55rem;
+    font-size: 0.85rem;
+    color: var(--ls-col-muted);
+  }
+  .ls-col__price-field input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: var(--ls-col-text);
+    outline: none;
+  }
+  .ls-col__price-dash { color: var(--ls-col-muted); }
+
+  .ls-col__sidebar-foot { padding-top: 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .ls-col__apply {
+    appearance: none;
+    border: 0;
+    background: var(--ls-col-accent);
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    padding: 0.7rem 1rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  /* With JS, facets auto-submit — the Apply button is a no-JS fallback. */
+  .ls-col--js .ls-col__apply { display: none; }
+  .ls-col__clear {
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ls-col-muted);
+    text-decoration: none;
+  }
+  .ls-col__clear:hover { color: var(--ls-col-accent); }
+  .ls-col__no-facets { font-size: 0.85rem; color: var(--ls-col-muted); padding-top: 0.5rem; }
+
+  /* ---------- Main / toolbar ---------- */
+  .ls-col__toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+  }
+  .ls-col__filters-toggle {
+    display: none;
+    align-items: center;
+    gap: 0.4rem;
+    appearance: none;
+    border: 1px solid var(--ls-col-border);
+    background: var(--ls-col-surface);
+    color: var(--ls-col-heading);
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .ls-col__filters-toggle svg { width: 16px; height: 16px; }
+
+  .ls-col__pills {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ls-col__pills::-webkit-scrollbar { display: none; }
+  .ls-col__pill {
+    flex-shrink: 0;
+    border: 1px solid var(--ls-col-border);
+    background: var(--ls-col-surface);
+    color: var(--ls-col-text);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .ls-col__pill:hover { border-color: var(--ls-col-heading); color: var(--ls-col-heading); }
+
+  .ls-col__sort {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    border: 1px solid var(--ls-col-border);
+    background: var(--ls-col-surface);
+    border-radius: 999px;
+    padding: 0.5rem 2rem 0.5rem 0.95rem;
+    font-size: 0.85rem;
+  }
+  .ls-col__sort-label { color: var(--ls-col-muted); }
+  .ls-col__sort select {
+    appearance: none;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-weight: 600;
+    color: var(--ls-col-heading);
+    cursor: pointer;
+    outline: none;
+  }
+  .ls-col__sort-caret {
+    position: absolute;
+    right: 0.85rem;
+    width: 14px; height: 14px;
+    color: var(--ls-col-muted);
+    pointer-events: none;
+  }
+
+  .ls-col__showing {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+    color: var(--ls-col-muted);
+  }
+
+  /* ---------- Grid ---------- */
+  .ls-col__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+  .ls-col__empty { color: var(--ls-col-muted); padding: 2rem 0; }
+
+  /* ---------- Load more ---------- */
+  .ls-col__loadmore-wrap { display: flex; justify-content: center; margin-top: 2rem; }
+  .ls-col__loadmore {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid var(--ls-col-border);
+    background: var(--ls-col-surface);
+    color: var(--ls-col-heading);
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.8rem 1.6rem;
+    border-radius: 999px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .ls-col__loadmore:hover { border-color: var(--ls-col-heading); }
+  .ls-col__loadmore.is-loading { opacity: 0.6; pointer-events: none; }
+
+  /* ---------- Responsive ---------- */
+  @media screen and (max-width: 1100px) {
+    .ls-col__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media screen and (max-width: 990px) {
+    .ls-col__body { grid-template-columns: minmax(0, 1fr); }
+    .ls-col__sidebar {
+      display: none;
+      position: static;
+      margin-bottom: 1rem;
+    }
+    .ls-col__sidebar.is-open { display: block; }
+    .ls-col__filters-toggle { display: inline-flex; }
+  }
+  @media screen and (max-width: 749px) {
+    .ls-col__header { align-items: flex-start; }
+    .ls-col__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  }
+  @media screen and (max-width: 430px) {
+    .ls-col__grid { grid-template-columns: minmax(0, 1fr); }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "LS Collection",
+  "tag": "section",
+  "class": "ls-collection-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "font_family",
+      "label": "Font",
+      "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Header"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_breadcrumbs",
+      "label": "Show breadcrumbs",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "item_noun",
+      "label": "Item noun",
+      "info": "Used in the count and \"Showing\" lines, e.g. \"paints\".",
+      "default": "paints"
+    },
+    {
+      "type": "text",
+      "id": "subtitle_suffix",
+      "label": "Subtitle suffix",
+      "info": "Appended after the count, e.g. \"412 paints, tinted to any color\".",
+      "default": "tinted to any color"
+    },
+    {
+      "type": "text",
+      "id": "assurance_1",
+      "label": "Assurance 1 (green dot)",
+      "default": "Ready today"
+    },
+    {
+      "type": "text",
+      "id": "assurance_2",
+      "label": "Assurance 2 (truck icon)",
+      "default": "Ships nationwide"
+    },
+    {
+      "type": "header",
+      "content": "Toolbar & filters"
+    },
+    {
+      "type": "text",
+      "id": "filters_label",
+      "label": "Filters label",
+      "default": "Filters"
+    },
+    {
+      "type": "text",
+      "id": "sort_label",
+      "label": "Sort label",
+      "default": "Sort:"
+    },
+    {
+      "type": "text",
+      "id": "showing_label",
+      "label": "\"Showing\" label",
+      "default": "Showing"
+    },
+    {
+      "type": "header",
+      "content": "Grid"
+    },
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "label": "Products per page",
+      "min": 4,
+      "max": 24,
+      "step": 4,
+      "default": 12
+    },
+    {
+      "type": "text",
+      "id": "load_more_label",
+      "label": "Load more label",
+      "default": "Load more products"
+    },
+    {
+      "type": "text",
+      "id": "empty_text",
+      "label": "Empty state text",
+      "default": "No products match these filters."
+    },
+    {
+      "type": "header",
+      "content": "Product card fallback rating"
+    },
+    {
+      "type": "range",
+      "id": "fallback_rating",
+      "label": "Fallback rating",
+      "min": 0,
+      "max": 5,
+      "step": 0.1,
+      "default": 4.9,
+      "info": "Shown when a product has no reviews metafield. Set 0 to hide."
+    },
+    {
+      "type": "number",
+      "id": "fallback_review_count",
+      "label": "Fallback review count",
+      "default": 312
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading",
+      "default": "#17181b"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#17181b"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted text",
+      "default": "#6c7178"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent",
+      "default": "#c13121"
+    },
+    {
+      "type": "color",
+      "id": "success_color",
+      "label": "Success",
+      "default": "#1e854a"
+    },
+    {
+      "type": "color",
+      "id": "surface_color",
+      "label": "Surface",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border",
+      "default": "#e6e2db"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    }
+  ],
+  "blocks": [
+    {
+      "type": "quick_filter",
+      "name": "Quick filter pill",
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Bestsellers"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link",
+          "info": "Point to a filtered collection URL or tag, e.g. ?filter.p.tag=Bestsellers"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "LS Collection",
+      "blocks": [
+        { "type": "quick_filter", "settings": { "label": "Bestsellers" } },
+        { "type": "quick_filter", "settings": { "label": "Low-VOC" } },
+        { "type": "quick_filter", "settings": { "label": "Cabinets & Trim" } },
+        { "type": "quick_filter", "settings": { "label": "Bath & Kitchen" } },
+        { "type": "quick_filter", "settings": { "label": "On sale" } },
+        { "type": "quick_filter", "settings": { "label": "Pro picks" } }
+      ]
+    }
+  ]
+}
+{% endschema %}
