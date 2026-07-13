@@ -36,6 +36,46 @@
       endif
     endif
   endfor
+
+  # --- Finish / sheen facet, derived from product titles ---
+  # Fallback for stores that can't add a finish tag/metafield: the finish is
+  # parsed out of the title (e.g. "... - Semi-Gloss Finish N793"). This is a
+  # client-side, demo-grade facet — it filters the products loaded on the page,
+  # not the whole collection server-side. Replace with a real metafield/tag
+  # filter once product settings can be edited.
+  assign finish_opts_raw = section.settings.finish_options | default: 'Flat, Matte, Eggshell, Satin, Semi-Gloss, High Gloss, Low Sheen'
+  assign finish_opts = finish_opts_raw | replace: ', ', ',' | split: ','
+  assign finish_present = '|'
+  if section.settings.show_finish_filter
+    for product in collection.products
+      assign t_dc = product.title | downcase
+      for f in finish_opts
+        assign f_dc = f | downcase | strip
+        if f_dc != '' and t_dc contains f_dc
+          assign f_key = f | handleize
+          assign needle = '|' | append: f_key | append: '|'
+          unless finish_present contains needle
+            assign finish_present = finish_present | append: f_key | append: '|'
+          endunless
+        endif
+      endfor
+    endfor
+  endif
+
+  # --- Grid columns (forced) + Sample CTA banner (interleaved) ---
+  assign grid_cols = section.settings.columns | default: 4
+  assign cta_enable = section.settings.cta_enable
+  assign cta_after = section.settings.cta_after_products | default: 8
+  # Effective insertion point. Normally after `cta_after` products (2 rows). If
+  # the collection can't fill that, drop the banner below the FIRST row instead;
+  # if there isn't even one full row, place it after the last product.
+  assign cta_at = cta_after
+  if collection.products.size < cta_after
+    assign cta_at = grid_cols
+    if collection.products.size < grid_cols
+      assign cta_at = collection.products.size
+    endif
+  endif
 -%}
 
 {% style %}
@@ -55,6 +95,19 @@
     --ls-col-border: {{ section.settings.border_color | default: '#e6e2db' }};
     --ls-col-chip: {{ section.settings.chip_background | default: '#fcf2f0' }};
     --ls-col-radius: {{ section.settings.corner_radius | default: 16 }}px;
+    --ls-col-cols: {{ section.settings.columns | default: 4 }};
+    /* Sample CTA banner */
+    --ls-col-cta-start: {{ section.settings.cta_bg_start | default: '#1e232c' }};
+    --ls-col-cta-mid: {{ section.settings.cta_bg_mid | default: '#13161c' }};
+    --ls-col-cta-end: {{ section.settings.cta_bg_end | default: '#0b0d11' }};
+    --ls-col-cta-w: {{ section.settings.cta_img_width | default: 160 }};
+    --ls-col-cta-x: {{ section.settings.cta_img_x | default: 40 }};
+    --ls-col-cta-y: {{ section.settings.cta_img_y | default: 0 }};
+    --ls-col-cta-r: {{ section.settings.cta_img_rotate | default: 0 }};
+    --ls-col-cta-w-m: {{ section.settings.cta_img_width_mobile | default: 140 }};
+    --ls-col-cta-x-m: {{ section.settings.cta_img_x_mobile | default: 30 }};
+    --ls-col-cta-y-m: {{ section.settings.cta_img_y_mobile | default: 70 }};
+    --ls-col-cta-r-m: {{ section.settings.cta_img_rotate_mobile | default: 0 }};
   }
 {% endstyle %}
 
@@ -108,7 +161,34 @@
   {%- endcomment -%}
   <form class="ls-col__body" data-filter-form method="get" action="{{ collection.url }}">
     {%- comment -%} =============== Sidebar facets =============== {%- endcomment -%}
-    <aside class="ls-col__sidebar" data-sidebar>
+    <aside class="ls-col__sidebar" data-sidebar role="dialog" aria-modal="true" aria-label="{{ section.settings.mobile_filter_label | default: 'Filter & sort' }}">
+      {%- comment -%} Mobile bottom-sheet header (hidden on desktop). {%- endcomment -%}
+      <div class="ls-col__sheet-head">
+        <span class="ls-col__sheet-handle" aria-hidden="true"></span>
+        <div class="ls-col__sheet-titlebar">
+          <span class="ls-col__sheet-title">
+            {{ section.settings.mobile_filter_label | default: 'Filter & sort' }}
+            {%- if active_facets > 0 -%}
+              <span class="ls-col__badge" data-facet-badge>{{ active_facets }}</span>
+            {%- endif -%}
+          </span>
+          <button type="button" class="ls-col__sheet-close" data-sheet-close aria-label="Close filters">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="ls-col__sheet-scroll">
+      {%- comment -%} Quick-filter pills — shown inside the sheet on mobile (the toolbar row is hidden there). {%- endcomment -%}
+      {%- if section.blocks.size > 0 -%}
+        <div class="ls-col__sheet-pills" role="list">
+          {%- for block in section.blocks -%}
+            {%- if block.type == 'quick_filter' and block.settings.label != blank -%}
+              <a class="ls-col__pill" href="{{ block.settings.link | default: '#' }}" role="listitem" {{ block.shopify_attributes }}>{{ block.settings.label }}</a>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
       <div class="ls-col__sidebar-head">
         <span class="ls-col__sidebar-title">
           <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 5h14M6 10h8M9 15h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -118,6 +198,57 @@
           <span class="ls-col__sidebar-count">{{ total_filtered }} items</span>
         {%- endif -%}
       </div>
+
+      {%- comment -%}
+        Sort — mobile only (the sheet is titled "Filter & sort"). Radios have no
+        name so they never submit; JS mirrors the choice into the toolbar's real
+        sort <select> on "Show results". On desktop this section is hidden and
+        sort lives in the toolbar instead.
+      {%- endcomment -%}
+      {%- if collection.sort_options.size > 0 -%}
+        <details class="ls-col__facet ls-col__facet--sort" data-sort-facet open>
+          <summary class="ls-col__facet-summary">
+            {{ section.settings.sort_facet_label | default: 'Sort by' }}
+            <span class="ls-col__facet-chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="ls-col__facet-body ls-col__options">
+            {%- for option in collection.sort_options -%}
+              <label class="ls-col__option ls-col__option--radio">
+                <input type="radio" data-sort-value="{{ option.value }}"{% if option.value == current_sort %} checked{% endif %}>
+                <span class="ls-col__option-box" aria-hidden="true"></span>
+                <span class="ls-col__option-label">{{ option.name }}</span>
+              </label>
+            {%- endfor -%}
+          </div>
+        </details>
+      {%- endif -%}
+
+      {%- comment -%}
+        Finish / sheen — custom facet parsed from titles (no name attr, so it
+        never submits with the GET form; filtering is done client-side in JS).
+      {%- endcomment -%}
+      {%- if section.settings.show_finish_filter and finish_present != '|' -%}
+        <details class="ls-col__facet ls-col__facet--finish" data-finish-facet open>
+          <summary class="ls-col__facet-summary">
+            {{ section.settings.finish_label | default: 'Finish / sheen' }}
+            <span class="ls-col__facet-chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="ls-col__facet-body ls-col__options">
+            {%- for f in finish_opts -%}
+              {%- assign f_dc = f | strip -%}
+              {%- assign f_key = f_dc | handleize -%}
+              {%- assign needle = '|' | append: f_key | append: '|' -%}
+              {%- if f_dc != '' and finish_present contains needle -%}
+                <label class="ls-col__option">
+                  <input type="checkbox" data-finish-value="{{ f_key }}">
+                  <span class="ls-col__option-box" aria-hidden="true"></span>
+                  <span class="ls-col__option-label">{{ f_dc }}</span>
+                </label>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        </details>
+      {%- endif -%}
 
       {%- if collection.filters.size > 0 -%}
         {%- for filter in collection.filters -%}
@@ -186,14 +317,30 @@
       {%- else -%}
         <p class="ls-col__no-facets">No filters are configured for this collection. Enable storefront filters in Search &amp; Discovery.</p>
       {%- endif -%}
+      </div>{%- comment -%} /sheet-scroll {%- endcomment -%}
+
+      {%- comment -%} Mobile bottom-sheet footer (hidden on desktop). {%- endcomment -%}
+      <div class="ls-col__sheet-foot">
+        <a class="ls-col__sheet-clear" href="{{ collection.url }}">{{ section.settings.clear_label | default: 'Clear' }}</a>
+        <button type="submit" class="ls-col__sheet-apply" data-sheet-apply>
+          {%- if total_filtered > 0 -%}
+            {{ section.settings.show_results_label | default: 'Show' }} {{ total_filtered }} {{ noun }}
+          {%- else -%}
+            {{ section.settings.show_results_label | default: 'Show' }} results
+          {%- endif -%}
+        </button>
+      </div>
     </aside>
 
     {%- comment -%} =============== Results =============== {%- endcomment -%}
     <div class="ls-col__main">
       <div class="ls-col__toolbar">
-        <button type="button" class="ls-col__filters-toggle" data-filters-toggle aria-expanded="false">
+        <button type="button" class="ls-col__filters-toggle" data-filters-toggle aria-expanded="false" aria-haspopup="dialog">
           <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 5h14M6 10h8M9 15h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          {{ section.settings.filters_label | default: 'Filters' }}
+          {{ section.settings.mobile_filter_label | default: 'Filter & sort' }}
+          {%- if active_facets > 0 -%}
+            <span class="ls-col__badge" data-facet-badge>{{ active_facets }}</span>
+          {%- endif -%}
         </button>
 
         {%- if section.blocks.size > 0 -%}
@@ -217,6 +364,11 @@
             <svg class="ls-col__sort-caret" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M4 5.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </label>
         {%- endif -%}
+
+        {%- comment -%} Mobile-only result count, sits opposite the "Filter & sort" button. {%- endcomment -%}
+        {%- if total_filtered > 0 -%}
+          <span class="ls-col__toolbar-count">{{ total_filtered }} {{ noun }}</span>
+        {%- endif -%}
       </div>
 
       {%- paginate collection.products by ppp -%}
@@ -226,14 +378,68 @@
           <span data-shown>{{ shown }}</span> of <span data-total>{{ total_filtered }}</span> {{ noun }}
         </p>
 
+        {%- comment -%}
+          Build the CTA banner once so it can be dropped into the grid after the
+          configured row (page 1 only). It spans the full grid width.
+        {%- endcomment -%}
+        {%- capture cta_banner -%}
+          <div class="ls-col__cta">
+            <div class="ls-col__cta-inner">
+              {%- if section.settings.cta_image != blank -%}
+                <div class="ls-col__cta-media" aria-hidden="true">
+                  {{
+                    section.settings.cta_image
+                    | image_url: width: 1400
+                    | image_tag: class: 'ls-col__cta-img', widths: '600, 900, 1200, 1400', loading: 'lazy', alt: ''
+                  }}
+                </div>
+              {%- endif -%}
+              <div class="ls-col__cta-content">
+                <div class="ls-col__cta-text">
+                  {%- if section.settings.cta_heading != blank -%}
+                    <h2 class="ls-col__cta-heading">{{ section.settings.cta_heading }}</h2>
+                  {%- endif -%}
+                  {%- if section.settings.cta_text != blank -%}
+                    <p class="ls-col__cta-sub">{{ section.settings.cta_text }}</p>
+                  {%- endif -%}
+                </div>
+                {%- if section.settings.cta_button_label != blank -%}
+                  <a class="ls-col__cta-btn" href="{{ section.settings.cta_button_link | default: '#' }}">
+                    {{ section.settings.cta_button_label }}
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11M11 6l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </a>
+                {%- endif -%}
+              </div>
+            </div>
+          </div>
+        {%- endcapture -%}
+
         {%- if collection.products.size > 0 -%}
           <div class="ls-col__grid" data-grid>
             {%- for product in collection.products -%}
+              {%- comment -%} Derive the finish(es) from the title for the client-side finish facet. {%- endcomment -%}
+              {%- assign p_finishes = '' -%}
+              {%- if section.settings.show_finish_filter -%}
+                {%- assign pt_dc = product.title | downcase -%}
+                {%- for f in finish_opts -%}
+                  {%- assign f_dc = f | downcase | strip -%}
+                  {%- if f_dc != '' and pt_dc contains f_dc -%}
+                    {%- assign f_key = f | handleize -%}
+                    {%- assign p_finishes = p_finishes | append: ' ' | append: f_key -%}
+                  {%- endif -%}
+                {%- endfor -%}
+              {%- endif -%}
+              {%- capture card_attrs -%}data-finish="{{ p_finishes | strip }}"{%- endcapture -%}
               {%- render 'ls-product-card',
                 card_product: product,
+                card_attributes: card_attrs,
                 fallback_rating: section.settings.fallback_rating,
                 fallback_review_count: section.settings.fallback_review_count
               -%}
+              {%- comment -%} Drop the CTA banner in at the computed row (first page only). {%- endcomment -%}
+              {%- if cta_enable and paginate.current_offset == 0 and forloop.index == cta_at -%}
+                {{ cta_banner }}
+              {%- endif -%}
             {%- endfor -%}
           </div>
 
@@ -250,6 +456,9 @@
       {%- endpaginate -%}
     </div>
   </form>
+
+  {%- comment -%} Backdrop for the mobile filter sheet. {%- endcomment -%}
+  <div class="ls-col__scrim" data-scrim hidden></div>
 </div>
 
 <script>
@@ -260,38 +469,130 @@
       root.classList.add('ls-col--js');
       var SECTION_ID = {{ section.id | json }};
 
-      /* ---------- Auto-submit facets + sort ---------- */
       var form = root.querySelector('[data-filter-form]');
+      var sidebar = root.querySelector('[data-sidebar]');
+      var scrim = root.querySelector('[data-scrim]');
+      var toggle = root.querySelector('[data-filters-toggle]');
+      var sortSelect = form ? form.querySelector('[data-sort]') : null;
+
+      // At the sheet breakpoint, facets batch-apply via the "Show results" button
+      // instead of reloading on every tap.
+      function sheetMode() { return window.matchMedia('(max-width: 990px)').matches; }
+
+      // Tracks whether a SERVER-SIDE facet (native checkbox / price / sort) was
+      // touched while the sheet is open. "Show results" reloads only when this is
+      // true; if only the client-side finish facet changed, it just closes over
+      // the already-filtered grid (a reload would wipe that client-side state).
+      var nativeDirty = false;
+
+      /* ---------- Facet + sort behavior ---------- */
       if (form) {
-        // Keep the hidden sort mirror in step with the visible <select> so a
-        // facet submit preserves the chosen sort.
-        var sortSelect = form.querySelector('[data-sort]');
-        if (sortSelect) {
-          // The select is inside the form, so its value submits with the facets.
-          sortSelect.addEventListener('change', function () { form.submit(); });
-        }
-        // Checkbox facets submit immediately; price inputs submit on change.
-        Array.prototype.slice.call(form.querySelectorAll('input[type="checkbox"]')).forEach(function (cb) {
-          cb.addEventListener('change', function () { form.submit(); });
+        // Native (server-side) checkbox facets: submit instantly on desktop; on
+        // mobile defer and mark dirty. The custom finish facet (data-finish-value,
+        // no name) is client-side, so it's excluded here.
+        Array.prototype.slice.call(form.querySelectorAll('input[type="checkbox"]:not([data-finish-value])')).forEach(function (cb) {
+          cb.addEventListener('change', function () { if (sheetMode()) { nativeDirty = true; } else { form.submit(); } });
         });
         Array.prototype.slice.call(form.querySelectorAll('.ls-col__price input')).forEach(function (inp) {
-          inp.addEventListener('change', function () { form.submit(); });
+          inp.addEventListener('change', function () { if (sheetMode()) { nativeDirty = true; } else { form.submit(); } });
+        });
+        // Desktop sort <select> (hidden on mobile).
+        if (sortSelect) {
+          sortSelect.addEventListener('change', function () { if (!sheetMode()) form.submit(); });
+        }
+        // Mobile sort radios have no shared name, so enforce single-select in JS
+        // and mark dirty (sort is server-side — it needs the reload).
+        var sortRadios = Array.prototype.slice.call(root.querySelectorAll('[data-sort-value]'));
+        sortRadios.forEach(function (r) {
+          r.addEventListener('change', function () {
+            sortRadios.forEach(function (o) { if (o !== r) o.checked = false; });
+            nativeDirty = true;
+          });
+        });
+        // On any real submit, mirror the chosen mobile sort into the real <select>.
+        form.addEventListener('submit', function () {
+          if (!sortSelect) return;
+          var picked = root.querySelector('[data-sort-value]:checked');
+          if (picked) sortSelect.value = picked.getAttribute('data-sort-value');
         });
       }
 
-      /* ---------- Mobile filters toggle ---------- */
-      var toggle = root.querySelector('[data-filters-toggle]');
-      var sidebar = root.querySelector('[data-sidebar]');
+      /* ---------- Mobile filter sheet ---------- */
+      function openSheet() {
+        if (!sidebar) return;
+        if (scrim) { scrim.hidden = false; void scrim.offsetWidth; scrim.classList.add('is-visible'); }
+        sidebar.classList.add('is-open');
+        document.body.classList.add('ls-col--sheet-open');
+        if (toggle) toggle.setAttribute('aria-expanded', 'true');
+      }
+      function closeSheet() {
+        if (!sidebar) return;
+        sidebar.classList.remove('is-open');
+        document.body.classList.remove('ls-col--sheet-open');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        if (scrim) {
+          scrim.classList.remove('is-visible');
+          var hide = function () { scrim.hidden = true; scrim.removeEventListener('transitionend', hide); };
+          scrim.addEventListener('transitionend', hide);
+        }
+      }
       if (toggle && sidebar) {
         toggle.addEventListener('click', function () {
-          var open = sidebar.classList.toggle('is-open');
-          toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+          if (sidebar.classList.contains('is-open')) closeSheet(); else openSheet();
+        });
+      }
+      if (scrim) scrim.addEventListener('click', closeSheet);
+      var sheetClose = root.querySelector('[data-sheet-close]');
+      if (sheetClose) sheetClose.addEventListener('click', closeSheet);
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && sidebar && sidebar.classList.contains('is-open')) closeSheet();
+      });
+
+      // "Show N results": if a server-side facet/sort changed, let the native
+      // submit reload with the new params. Otherwise only the client-side finish
+      // filter changed (already applied live) — reveal the filtered grid instead
+      // of reloading, which would wipe it.
+      var applyBtn = root.querySelector('[data-sheet-apply]');
+      if (applyBtn) {
+        applyBtn.addEventListener('click', function (e) {
+          if (nativeDirty) return;
+          e.preventDefault();
+          applyFinishFilter();
+          closeSheet();
         });
       }
 
-      /* ---------- Load more (Section Rendering API) ---------- */
+      /* ---------- Finish facet (client-side, title-derived) ---------- */
       var grid = root.querySelector('[data-grid]');
       var shownEl = root.querySelector('[data-shown]');
+      var loadedCount = shownEl ? (parseInt(shownEl.textContent, 10) || 0) : 0;
+      var finishInputs = Array.prototype.slice.call(root.querySelectorAll('[data-finish-value]'));
+      var ctaEl = grid ? grid.querySelector('.ls-col__cta') : null;
+
+      function applyFinishFilter() {
+        var active = finishInputs.filter(function (i) { return i.checked; })
+          .map(function (i) { return i.getAttribute('data-finish-value'); });
+        var visible = 0;
+        if (grid) {
+          Array.prototype.slice.call(grid.querySelectorAll('.ls-pcard')).forEach(function (card) {
+            var finishes = (card.getAttribute('data-finish') || '').split(' ');
+            var show = active.length === 0 || active.some(function (a) { return finishes.indexOf(a) !== -1; });
+            card.style.display = show ? '' : 'none';
+            if (show) visible++;
+          });
+        }
+        // The CTA banner sits at a fixed spot in the grid (after row 2). Once the
+        // client-side filter hides cards, that spot is meaningless and its
+        // full-row span breaks the reflow into partial rows — so hide it while a
+        // finish filter is active and restore it when cleared.
+        if (ctaEl) ctaEl.style.display = active.length ? 'none' : '';
+        // While filtering, the count reflects what's visible; otherwise the
+        // running loaded total.
+        if (shownEl) shownEl.textContent = active.length ? visible : loadedCount;
+      }
+      finishInputs.forEach(function (i) { i.addEventListener('change', applyFinishFilter); });
+
+      /* ---------- Load more (Section Rendering API) ---------- */
       function bindLoadMore() {
         var btn = root.querySelector('[data-loadmore]');
         if (!btn) return;
@@ -313,7 +614,7 @@
                   grid.appendChild(card);
                   added++;
                 });
-                if (shownEl) shownEl.textContent = (parseInt(shownEl.textContent, 10) || 0) + added;
+                loadedCount += added;
               }
               var wrap = btn.closest('.ls-col__loadmore-wrap');
               if (newBtn) {
@@ -322,6 +623,9 @@
               } else if (wrap) {
                 wrap.parentNode.removeChild(wrap); // no more pages
               }
+              // Re-apply the finish filter so appended cards respect it and the
+              // count stays correct.
+              applyFinishFilter();
             })
             .catch(function () {
               btn.classList.remove('is-loading');
@@ -656,10 +960,94 @@
   /* ---------- Grid ---------- */
   .ls-col__grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--ls-col-cols, 4), minmax(0, 1fr));
     gap: 1.5rem;
   }
   .ls-col__empty { color: var(--ls-col-muted); padding: 2rem 0; }
+
+  /* ---------- Sample CTA banner (interleaved) ---------- */
+  .ls-col__cta { grid-column: 1 / -1; }
+  .ls-col__cta-inner {
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px;
+    /* No padding here — the image fills the full card. Inset lives on the
+       content below so only the text/button are padded. */
+    min-height: 200px;
+    background: linear-gradient(139deg, var(--ls-col-cta-start) 0%, var(--ls-col-cta-mid) 55%, var(--ls-col-cta-end) 100%);
+  }
+  .ls-col__cta-media {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  .ls-col__cta-img {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    /* Height-driven so it always bleeds top-to-bottom; width follows aspect.
+       Size % is relative to the banner height; min-height keeps it full-bleed
+       even at smaller size settings. */
+    height: calc(var(--ls-col-cta-w, 160) * 1%);
+    min-height: 100%;
+    width: auto;
+    max-width: none;
+    transform: translate(calc(var(--ls-col-cta-x, 40) * 1px), calc(-50% + var(--ls-col-cta-y, 0) * 1px)) rotate(calc(var(--ls-col-cta-r, 0) * 1deg));
+  }
+  .ls-col__cta-content {
+    position: relative;
+    z-index: 1;
+    box-sizing: content-box;
+    max-width: 420px;
+    padding: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .ls-col__cta-text { display: flex; flex-direction: column; gap: 6px; }
+  .ls-col__cta-heading {
+    margin: 0;
+    font-size: 30px;
+    line-height: 34px;
+    font-weight: 700;
+    letter-spacing: -0.6px;
+    color: #fff;
+  }
+  .ls-col__cta-sub {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.72);
+    max-width: 354px;
+  }
+  .ls-col__cta-btn {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--ls-col-accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 13px 20px;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: filter 0.15s ease;
+  }
+  .ls-col__cta-btn:hover { filter: brightness(1.06); }
+  .ls-col__cta-btn svg { width: 16px; height: 16px; }
+
+  @media screen and (max-width: 749px) {
+    .ls-col__cta-content { max-width: none; padding: 28px 24px; }
+    .ls-col__cta-heading { font-size: 24px; line-height: 28px; }
+    .ls-col__cta-img {
+      height: calc(var(--ls-col-cta-w-m, 140) * 1%);
+      width: auto;
+      transform: translate(calc(var(--ls-col-cta-x-m, 30) * 1px), calc(-50% + var(--ls-col-cta-y-m, 70) * 1px)) rotate(calc(var(--ls-col-cta-r-m, 0) * 1deg));
+    }
+  }
 
   /* ---------- Load more ---------- */
   .ls-col__loadmore-wrap { display: flex; justify-content: center; margin-top: 2rem; }
@@ -681,26 +1069,201 @@
   .ls-col__loadmore:hover { border-color: var(--ls-col-heading); }
   .ls-col__loadmore.is-loading { opacity: 0.6; pointer-events: none; }
 
-  /* ---------- Responsive ---------- */
-  @media screen and (max-width: 1100px) {
-    .ls-col__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* ---------- Filter sheet chrome (hidden on desktop) ---------- */
+  /* The sheet head/foot only exist on mobile. `display:contents` on the scroll
+     wrapper lets the desktop card lay out exactly as before. */
+  .ls-col__sheet-head,
+  .ls-col__sheet-foot { display: none; }
+  .ls-col__sheet-scroll { display: contents; }
+  .ls-col__toolbar-count { display: none; }
+  .ls-col__facet--sort { display: none; }
+  .ls-col__sheet-pills { display: none; }
+
+  /* Active-facet badge (on the mobile button + sheet title) */
+  .ls-col__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--ls-col-accent);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
   }
+
+  /* Radio variant (mobile Sort section) — circular box with a filled dot */
+  .ls-col__option--radio .ls-col__option-box { border-radius: 999px; }
+  .ls-col__option--radio input:checked ~ .ls-col__option-box {
+    background: #fff;
+    border-color: var(--ls-col-accent);
+  }
+  .ls-col__option--radio input:checked ~ .ls-col__option-box::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--ls-col-accent);
+    transform: none;
+  }
+
+  /* Scrim is inert until JS drops the `hidden` attribute on mobile */
+  .ls-col__scrim { position: fixed; inset: 0; z-index: 1000; }
+
+  /* ---------- Responsive ---------- */
+  /* Columns are forced (var-driven) down to the mobile breakpoint — no 3-up step. */
   @media screen and (max-width: 990px) {
     .ls-col__body { grid-template-columns: minmax(0, 1fr); }
-    .ls-col__sidebar {
-      display: none;
-      position: static;
-      margin-bottom: 1rem;
-    }
-    .ls-col__sidebar.is-open { display: block; }
+
+    /* Toolbar → ActionRow: single button + count, pills & sort fold away */
     .ls-col__filters-toggle { display: inline-flex; }
+    .ls-col__toolbar-count {
+      display: inline-block;
+      margin-left: auto;
+      color: var(--ls-col-muted);
+      font-size: 0.9375rem;
+    }
+    .ls-col__pills,
+    .ls-col__sort,
+    .ls-col__showing { display: none; }
+    .ls-col__facet--sort { display: block; }
+    .ls-col__sheet-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 2px 0 16px;
+    }
+
+    /* Sidebar → bottom sheet */
+    .ls-col__sidebar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+      max-height: 88vh;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 22px 22px 0 0;
+      box-shadow: 0 -8px 40px rgba(20, 22, 26, 0.22);
+      transform: translateY(100%);
+      transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+      overscroll-behavior: contain;
+    }
+    .ls-col__sidebar.is-open { transform: translateY(0); }
+
+    .ls-col__sheet-head { display: block; padding: 10px 20px 14px; }
+    .ls-col__sheet-handle {
+      display: block;
+      width: 40px;
+      height: 4px;
+      margin: 0 auto 14px;
+      border-radius: 999px;
+      background: #d9d9d9;
+    }
+    .ls-col__sheet-titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .ls-col__sheet-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.375rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ls-col-heading);
+    }
+    .ls-col__sheet-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+      border: 0;
+      border-radius: 999px;
+      background: var(--ls-col-chip, #eee);
+      color: var(--ls-col-heading);
+      cursor: pointer;
+    }
+    .ls-col__sheet-close svg { width: 18px; height: 18px; }
+
+    /* Scrollable facet body between the fixed head and foot */
+    .ls-col__sheet-scroll {
+      display: block;
+      flex: 1 1 auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0 20px;
+    }
+    /* Desktop card head + apply/clear foot don't belong in the sheet */
+    .ls-col__sidebar-head,
+    .ls-col__sidebar-foot { display: none; }
+    /* First facet inside the sheet shouldn't carry a top divider */
+    .ls-col__sheet-scroll > .ls-col__facet:first-child { border-top: 0; padding-top: 0.2rem; }
+
+    .ls-col__sheet-foot {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+      border-top: 1px solid var(--ls-col-border);
+      background: var(--ls-col-surface);
+    }
+    .ls-col__sheet-clear {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.85rem 1.4rem;
+      border: 1px solid var(--ls-col-border);
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: var(--ls-col-heading);
+      text-decoration: none;
+    }
+    .ls-col__sheet-apply {
+      flex: 1 1 auto;
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      padding: 0.9rem 1.2rem;
+      border-radius: 999px;
+      background: var(--ls-col-accent);
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.9375rem;
+    }
+
+    .ls-col__scrim {
+      background: rgba(15, 16, 20, 0.5);
+      opacity: 0;
+      transition: opacity 0.28s ease;
+    }
+    .ls-col__scrim.is-visible { opacity: 1; }
+
+    /* Lock background scroll while the sheet is open */
+    .ls-col--sheet-open { overflow: hidden; }
   }
   @media screen and (max-width: 749px) {
     .ls-col__header { align-items: flex-start; }
+    /* 2-up grid holds all the way down (matches the 430px Figma frame). */
     .ls-col__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-  }
-  @media screen and (max-width: 430px) {
-    .ls-col__grid { grid-template-columns: minmax(0, 1fr); }
+    /* Load more spans the row (Figma "Secondary Button"). */
+    .ls-col__loadmore-wrap { display: block; }
+    .ls-col__loadmore { width: 100%; justify-content: center; }
   }
 {% endstylesheet %}
 
@@ -764,7 +1327,14 @@
       "type": "text",
       "id": "filters_label",
       "label": "Filters label",
+      "info": "Desktop sidebar heading.",
       "default": "Filters"
+    },
+    {
+      "type": "text",
+      "id": "mobile_filter_label",
+      "label": "Mobile filter button / sheet title",
+      "default": "Filter & sort"
     },
     {
       "type": "text",
@@ -774,9 +1344,215 @@
     },
     {
       "type": "text",
+      "id": "sort_facet_label",
+      "label": "Mobile \"Sort by\" section label",
+      "default": "Sort by"
+    },
+    {
+      "type": "text",
+      "id": "clear_label",
+      "label": "Sheet \"Clear\" label",
+      "default": "Clear"
+    },
+    {
+      "type": "text",
+      "id": "show_results_label",
+      "label": "Sheet apply verb",
+      "info": "Rendered as \"[verb] 24 paints\".",
+      "default": "Show"
+    },
+    {
+      "type": "text",
       "id": "showing_label",
       "label": "\"Showing\" label",
       "default": "Showing"
+    },
+    {
+      "type": "header",
+      "content": "Finish / sheen facet (from titles)"
+    },
+    {
+      "type": "paragraph",
+      "content": "Demo-grade fallback for when product tags/metafields can't be edited: the finish is parsed from each product title and filtered client-side (only affects loaded products). Replace with a real metafield/tag filter when possible."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_finish_filter",
+      "label": "Show finish / sheen filter",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "finish_label",
+      "label": "Finish filter label",
+      "default": "Finish / sheen"
+    },
+    {
+      "type": "text",
+      "id": "finish_options",
+      "label": "Finish keywords",
+      "info": "Comma-separated. Matched against the product title (case-insensitive). Only finishes actually found are shown.",
+      "default": "Flat, Matte, Eggshell, Satin, Semi-Gloss, High Gloss, Low Sheen"
+    },
+    {
+      "type": "header",
+      "content": "Sample CTA banner"
+    },
+    {
+      "type": "checkbox",
+      "id": "cta_enable",
+      "label": "Show CTA banner in the grid",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "cta_after_products",
+      "label": "Insert after N products",
+      "info": "e.g. 8 = after the 2nd row on desktop (4 per row).",
+      "min": 4,
+      "max": 16,
+      "step": 4,
+      "default": 8
+    },
+    {
+      "type": "text",
+      "id": "cta_heading",
+      "label": "Heading",
+      "default": "Not sure of the color? Try it first."
+    },
+    {
+      "type": "textarea",
+      "id": "cta_text",
+      "label": "Text",
+      "default": "Peel-and-stick samples in any Benjamin Moore color — $4.99, no painting, no mess."
+    },
+    {
+      "type": "text",
+      "id": "cta_button_label",
+      "label": "Button label",
+      "default": "Shop color samples"
+    },
+    {
+      "type": "url",
+      "id": "cta_button_link",
+      "label": "Button link"
+    },
+    {
+      "type": "image_picker",
+      "id": "cta_image",
+      "label": "Image (fan deck)"
+    },
+    {
+      "type": "header",
+      "content": "CTA image position — desktop"
+    },
+    {
+      "type": "range",
+      "id": "cta_img_width",
+      "label": "Image size (height)",
+      "info": "% of the banner height. 100% = exact fit; higher bleeds past the top & bottom.",
+      "min": 40,
+      "max": 300,
+      "step": 5,
+      "unit": "%",
+      "default": 160
+    },
+    {
+      "type": "range",
+      "id": "cta_img_x",
+      "label": "Image X offset",
+      "min": -400,
+      "max": 400,
+      "step": 10,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "cta_img_y",
+      "label": "Image Y offset",
+      "min": -300,
+      "max": 300,
+      "step": 10,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "cta_img_rotate",
+      "label": "Image rotation",
+      "min": -180,
+      "max": 180,
+      "step": 5,
+      "unit": "°",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "CTA image position — mobile"
+    },
+    {
+      "type": "range",
+      "id": "cta_img_width_mobile",
+      "label": "Image size (height)",
+      "info": "% of the banner height. Higher bleeds past the top & bottom.",
+      "min": 40,
+      "max": 300,
+      "step": 5,
+      "unit": "%",
+      "default": 140
+    },
+    {
+      "type": "range",
+      "id": "cta_img_x_mobile",
+      "label": "Image X offset",
+      "min": -400,
+      "max": 400,
+      "step": 10,
+      "unit": "px",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "cta_img_y_mobile",
+      "label": "Image Y offset",
+      "min": -300,
+      "max": 300,
+      "step": 10,
+      "unit": "px",
+      "default": 70
+    },
+    {
+      "type": "range",
+      "id": "cta_img_rotate_mobile",
+      "label": "Image rotation",
+      "min": -180,
+      "max": 180,
+      "step": 5,
+      "unit": "°",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "CTA colors"
+    },
+    {
+      "type": "color",
+      "id": "cta_bg_start",
+      "label": "Gradient start",
+      "default": "#1e232c"
+    },
+    {
+      "type": "color",
+      "id": "cta_bg_mid",
+      "label": "Gradient middle",
+      "default": "#13161c"
+    },
+    {
+      "type": "color",
+      "id": "cta_bg_end",
+      "label": "Gradient end",
+      "default": "#0b0d11"
     },
     {
       "type": "header",
@@ -784,8 +1560,19 @@
     },
     {
       "type": "range",
+      "id": "columns",
+      "label": "Columns per row",
+      "info": "Forced at this many across (down to the mobile breakpoint).",
+      "min": 2,
+      "max": 6,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "range",
       "id": "products_per_page",
       "label": "Products per page",
+      "info": "3 rows on desktop (4 per row) = 12.",
       "min": 4,
       "max": 24,
       "step": 4,
