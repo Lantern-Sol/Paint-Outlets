@@ -785,47 +785,11 @@
             "secondary_link": "",
             "secondary_icon": "none"
           }
-        },
-        "info_bckBkC": {
-          "type": "info",
-          "settings": {
-            "icon": "location",
-            "title": "In-store pickup",
-            "subtitle": "Ready at the counter"
-          }
-        },
-        "info_qLRcy8": {
-          "type": "info",
-          "settings": {
-            "icon": "truck",
-            "title": "Free curbside",
-            "subtitle": "Call ahead, we load it"
-          }
-        },
-        "info_CzNVHH": {
-          "type": "info",
-          "settings": {
-            "icon": "truck",
-            "title": "Free local delivery",
-            "subtitle": "On 48-gal qualifying orders"
-          }
-        },
-        "info_c9QUQn": {
-          "type": "info",
-          "settings": {
-            "icon": "guarantee",
-            "title": "Ships nationwide",
-            "subtitle": "Securely packed & tracked"
-          }
         }
       },
       "block_order": [
         "card_R4Ki3r",
-        "card_J7CB77",
-        "info_bckBkC",
-        "info_qLRcy8",
-        "info_CzNVHH",
-        "info_c9QUQn"
+        "card_J7CB77"
       ],
       "name": "LS Purpose",
       "settings": {
@@ -863,6 +827,62 @@
         "glow_size_x": 25,
         "glow_size_y": 25,
         "card_radius": 26,
+        "padding-block-start": 0,
+        "padding-block-end": 48
+      }
+    },
+    "ls_info_9Kd3mZ": {
+      "type": "ls-info",
+      "blocks": {
+        "info_bckBkC": {
+          "type": "info",
+          "settings": {
+            "icon": "location",
+            "title": "In-store pickup",
+            "subtitle": "Ready at the counter"
+          }
+        },
+        "info_qLRcy8": {
+          "type": "info",
+          "settings": {
+            "icon": "truck",
+            "title": "Free curbside",
+            "subtitle": "Call ahead, we load it"
+          }
+        },
+        "info_CzNVHH": {
+          "type": "info",
+          "settings": {
+            "icon": "truck",
+            "title": "Free local delivery",
+            "subtitle": "On 48-gal qualifying orders"
+          }
+        },
+        "info_c9QUQn": {
+          "type": "info",
+          "settings": {
+            "icon": "guarantee",
+            "title": "Ships nationwide",
+            "subtitle": "Securely packed & tracked"
+          }
+        }
+      },
+      "block_order": [
+        "info_bckBkC",
+        "info_qLRcy8",
+        "info_CzNVHH",
+        "info_c9QUQn"
+      ],
+      "name": "LS Info",
+      "settings": {
+        "font_family": "outfit_n4",
+        "background_color": "#fafafa",
+        "eyebrow_color": "#c13121",
+        "heading_color": "#1a1a1a",
+        "accent_color": "#c13121",
+        "muted_color": "#17181b",
+        "border_color": "#e6e2db",
+        "corner_radius": 20,
         "padding-block-start": 0,
         "padding-block-end": 48
       }
@@ -1081,6 +1101,7 @@
     "ls_deal_UdVyRE",
     "ls_color_swatch_3AwTPh",
     "ls_purpose_BAQmt8",
+    "ls_info_9Kd3mZ",
     "ls_review_HJtWni",
     "ls_map_cGYwPb",
     "ls_contact_rVceKE"
