@@ -254,23 +254,52 @@
         {%- for filter in collection.filters -%}
           {%- case filter.type -%}
             {%- when 'price_range' -%}
+              {%- comment -%}
+                Preset price buckets as checkboxes (Figma). Shopify's price filter
+                is a single server-side range, so the checkboxes don't submit
+                directly — two hidden inputs carry the real gte/lte params and JS
+                sets them to span the checked buckets. A bucket is pre-checked when
+                it sits inside the currently-applied range.
+              {%- endcomment -%}
+              {%- assign cur_min = filter.min_value.value -%}
+              {%- assign cur_max = filter.max_value.value -%}
+              {%- assign buckets = section.settings.price_buckets | default: '0-40, 40-60, 60-80, 80-' | replace: ', ', ',' | split: ',' -%}
               <details class="ls-col__facet" open>
                 <summary class="ls-col__facet-summary">
                   {{ filter.label }}
                   <span class="ls-col__facet-chevron" aria-hidden="true"></span>
                 </summary>
-                <div class="ls-col__facet-body ls-col__price">
-                  {%- assign cur_min = filter.min_value.value -%}
-                  {%- assign cur_max = filter.max_value.value -%}
-                  <label class="ls-col__price-field">
-                    <span>{{ cart.currency.symbol }}</span>
-                    <input type="number" inputmode="decimal" name="{{ filter.min_value.param_name }}" value="{{ cur_min }}" placeholder="0" min="0" max="{{ filter.range_max | money_without_currency | replace: ',', '' }}">
-                  </label>
-                  <span class="ls-col__price-dash">–</span>
-                  <label class="ls-col__price-field">
-                    <span>{{ cart.currency.symbol }}</span>
-                    <input type="number" inputmode="decimal" name="{{ filter.max_value.param_name }}" value="{{ cur_max }}" placeholder="{{ filter.range_max | money_without_currency | replace: ',', '' }}" min="0" max="{{ filter.range_max | money_without_currency | replace: ',', '' }}">
-                  </label>
+                <div class="ls-col__facet-body ls-col__options" data-price-buckets>
+                  <input type="hidden" name="{{ filter.min_value.param_name }}" value="{{ cur_min }}" data-price-gte>
+                  <input type="hidden" name="{{ filter.max_value.param_name }}" value="{{ cur_max }}" data-price-lte>
+                  {%- for b in buckets -%}
+                    {%- assign parts = b | split: '-' -%}
+                    {%- assign bmin = parts[0] | strip -%}
+                    {%- assign bmax = parts[1] | strip -%}
+                    {%- comment -%} Human label from the numbers. {%- endcomment -%}
+                    {%- if bmin == '' or bmin == '0' -%}
+                      {%- capture blabel -%}Under {{ cart.currency.symbol }}{{ bmax }}{%- endcapture -%}
+                    {%- elsif bmax == '' -%}
+                      {%- capture blabel -%}{{ cart.currency.symbol }}{{ bmin }}+{%- endcapture -%}
+                    {%- else -%}
+                      {%- capture blabel -%}{{ cart.currency.symbol }}{{ bmin }} – {{ cart.currency.symbol }}{{ bmax }}{%- endcapture -%}
+                    {%- endif -%}
+                    {%- comment -%} Pre-check if this bucket falls within the active range. {%- endcomment -%}
+                    {%- assign bmin_n = bmin | plus: 0 -%}
+                    {%- assign bmax_n = bmax | plus: 0 -%}
+                    {%- assign is_on = true -%}
+                    {%- if cur_min == blank and cur_max == blank -%}{%- assign is_on = false -%}{%- endif -%}
+                    {%- if cur_min != blank and bmin != '' and bmin_n < cur_min -%}{%- assign is_on = false -%}{%- endif -%}
+                    {%- if cur_max != blank -%}
+                      {%- if bmax == '' -%}{%- assign is_on = false -%}
+                      {%- elsif bmax_n > cur_max -%}{%- assign is_on = false -%}{%- endif -%}
+                    {%- endif -%}
+                    <label class="ls-col__option">
+                      <input type="checkbox" data-price-min="{{ bmin | default: '0' }}" data-price-max="{{ bmax }}"{% if is_on %} checked{% endif %}>
+                      <span class="ls-col__option-box" aria-hidden="true"></span>
+                      <span class="ls-col__option-label">{{ blabel }}</span>
+                    </label>
+                  {%- endfor -%}
                 </div>
               </details>
 
@@ -488,14 +517,41 @@
       /* ---------- Facet + sort behavior ---------- */
       if (form) {
         // Native (server-side) checkbox facets: submit instantly on desktop; on
-        // mobile defer and mark dirty. The custom finish facet (data-finish-value,
-        // no name) is client-side, so it's excluded here.
-        Array.prototype.slice.call(form.querySelectorAll('input[type="checkbox"]:not([data-finish-value])')).forEach(function (cb) {
+        // mobile defer and mark dirty. Excluded: the client-side finish facet
+        // (data-finish-value) and the price buckets (data-price-min), which are
+        // handled by dedicated logic below.
+        Array.prototype.slice.call(form.querySelectorAll('input[type="checkbox"]:not([data-finish-value]):not([data-price-min])')).forEach(function (cb) {
           cb.addEventListener('change', function () { if (sheetMode()) { nativeDirty = true; } else { form.submit(); } });
         });
-        Array.prototype.slice.call(form.querySelectorAll('.ls-col__price input')).forEach(function (inp) {
-          inp.addEventListener('change', function () { if (sheetMode()) { nativeDirty = true; } else { form.submit(); } });
-        });
+
+        // Price buckets → hidden gte/lte params. Checking several buckets spans
+        // them (min of the floors, max of the ceilings); an open-ended bucket
+        // (no max) leaves lte empty. Then submit (desktop) / mark dirty (mobile).
+        var priceWrap = form.querySelector('[data-price-buckets]');
+        if (priceWrap) {
+          var gteInput = priceWrap.querySelector('[data-price-gte]');
+          var lteInput = priceWrap.querySelector('[data-price-lte]');
+          var priceBoxes = Array.prototype.slice.call(priceWrap.querySelectorAll('[data-price-min]'));
+          var syncPrice = function () {
+            var mins = [], maxs = [], open = false, any = false;
+            priceBoxes.forEach(function (cb) {
+              if (!cb.checked) return;
+              any = true;
+              var mn = parseFloat(cb.getAttribute('data-price-min'));
+              var mx = cb.getAttribute('data-price-max');
+              if (!isNaN(mn)) mins.push(mn);
+              if (mx === '' || mx == null) { open = true; } else { maxs.push(parseFloat(mx)); }
+            });
+            gteInput.value = any && mins.length ? Math.min.apply(null, mins) : '';
+            lteInput.value = any && !open && maxs.length ? Math.max.apply(null, maxs) : '';
+          };
+          priceBoxes.forEach(function (cb) {
+            cb.addEventListener('change', function () {
+              syncPrice();
+              if (sheetMode()) { nativeDirty = true; } else { form.submit(); }
+            });
+          });
+        }
         // Desktop sort <select> (hidden on mobile).
         if (sortSelect) {
           sortSelect.addEventListener('change', function () { if (!sheetMode()) form.submit(); });
@@ -820,31 +876,6 @@
   .ls-col__option-label { flex: 1 1 auto; min-width: 0; }
   .ls-col__option-count { color: var(--ls-col-muted); font-size: 0.8rem; }
   .ls-col__option.is-disabled { opacity: 0.4; cursor: default; }
-
-  /* Price */
-  .ls-col__price { display: flex; align-items: center; gap: 0.5rem; }
-  .ls-col__price-field {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    flex: 1 1 0;
-    min-width: 0;
-    border: 1.5px solid var(--ls-col-border);
-    border-radius: 8px;
-    padding: 0.4rem 0.55rem;
-    font-size: 0.85rem;
-    color: var(--ls-col-muted);
-  }
-  .ls-col__price-field input {
-    width: 100%;
-    min-width: 0;
-    border: 0;
-    background: none;
-    font: inherit;
-    color: var(--ls-col-text);
-    outline: none;
-  }
-  .ls-col__price-dash { color: var(--ls-col-muted); }
 
   .ls-col__sidebar-foot { padding-top: 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
   .ls-col__apply {
@@ -1366,6 +1397,13 @@
       "id": "showing_label",
       "label": "\"Showing\" label",
       "default": "Showing"
+    },
+    {
+      "type": "text",
+      "id": "price_buckets",
+      "label": "Price filter buckets",
+      "info": "Comma-separated ranges for the price checkboxes. Use \"0-40\" for \"Under $40\", \"40-60\" for \"$40 – $60\", and \"80-\" for \"$80+\".",
+      "default": "0-40, 40-60, 60-80, 80-"
     },
     {
       "type": "header",
