@@ -12,12 +12,48 @@
     "main": {
       "type": "ls-collection",
       "blocks": {
-        "qf_bestsellers": { "type": "quick_filter", "settings": { "label": "Bestsellers" } },
-        "qf_lowvoc": { "type": "quick_filter", "settings": { "label": "Low-VOC" } },
-        "qf_cabinets": { "type": "quick_filter", "settings": { "label": "Cabinets & Trim" } },
-        "qf_bath": { "type": "quick_filter", "settings": { "label": "Bath & Kitchen" } },
-        "qf_sale": { "type": "quick_filter", "settings": { "label": "On sale" } },
-        "qf_pro": { "type": "quick_filter", "settings": { "label": "Pro picks" } }
+        "qf_bestsellers": {
+          "type": "quick_filter",
+          "settings": {
+            "label": "Bestsellers",
+            "link": ""
+          }
+        },
+        "qf_lowvoc": {
+          "type": "quick_filter",
+          "settings": {
+            "label": "Low-VOC",
+            "link": ""
+          }
+        },
+        "qf_cabinets": {
+          "type": "quick_filter",
+          "settings": {
+            "label": "Cabinets & Trim",
+            "link": ""
+          }
+        },
+        "qf_bath": {
+          "type": "quick_filter",
+          "settings": {
+            "label": "Bath & Kitchen",
+            "link": ""
+          }
+        },
+        "qf_sale": {
+          "type": "quick_filter",
+          "settings": {
+            "label": "On sale",
+            "link": ""
+          }
+        },
+        "qf_pro": {
+          "type": "quick_filter",
+          "settings": {
+            "label": "Pro picks",
+            "link": ""
+          }
+        }
       },
       "block_order": [
         "qf_bestsellers",
@@ -28,15 +64,171 @@
         "qf_pro"
       ],
       "settings": {
+        "font_family": "outfit_n4",
+        "show_breadcrumbs": true,
         "item_noun": "paints",
         "subtitle_suffix": "tinted to any color",
         "assurance_1": "Ready today",
         "assurance_2": "Ships nationwide",
-        "products_per_page": 12
+        "filters_label": "Filters",
+        "mobile_filter_label": "Filter & sort",
+        "sort_label": "Sort:",
+        "sort_facet_label": "Sort by",
+        "clear_label": "Clear",
+        "show_results_label": "Show",
+        "showing_label": "Showing",
+        "show_finish_filter": true,
+        "finish_label": "Finish / sheen",
+        "finish_options": "Flat, Matte, Eggshell, Satin, Semi-Gloss, High Gloss, Low Sheen",
+        "cta_enable": true,
+        "cta_after_products": 8,
+        "cta_heading": "Not sure of the color? Try it first.",
+        "cta_text": "Peel-and-stick samples in any Benjamin Moore color — $4.99, no painting, no mess.",
+        "cta_button_label": "Shop color samples",
+        "cta_button_link": "",
+        "cta_image": "shopify://shop_images/colordeck-full.png",
+        "cta_img_width": 180,
+        "cta_img_x": 320,
+        "cta_img_y": -80,
+        "cta_img_rotate": -150,
+        "cta_img_width_mobile": 100,
+        "cta_img_x_mobile": 200,
+        "cta_img_y_mobile": -130,
+        "cta_img_rotate_mobile": -150,
+        "cta_bg_start": "#1e232c",
+        "cta_bg_mid": "#13161c",
+        "cta_bg_end": "#0b0d11",
+        "columns": 4,
+        "products_per_page": 12,
+        "load_more_label": "Load more products",
+        "empty_text": "No products match these filters.",
+        "fallback_rating": 4.9,
+        "fallback_review_count": 312,
+        "heading_color": "#17181b",
+        "text_color": "#17181b",
+        "muted_color": "#6c7178",
+        "accent_color": "#c13121",
+        "success_color": "#1e854a",
+        "surface_color": "#ffffff",
+        "border_color": "#e6e2db",
+        "padding-block-start": 40,
+        "padding-block-end": 64
+      }
+    },
+    "ls_contact_yVzfqM": {
+      "type": "ls-contact",
+      "name": "LS Contact",
+      "settings": {
+        "font_family": "outfit_n4",
+        "eyebrow": "Talk to a human",
+        "heading": "Ready to start your project?",
+        "subtext": "Our paint experts will help you pick the right product, match your color, and handle bulk pricing — no guesswork.",
+        "phone_number": "248.598.0311",
+        "phone_link": "",
+        "email_label": "Email an expert",
+        "email_link": "mailto:test@gmail.com",
+        "email_open_new_tab": false,
+        "hours": "Mon–Fri 7:30–5:30 · Sat 8–3",
+        "background_color": "#0d0f12",
+        "eyebrow_color": "#e0281e",
+        "heading_color": "#ffffff",
+        "subtext_color": "#ffffff",
+        "hours_color": "#8b93a1",
+        "phone_background": "#ffffff",
+        "phone_text": "#111318",
+        "email_text": "#ffffff",
+        "email_border": "#3a3f47",
+        "email_hover_background": "#ffffff",
+        "email_hover_text": "#111318",
+        "linear_angle": 140,
+        "linear_color_1": "#1e232c",
+        "linear_pos_1": 0,
+        "linear_color_2": "#13161c",
+        "linear_pos_2": 55,
+        "linear_color_3": "#0b0d11",
+        "linear_pos_3": 100,
+        "glow_start_color": "#d42a1c",
+        "glow_start_opacity": 35,
+        "glow_start_pos": 0,
+        "glow_end_color": "#d42a1c",
+        "glow_end_opacity": 0,
+        "glow_end_pos": 70,
+        "glow_x": 93,
+        "glow_y": 32,
+        "glow_x_mobile": 81,
+        "glow_y_mobile": 14,
+        "glow_size_x": 11,
+        "glow_size_y": 11,
+        "glow_size_x_mobile": 25,
+        "glow_size_y_mobile": 25,
+        "card_radius": 20,
+        "padding-block-start": 24,
+        "padding-block-end": 24
+      }
+    },
+    "ls_info_HXtE3T": {
+      "type": "ls-info",
+      "blocks": {
+        "info_mCK3xr": {
+          "type": "info",
+          "settings": {
+            "icon": "location",
+            "title": "In-store pickup",
+            "subtitle": "Ready at the counter"
+          }
+        },
+        "info_7rkAtM": {
+          "type": "info",
+          "settings": {
+            "icon": "truck",
+            "title": "Free curbside",
+            "subtitle": "Call ahead, we load it"
+          }
+        },
+        "info_iGpT8b": {
+          "type": "info",
+          "settings": {
+            "icon": "truck",
+            "title": "Free local delivery",
+            "subtitle": "On 48-gal qualifying orders"
+          }
+        },
+        "info_8wyzrj": {
+          "type": "info",
+          "settings": {
+            "icon": "guarantee",
+            "title": "Ships nationwide",
+            "subtitle": "Securely packed & tracked"
+          }
+        }
+      },
+      "block_order": [
+        "info_mCK3xr",
+        "info_7rkAtM",
+        "info_iGpT8b",
+        "info_8wyzrj"
+      ],
+      "name": "LS Info",
+      "settings": {
+        "eyebrow": "",
+        "heading": "",
+        "font_family": "outfit_n4",
+        "background_color": "",
+        "bar_background": "",
+        "eyebrow_color": "#c13121",
+        "heading_color": "#1a1a1a",
+        "accent_color": "#c13121",
+        "muted_color": "#6b7280",
+        "border_color": "#e5e7eb",
+        "corner_radius": 20,
+        "padding-block-start": 0,
+        "padding-block-end": 48
       }
     }
   },
   "order": [
-    "main"
+    "main",
+    "ls_contact_yVzfqM",
+    "ls_info_HXtE3T"
   ]
 }
