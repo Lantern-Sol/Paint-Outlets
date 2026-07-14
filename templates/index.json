@@ -134,7 +134,7 @@
           "settings": {
             "logo": "shopify://shop_images/lenmar-logo.png",
             "name": "Lenmar",
-            "link": ""
+            "link": "shopify://collections/productfamily_ld"
           }
         },
         "brand_oldmasters": {
@@ -142,7 +142,7 @@
           "settings": {
             "logo": "shopify://shop_images/old-masters-logo.png",
             "name": "Old Masters",
-            "link": ""
+            "link": "shopify://collections/old-masters-stains-and-finishes"
           }
         },
         "brand_tritech": {
@@ -158,7 +158,7 @@
           "settings": {
             "logo": "shopify://shop_images/benjamin-moore-paints-logo.png",
             "name": "Benjamin Moore",
-            "link": ""
+            "link": "shopify://collections/benjamin-moore-products"
           }
         },
         "brand_festool": {
@@ -166,7 +166,7 @@
           "settings": {
             "logo": "shopify://shop_images/festool-logo.png",
             "name": "Festool",
-            "link": ""
+            "link": "shopify://collections/festool"
           }
         },
         "brand_8y93BV": {
@@ -174,7 +174,7 @@
           "settings": {
             "logo": "shopify://shop_images/old-masters-logo.png",
             "name": "Old Masters",
-            "link": ""
+            "link": "shopify://collections/old-masters-stains-and-finishes"
           }
         },
         "brand_graco": {
@@ -182,7 +182,7 @@
           "settings": {
             "logo": "shopify://shop_images/graco-logo.png",
             "name": "Graco",
-            "link": ""
+            "link": "shopify://collections/graco"
           }
         },
         "brand_rustoleum": {
@@ -190,7 +190,7 @@
           "settings": {
             "logo": "shopify://shop_images/rustoleum-logo.png",
             "name": "Rust-Oleum",
-            "link": ""
+            "link": "shopify://collections/rust-oleum-products"
           }
         },
         "brand_evo": {
@@ -198,7 +198,7 @@
           "settings": {
             "logo": "shopify://shop_images/evo-logo.png",
             "name": "EVO Eclipse",
-            "link": ""
+            "link": "shopify://collections/evo"
           }
         }
       },
@@ -875,8 +875,11 @@
       ],
       "name": "LS Info",
       "settings": {
+        "eyebrow": "",
+        "heading": "",
         "font_family": "outfit_n4",
         "background_color": "#fafafa",
+        "bar_background": "",
         "eyebrow_color": "#c13121",
         "heading_color": "#1a1a1a",
         "accent_color": "#c13121",
