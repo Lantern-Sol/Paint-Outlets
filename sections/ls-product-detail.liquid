@@ -783,34 +783,57 @@
 
         {%- comment -%}
           =============== Frequently paired ===============
-          Manual `paired_product` blocks always win (merchant override). With no
-          manual blocks and paired_source = 'recommendations', the track is left
-          empty and filled client-side from the Product Recommendations API:
-          complementary (curated in Search & Discovery) first, falling back to
-          related (algorithmic). See the ls-frequently-paired section + the
-          "Frequently paired" block in the script below.
+          Source priority (highest first):
+            1. Manual `paired_product` blocks — explicit merchant override.
+            2. Complementary products curated in the Search & Discovery app,
+               read straight from the product metafield and rendered server-side
+               (no fetch, no layout shift).
+            3. Shopify Product Recommendations API (client-side fallback):
+               complementary intent first, then algorithmic related.
+          Tiers 2 and 3 only apply when paired_source = 'recommendations'. See
+          the ls-frequently-paired section + the "Frequently paired" script below.
         {%- endcomment -%}
         {%- assign paired_blocks = section.blocks | where: 'type', 'paired_product' -%}
-        {%- assign paired_dynamic = false -%}
+        {%- assign paired_limit = section.settings.paired_limit | default: 6 -%}
+        {%- assign paired_reco = false -%}
         {%- if paired_blocks.size == 0 and section.settings.paired_source == 'recommendations' -%}
+          {%- assign paired_reco = true -%}
+        {%- endif -%}
+
+        {%- comment -%} Tier 2: curated complementary products (Search & Discovery metafield). {%- endcomment -%}
+        {%- assign complementary = '' -%}
+        {%- assign complementary_count = 0 -%}
+        {%- if paired_reco -%}
+          {%- assign complementary = product.metafields.shopify--discovery--product_recommendation.complementary_products.value -%}
+          {%- if complementary != blank -%}
+            {%- assign complementary_count = complementary | size -%}
+          {%- endif -%}
+        {%- endif -%}
+
+        {%- comment -%} Tier 3: fetch from the recommendations API only when tiers 1 and 2 are empty. {%- endcomment -%}
+        {%- assign paired_dynamic = false -%}
+        {%- if paired_reco and complementary_count == 0 -%}
           {%- assign paired_dynamic = true -%}
         {%- endif -%}
-        {%- if paired_blocks.size > 0 or paired_dynamic -%}
+
+        {%- if paired_blocks.size > 0 or complementary_count > 0 or paired_dynamic -%}
           {%- assign paired_reco_section = section.settings.paired_section_id | default: 'ls-frequently-paired' -%}
+          {%- comment -%} SSR count (manual blocks or curated complementary); JS recounts for the dynamic tier. {%- endcomment -%}
+          {%- assign paired_static_count = paired_blocks.size | plus: complementary_count -%}
           <div
             class="ls-pdp__paired"
             data-paired
             {% if paired_dynamic %}
               data-paired-dynamic
-              data-reco-url="{{ routes.product_recommendations_url }}?section_id={{ paired_reco_section }}&product_id={{ product.id }}&limit={{ section.settings.paired_limit | default: 6 }}"
+              data-reco-url="{{ routes.product_recommendations_url }}?section_id={{ paired_reco_section }}&product_id={{ product.id }}&limit={{ paired_limit }}"
             {% endif %}
           >
             <div class="ls-pdp__paired-head">
               <h2 class="ls-pdp__paired-title">
                 {{ section.settings.paired_heading }}
-                <span class="ls-pdp__paired-count" data-paired-count{% if paired_dynamic %} hidden{% endif %}>{{ paired_blocks.size }}</span>
+                <span class="ls-pdp__paired-count" data-paired-count{% if paired_dynamic %} hidden{% endif %}>{{ paired_static_count }}</span>
               </h2>
-              <div class="ls-pdp__paired-nav" data-paired-nav{% unless paired_blocks.size > 1 %} hidden{% endunless %}>
+              <div class="ls-pdp__paired-nav" data-paired-nav{% unless paired_static_count > 1 %} hidden{% endunless %}>
                 <button type="button" class="ls-pdp__paired-arrow" data-paired-prev aria-label="Previous">
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
@@ -823,6 +846,14 @@
               {%- if paired_dynamic -%}
                 {%- comment -%} Filled by JS; skeleton avoids layout shift while fetching. {%- endcomment -%}
                 <div class="ls-pdp__paired-skeleton" data-paired-skeleton aria-hidden="true"></div>
+              {%- elsif complementary_count > 0 -%}
+                {%- for card_product in complementary limit: paired_limit -%}
+                  {%- render 'ls-pdp-paired-card',
+                    card_product: card_product,
+                    quick_add_text: section.settings.quick_add_text,
+                    sold_out_text: section.settings.sold_out_text
+                  -%}
+                {%- endfor -%}
               {%- else -%}
                 {%- for block in paired_blocks -%}
                   {%- render 'ls-pdp-paired-card',
@@ -838,44 +869,61 @@
           </div>
         {%- endif -%}
 
-        {%- comment -%} =============== Accordions =============== {%- endcomment -%}
-        {%- assign accordion_blocks = section.blocks | where: 'type', 'accordion' -%}
-        {%- if accordion_blocks.size > 0 -%}
-          {%- assign acc_tag = section.settings.description_heading_tag | default: 'h2' -%}
-          {%- assign acc_open = '<' | append: acc_tag -%}
-          <div class="ls-pdp__accordions" data-accordions>
-            {%- for block in accordion_blocks -%}
-              {%- liquid
-                assign body = block.settings.content
-                if block.settings.use_description
-                  # Pull this accordion's slice out of the product description:
-                  # everything between "<tag>Label</tag>" and the next "<tag".
-                  assign label = block.settings.description_section | default: block.settings.title
-                  assign delim = acc_open | append: '>' | append: label | append: '</' | append: acc_tag | append: '>'
-                  assign chunks = product.description | split: delim
-                  if chunks.size > 1
-                    assign extracted = chunks[1] | split: acc_open | first | strip
-                    if extracted != blank
-                      assign body = extracted
-                    endif
-                  endif
+        {%- comment -%}
+          =============== Accordions (from description) ===============
+          Accordions are derived from the product description at render time —
+          one panel per heading section, in the order they appear — so a product
+          only shows the panels it actually has content for (Details, Features,
+          Data Sheets, Coverage, Technical data, …). No per-block setup: the
+          description's own "<tag>Heading</tag>" structure drives the whole list.
 
-                  # The description ends with <gtin>…</gtin> tags (barcodes).
-                  # Cut the content at the first one so they don't render.
-                  assign body = body | split: '<gtin' | first | strip
-                endif
-              -%}
-              {%- unless body == blank -%}
-                <details class="ls-pdp__accordion" {% if block.settings.open_by_default %}open{% endif %} {{ block.shopify_attributes }}>
-                  <summary class="ls-pdp__accordion-summary">
-                    <span>{{ block.settings.title }}</span>
-                    <span class="ls-pdp__accordion-icon" aria-hidden="true"></span>
-                  </summary>
-                  <div class="ls-pdp__accordion-body rte">{{ body }}</div>
-                </details>
-              {%- endunless -%}
-            {%- endfor -%}
-          </div>
+          A section is skipped when its heading or its body is empty, when the
+          heading is in the merchant's exclude list, and trailing <gtin> barcode
+          tags are cut off. If nothing qualifies, the wrapper isn't rendered.
+        {%- endcomment -%}
+        {%- liquid
+          assign acc_tag = section.settings.description_heading_tag | default: 'h2'
+          assign acc_open = '<' | append: acc_tag
+          assign acc_close = '</' | append: acc_tag | append: '>'
+          assign acc_exclude = section.settings.accordion_exclude_headings | default: '' | downcase | replace: ', ', ',' | split: ','
+          assign acc_first_open = section.settings.accordions_first_open
+          # Drop trailing <gtin> barcodes, then break the description into
+          # heading-led sections. Chunk 0 is any preamble before the first
+          # heading — skipped.
+          assign acc_desc = product.description | split: '<gtin' | first
+          assign acc_chunks = acc_desc | split: acc_open
+        -%}
+        {%- capture accordions_html -%}
+          {%- assign acc_rendered = 0 -%}
+          {%- for chunk in acc_chunks -%}
+            {%- if forloop.first -%}{%- continue -%}{%- endif -%}
+            {%- comment -%}
+              chunk looks like ">Details</h2>…body…" (or "><span>Details</span></h2>…",
+              or " class=…>Details</h2>…"). Split off the heading, then derive the
+              title from its text and the body from everything after "</tag>".
+            {%- endcomment -%}
+            {%- assign acc_head_raw = chunk | split: acc_close | first -%}
+            {%- assign acc_title = acc_head_raw | strip_html | split: '>' | last | strip -%}
+            {%- if acc_title == blank -%}{%- continue -%}{%- endif -%}
+            {%- assign acc_title_dc = acc_title | downcase -%}
+            {%- if acc_exclude contains acc_title_dc -%}{%- continue -%}{%- endif -%}
+            {%- assign acc_body = chunk | remove_first: acc_head_raw | remove_first: acc_close | strip -%}
+            {%- comment -%} Require real (non-markup) content, so empty/placeholder sections drop out. {%- endcomment -%}
+            {%- assign acc_body_text = acc_body | strip_html | strip -%}
+            {%- if acc_body_text == blank -%}{%- continue -%}{%- endif -%}
+            {%- assign acc_rendered = acc_rendered | plus: 1 -%}
+            <details class="ls-pdp__accordion"{% if acc_first_open and acc_rendered == 1 %} open{% endif %}>
+              <summary class="ls-pdp__accordion-summary">
+                <span>{{ acc_title }}</span>
+                <span class="ls-pdp__accordion-icon" aria-hidden="true"></span>
+              </summary>
+              <div class="ls-pdp__accordion-body rte">{{ acc_body }}</div>
+            </details>
+          {%- endfor -%}
+        {%- endcapture -%}
+        {%- assign accordions_html = accordions_html | strip -%}
+        {%- if accordions_html != blank -%}
+          <div class="ls-pdp__accordions" data-accordions>{{ accordions_html }}</div>
         {%- endif -%}
       </div>
     </div>
@@ -2922,7 +2970,7 @@
       "type": "select",
       "id": "paired_source",
       "label": "Source",
-      "info": "Manually added products always take priority. 'Recommendations' auto-fills when no products are added below: curated complementary products (set in the Search & Discovery app) first, falling back to algorithmic related products.",
+      "info": "Manually added products always take priority. 'Recommendations' auto-fills when no products are added below: curated complementary products (set in the Search & Discovery app) render first, then the Product Recommendations API fills in (complementary, falling back to algorithmic related) when none are curated.",
       "options": [
         { "value": "manual", "label": "Manual only" },
         { "value": "recommendations", "label": "Recommendations (curated + fallback)" }
@@ -2945,7 +2993,7 @@
     },
     {
       "type": "paragraph",
-      "content": "For accordions set to 'Pull content from product description', this is the heading tag that separates sections in the description. Details/Features/Data Sheets are each pulled from between their heading and the next one."
+      "content": "Accordions are built automatically from the product description: one panel per heading section (Details, Features, Data Sheets, …), in the order they appear. A product only shows the panels it has content for — empty sections are skipped. Set the heading tag that separates those sections below."
     },
     {
       "type": "select",
@@ -2960,6 +3008,18 @@
         { "value": "p", "label": "Paragraph (p)" }
       ],
       "default": "h2"
+    },
+    {
+      "type": "checkbox",
+      "id": "accordions_first_open",
+      "label": "Open the first accordion by default",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "accordion_exclude_headings",
+      "label": "Headings to hide",
+      "info": "Comma-separated heading names to never turn into an accordion, e.g. Description, Discontinued. Case-insensitive."
     },
     {
       "type": "header",
@@ -3129,45 +3189,6 @@
           "info": "Defaults to the product title."
         }
       ]
-    },
-    {
-      "type": "accordion",
-      "name": "Accordion",
-      "settings": [
-        {
-          "type": "text",
-          "id": "title",
-          "label": "Title",
-          "default": "Details"
-        },
-        {
-          "type": "checkbox",
-          "id": "use_description",
-          "label": "Pull content from product description",
-          "info": "Extracts the section under this heading in the description (matched by the label below).",
-          "default": false
-        },
-        {
-          "type": "text",
-          "id": "description_section",
-          "label": "Description heading to match",
-          "info": "The heading text in the description that starts this section, e.g. Details. Defaults to the title above.",
-          "visible_if": "{{ block.settings.use_description }}"
-        },
-        {
-          "type": "richtext",
-          "id": "content",
-          "label": "Content",
-          "default": "<ul><li>Available Colors: All Colors</li><li>Cleanup: Soap and Water</li><li>Recommended Use: Interior</li></ul>",
-          "visible_if": "{{ block.settings.use_description == false }}"
-        },
-        {
-          "type": "checkbox",
-          "id": "open_by_default",
-          "label": "Open by default",
-          "default": false
-        }
-      ]
     }
   ],
   "presets": [
@@ -3177,10 +3198,7 @@
       "blocks": [
         { "type": "assurance", "settings": { "icon": "truck", "title": "Free local delivery", "subtitle": "On 48-gal orders" } },
         { "type": "assurance", "settings": { "icon": "pickup", "title": "Curbside pickup", "subtitle": "Ready in ~2 hrs" } },
-        { "type": "assurance", "settings": { "icon": "returns", "title": "30-day returns", "subtitle": "Hassle-free" } },
-        { "type": "accordion", "settings": { "title": "Details", "open_by_default": true } },
-        { "type": "accordion", "settings": { "title": "Features", "content": "<p>Add product features here.</p>" } },
-        { "type": "accordion", "settings": { "title": "Data Sheets", "content": "<p>Link technical data sheets here.</p>" } }
+        { "type": "assurance", "settings": { "icon": "returns", "title": "30-day returns", "subtitle": "Hassle-free" } }
       ]
     }
   ]
