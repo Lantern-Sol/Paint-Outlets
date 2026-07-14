@@ -35,45 +35,12 @@
             "title": "30-day returns",
             "subtitle": "Hassle-free"
           }
-        },
-        "accordion_details": {
-          "type": "accordion",
-          "settings": {
-            "title": "Details",
-            "use_description": true,
-            "description_section": "",
-            "content": "<ul><li>Available Colors: All Colors, Ready Mix White, Ready Mix Black</li><li>Sheen (or Gloss): Satin</li><li>Cleanup: Soap and Water</li><li>Resin Type: Water Reducible Alkyd</li><li>Recommended Use: Interior</li><li>VOC Level: 47.0</li></ul>",
-            "open_by_default": true
-          }
-        },
-        "accordion_features": {
-          "type": "accordion",
-          "settings": {
-            "title": "Features",
-            "use_description": true,
-            "description_section": "Features",
-            "content": "<p>Add product features here.</p>",
-            "open_by_default": false
-          }
-        },
-        "accordion_datasheets": {
-          "type": "accordion",
-          "settings": {
-            "title": "Data Sheets",
-            "use_description": true,
-            "description_section": "Data Sheets",
-            "content": "<p>Link technical data sheets here.</p>",
-            "open_by_default": false
-          }
         }
       },
       "block_order": [
         "assurance_delivery",
         "assurance_pickup",
-        "assurance_returns",
-        "accordion_details",
-        "accordion_features",
-        "accordion_datasheets"
+        "assurance_returns"
       ],
       "settings": {
         "font_family": "outfit_n4",
