@@ -616,33 +616,14 @@
                           endif
                         endif
 
-                        # Original (compare-at) price when this size is on sale.
+                        # Original (compare-at) price and the shopper's savings on
+                        # this size when it's on sale.
                         assign card_compare = card_variant.compare_at_price
                         assign card_on_sale = false
+                        assign card_savings = 0
                         if card_compare != blank and card_compare > card_variant.price
                           assign card_on_sale = true
-                        endif
-
-                        # Per-quart price, derived from the size name:
-                        # Quart = 1qt · Gallon = 4qt · 5 Gallon = 20qt · Pint = 0.5qt.
-                        # A leading number scales the base unit (defaults to 1).
-                        assign size_dc = value.name | downcase
-                        assign size_num = value.name | split: ' ' | first | times: 1
-                        if size_num == 0
-                          assign size_num = 1
-                        endif
-                        assign qt_per_unit = 0
-                        if size_dc contains 'gallon' or size_dc contains 'gal'
-                          assign qt_per_unit = 4
-                        elsif size_dc contains 'quart' or size_dc contains 'qt'
-                          assign qt_per_unit = 1
-                        elsif size_dc contains 'pint'
-                          assign qt_per_unit = 0.5
-                        endif
-                        assign total_qt = size_num | times: qt_per_unit
-                        assign per_qt = 0
-                        if total_qt > 0 and card_variant.price != blank
-                          assign per_qt = card_variant.price | divided_by: total_qt
+                          assign card_savings = card_compare | minus: card_variant.price
                         endif
                       -%}
                       <button
@@ -665,8 +646,8 @@
                               <s class="ls-pdp__size-compare">{{ card_compare | money }}</s>
                             {%- endif -%}
                           </span>
-                          {%- if per_qt > 0 -%}
-                            <span class="ls-pdp__size-unit">{{ per_qt | money }} / qt</span>
+                          {%- if card_on_sale -%}
+                            <span class="ls-pdp__size-unit">Save {{ card_savings | money }}</span>
                           {%- endif -%}
                         {%- endif -%}
                       </button>
@@ -2221,7 +2202,7 @@
   .ls-pdp__size-pricing { display: flex; align-items: baseline; gap: 0.25rem; flex-wrap: nowrap; white-space: nowrap; }
   .ls-pdp__size-price { font-size: clamp(0.72rem, 12.5cqi, 1.0625rem); font-weight: 700; color: var(--ls-pd-heading); }
   .ls-pdp__size-compare { font-size: clamp(0.55rem, 8cqi, 0.72rem); color: var(--ls-pd-muted); text-decoration: line-through; }
-  .ls-pdp__size-unit { font-size: clamp(0.58rem, 8cqi, 0.72rem); color: var(--ls-pd-success); font-weight: 500; }
+  .ls-pdp__size-unit { font-size: clamp(0.68rem, 10cqi, 0.875rem); color: var(--ls-pd-success); font-weight: 700; }
 
   /* ---------- Buy row ---------- */
   .ls-pdp__buy { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
