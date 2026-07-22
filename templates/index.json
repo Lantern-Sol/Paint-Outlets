@@ -25,7 +25,7 @@
         "star_color": "#f5b301",
         "rating_text_color": "#ffffff",
         "button_1_label": "Shop now",
-        "button_1_link": "",
+        "button_1_link": "shopify://collections/interior-paint",
         "button_1_show_arrow": true,
         "button_1_open_new_tab": false,
         "button_1_background": "#c13121",
@@ -37,7 +37,7 @@
         "button_1_border_width": 0,
         "button_1_border_radius": 40,
         "button_2_label": "Shop by color",
-        "button_2_link": "",
+        "button_2_link": "shopify://collections/colors",
         "button_2_open_new_tab": false,
         "button_2_background": "rgba(0,0,0,0)",
         "button_2_text": "#ffffff",
@@ -81,7 +81,7 @@
           "type": "feature",
           "settings": {
             "icon": "truck",
-            "text": "Free local delivery on bulk orders"
+            "text": "Free Local Delivery (Oakland County, Macomb County, Genesee Gounty Michigan)"
           }
         },
         "feature_guarantee": {
@@ -148,9 +148,9 @@
         "brand_tritech": {
           "type": "brand",
           "settings": {
-            "logo": "shopify://shop_images/tritech.png",
-            "name": "TriTech",
-            "link": ""
+            "logo": "shopify://shop_images/allpro-logo.png",
+            "name": "AllPro",
+            "link": "shopify://collections/allpro-products"
           }
         },
         "brand_benjaminmoore": {
@@ -172,15 +172,15 @@
         "brand_8y93BV": {
           "type": "brand",
           "settings": {
-            "logo": "shopify://shop_images/old-masters-logo.png",
-            "name": "Old Masters",
-            "link": "shopify://collections/old-masters-stains-and-finishes"
+            "logo": "shopify://shop_images/wooster-logo.jpg",
+            "name": "Wooster",
+            "link": "shopify://collections/painting-tools"
           }
         },
         "brand_graco": {
           "type": "brand",
           "settings": {
-            "logo": "shopify://shop_images/graco-logo.png",
+            "logo": "shopify://shop_images/graco-logo.jpg",
             "name": "Graco",
             "link": "shopify://collections/graco"
           }
@@ -422,11 +422,33 @@
         "collection_card_zcgpmn": {
           "type": "collection_card",
           "settings": {
-            "collection": "festool",
+            "collection": "aura®-the-pinnacle-of-paint-perfection",
+            "category": "Paint",
+            "title": "Benjamin Moore \"Premium\"",
+            "subtitle": "The pinnacle of paint",
+            "badge": "",
+            "link": ""
+          }
+        },
+        "collection_card_V47VPd": {
+          "type": "collection_card",
+          "settings": {
+            "collection": "graco",
             "category": "Tools",
-            "title": "FESTOOL",
-            "subtitle": "Sanders & power tools",
-            "badge": "Tools",
+            "title": "",
+            "subtitle": "Paint appliers",
+            "badge": "",
+            "link": ""
+          }
+        },
+        "collection_card_3gL8rT": {
+          "type": "collection_card",
+          "settings": {
+            "collection": "wooster",
+            "category": "Tools",
+            "title": "",
+            "subtitle": "Brushes and other hand tools",
+            "badge": "",
             "link": ""
           }
         }
@@ -437,7 +459,9 @@
         "collection_card_kWN4E9",
         "collection_card_QNipen",
         "collection_card_ar6TVr",
-        "collection_card_zcgpmn"
+        "collection_card_zcgpmn",
+        "collection_card_V47VPd",
+        "collection_card_3gL8rT"
       ],
       "name": "LS Featured Collections",
       "settings": {
@@ -534,7 +558,7 @@
             "image": "shopify://shop_images/whites-swatch.png",
             "title": "Whites & Off-Whites",
             "subtitle": "Chantilly Lace · Simply White",
-            "link": ""
+            "link": "shopify://collections/white-paint-colors"
           },
           "blocks": {
             "ls_color_swatch_QhM7aW": {
@@ -580,7 +604,7 @@
             "image": "shopify://shop_images/blues-greens-swatch.png",
             "title": "Blues & Greens",
             "subtitle": "Hale Navy · Caldwell Green",
-            "link": ""
+            "link": "shopify://collections/blue-paint-colors"
           },
           "blocks": {
             "ls_color_swatch_yx7cNE": {
@@ -626,7 +650,7 @@
             "image": "shopify://shop_images/bold-swatch.png",
             "title": "Bold & Moody",
             "subtitle": "Black Beauty · Caliente",
-            "link": ""
+            "link": "shopify://collections/black-paint-colors"
           },
           "blocks": {
             "ls_color_swatch_xDkmLt": {
@@ -672,7 +696,7 @@
             "image": "shopify://shop_images/cabinet-swatch.png",
             "title": "Cabinet & Trim",
             "subtitle": "Cloud White · Kendall Charcoal",
-            "link": ""
+            "link": "shopify://collections/ac"
           },
           "blocks": {
             "ls_color_swatch_VCTw3U": {
@@ -731,7 +755,9 @@
         "cta_title": "Not sure yet? Order a color sample.",
         "cta_text": "Peel-&-stick samples and pints shipped before you commit to a gallon.",
         "cta_button_label": "Order samples",
-        "cta_button_link": "",
+        "cta_button_link": "shopify://collections/colors",
+        "cta_button2_label": "Order fan decks",
+        "cta_button2_link": "shopify://collections/full-fan-decks",
         "background_color": "#fafafa",
         "eyebrow_color": "#c13121",
         "heading_color": "#1a1a1a",
@@ -763,7 +789,7 @@
             "primary_label": "Get bulk pricing",
             "primary_link": "",
             "secondary_label": "248.598.0311",
-            "secondary_link": "",
+            "secondary_link": "tel:2485980311",
             "secondary_icon": "phone"
           }
         },
@@ -780,9 +806,9 @@
             "tag_2": "Free color matching",
             "tag_3": "Expert advice",
             "primary_label": "Order color samples",
-            "primary_link": "",
+            "primary_link": "shopify://collections/colors",
             "secondary_label": "Explore colors",
-            "secondary_link": "",
+            "secondary_link": "shopify://collections/af",
             "secondary_icon": "none"
           }
         }
@@ -1048,7 +1074,7 @@
       "name": "LS Contact",
       "settings": {
         "font_family": "outfit_n4",
-        "eyebrow": "Talk to a human",
+        "eyebrow": "Chat with a human",
         "heading": "Ready to start your project?",
         "subtext": "Our paint experts will help you pick the right product, match your color, and handle bulk pricing — no guesswork.",
         "phone_number": "248.598.0311",

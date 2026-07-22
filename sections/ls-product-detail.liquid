@@ -275,6 +275,14 @@
 
       {%- comment -%} ================= DETAILS ================= {%- endcomment -%}
       <div class="ls-pdp__details">
+        {%- comment -%} Ships nationwide {%- endcomment -%}
+        {%- if section.settings.ships_text != blank -%}
+          <p class="ls-pdp__ships" role="note">
+            <svg class="ls-pdp__ships-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M1.5 5.5h9v7h-9zM10.5 8h3l2.5 2.5v2h-5.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="5" cy="14" r="1.6" stroke="currentColor" stroke-width="1.3"/><circle cx="13.5" cy="14" r="1.6" stroke="currentColor" stroke-width="1.3"/></svg>
+            <span>{{ section.settings.ships_text }}</span>
+          </p>
+        {%- endif -%}
+
         {%- comment -%} Rating {%- endcomment -%}
         {%- if section.settings.show_rating and rating_value != blank and rating_value > 0 -%}
           <div class="ls-pdp__rating">
@@ -541,6 +549,13 @@
                     </div>
                   {%- endif -%}
                 </div>
+
+                {%- if section.settings.color_disclaimer_text != blank -%}
+                  <p class="ls-pdp__color-disclaimer" role="note">
+                    <svg class="ls-pdp__color-disclaimer-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 6.5v4M10 13.5h.01M10 1.5 1.5 16.5h17L10 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>{{ section.settings.color_disclaimer_text }}</span>
+                  </p>
+                {%- endif -%}
               {%- endif -%}
 
               {%- comment -%} Pass 2 — Size renders as price cards, after Color (Figma order). {%- endcomment -%}
@@ -776,6 +791,24 @@
         {%- endcomment -%}
         {%- assign paired_blocks = section.blocks | where: 'type', 'paired_product' -%}
         {%- assign paired_limit = section.settings.paired_limit | default: 6 -%}
+        {%- comment -%}
+          Optional hand-picked product, shown alongside the API/curated list (doesn't replace it).
+          If a "pinned collection" is set, it only shows when THIS product is in that collection.
+        {%- endcomment -%}
+        {%- assign paired_pinned = section.settings.paired_pinned_product -%}
+        {%- assign paired_pin_gate = section.settings.paired_pinned_collection -%}
+        {%- if paired_pinned != blank and paired_pin_gate != blank -%}
+          {%- assign paired_pin_in = false -%}
+          {%- for paired_pc in product.collections -%}
+            {%- if paired_pc.id == paired_pin_gate.id -%}
+              {%- assign paired_pin_in = true -%}
+              {%- break -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- unless paired_pin_in -%}
+            {%- assign paired_pinned = blank -%}
+          {%- endunless -%}
+        {%- endif -%}
         {%- assign paired_reco = false -%}
         {%- if paired_blocks.size == 0 and section.settings.paired_source == 'recommendations' -%}
           {%- assign paired_reco = true -%}
@@ -797,10 +830,13 @@
           {%- assign paired_dynamic = true -%}
         {%- endif -%}
 
-        {%- if paired_blocks.size > 0 or complementary_count > 0 or paired_dynamic -%}
+        {%- if paired_blocks.size > 0 or complementary_count > 0 or paired_dynamic or paired_pinned != blank -%}
           {%- assign paired_reco_section = section.settings.paired_section_id | default: 'ls-frequently-paired' -%}
           {%- comment -%} SSR count (manual blocks or curated complementary); JS recounts for the dynamic tier. {%- endcomment -%}
           {%- assign paired_static_count = paired_blocks.size | plus: complementary_count -%}
+          {%- if paired_pinned != blank -%}
+            {%- assign paired_static_count = paired_static_count | plus: 1 -%}
+          {%- endif -%}
           <div
             class="ls-pdp__paired"
             data-paired
@@ -824,11 +860,22 @@
               </div>
             </div>
             <div class="ls-pdp__paired-track" data-paired-track>
+              {%- comment -%} Pinned product first — kept across the dynamic refresh by the JS below. {%- endcomment -%}
+              {%- if paired_pinned != blank -%}
+                {%- capture paired_pinned_attrs -%}data-paired-pinned data-paired-id="{{ paired_pinned.id }}"{%- endcapture -%}
+                {%- render 'ls-pdp-paired-card',
+                  card_product: paired_pinned,
+                  quick_add_text: section.settings.quick_add_text,
+                  sold_out_text: section.settings.sold_out_text,
+                  card_attributes: paired_pinned_attrs
+                -%}
+              {%- endif -%}
               {%- if paired_dynamic -%}
                 {%- comment -%} Filled by JS; skeleton avoids layout shift while fetching. {%- endcomment -%}
                 <div class="ls-pdp__paired-skeleton" data-paired-skeleton aria-hidden="true"></div>
               {%- elsif complementary_count > 0 -%}
                 {%- for card_product in complementary limit: paired_limit -%}
+                  {%- if paired_pinned != blank and card_product.id == paired_pinned.id -%}{%- continue -%}{%- endif -%}
                   {%- render 'ls-pdp-paired-card',
                     card_product: card_product,
                     quick_add_text: section.settings.quick_add_text,
@@ -837,6 +884,7 @@
                 {%- endfor -%}
               {%- else -%}
                 {%- for block in paired_blocks -%}
+                  {%- if paired_pinned != blank and block.settings.product.id == paired_pinned.id -%}{%- continue -%}{%- endif -%}
                   {%- render 'ls-pdp-paired-card',
                     card_product: block.settings.product,
                     title_override: block.settings.title_override,
@@ -1086,16 +1134,36 @@
 
           function hide() { paired.setAttribute('hidden', ''); }
 
-          if (!baseUrl) { hide(); return; }
+          // A pinned card is server-rendered and must survive the dynamic refresh.
+          var pinnedCard = track.querySelector('[data-paired-pinned]');
+          var pinnedId = pinnedCard ? pinnedCard.getAttribute('data-paired-id') : null;
+          function removeSkeleton() {
+            var sk = track.querySelector('[data-paired-skeleton]');
+            if (sk && sk.parentNode) sk.parentNode.removeChild(sk);
+          }
+          function keepPinnedOrHide() {
+            // No API results: keep the pinned card if there is one, otherwise hide the whole block.
+            if (pinnedCard) { removeSkeleton(); refreshNav(); } else { hide(); }
+          }
+
+          if (!baseUrl) { keepPinnedOrHide(); return; }
           fetchIntent('complementary')
             .then(function (list) { return (list && list.length) ? list : fetchIntent('related'); })
             .then(function (list) {
-              if (!list || !list.length) { hide(); return; }
+              if (!list || !list.length) { keepPinnedOrHide(); return; }
               track.innerHTML = '';
-              list.forEach(function (c) { track.appendChild(c); });
+              if (pinnedCard) track.appendChild(pinnedCard);
+              list.forEach(function (c) {
+                // Drop any API card that duplicates the pinned product.
+                if (pinnedId) {
+                  var pf = c.querySelector('[data-product-id]');
+                  if (pf && pf.getAttribute('data-product-id') === pinnedId) return;
+                }
+                track.appendChild(c);
+              });
               refreshNav();
             })
-            .catch(hide);
+            .catch(keepPinnedOrHide);
         })();
 
         function showMediaId(mediaId) {
@@ -1810,6 +1878,18 @@
   /* ---------- Details ---------- */
   .ls-pdp__details { display: flex; flex-direction: column; }
 
+  .ls-pdp__ships {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    align-self: flex-start;
+    margin: 0 0 0.85rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ls-pd-heading);
+  }
+  .ls-pdp__ships-icon { flex: 0 0 auto; width: 16px; height: 16px; }
+
   .ls-pdp__rating { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.85rem; }
   .ls-pdp__stars { display: inline-flex; gap: 2px; }
   .ls-pdp__star { position: relative; width: 15px; height: 15px; display: inline-block; }
@@ -2041,6 +2121,17 @@
   .ls-pdp__combo-empty,
   .ls-pdp__combo-note { padding: 0.7rem 0.6rem; color: var(--ls-pd-muted); font-size: 0.8125rem; }
   .ls-pdp__combo-empty[hidden] { display: none; }
+
+  .ls-pdp__color-disclaimer {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    margin: 0.5rem 0 0;
+    color: var(--ls-pd-muted);
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+  .ls-pdp__color-disclaimer-icon { flex: 0 0 auto; width: 0.9375rem; height: 0.9375rem; margin-top: 0.05rem; }
 
   /* Footer sits below the scrolling list, so nothing scrolls under it. */
   .ls-pdp__combo-foot {
@@ -2555,6 +2646,13 @@
       "default": true
     },
     {
+      "type": "text",
+      "id": "ships_text",
+      "label": "Ships note",
+      "info": "Shown at the top of the product details with a truck icon. Leave blank to hide.",
+      "default": "Ships nationwide"
+    },
+    {
       "type": "checkbox",
       "id": "show_rating",
       "label": "Show rating",
@@ -2777,6 +2875,14 @@
     },
     {
       "type": "text",
+      "id": "color_disclaimer_text",
+      "label": "Color disclaimer",
+      "info": "Shown below the color picker. Leave blank to hide.",
+      "default": "No returns on tinted or non-stocked colors.",
+      "visible_if": "{{ section.settings.show_color_field }}"
+    },
+    {
+      "type": "text",
       "id": "paint_family_tag_prefix",
       "label": "Paint family tag prefix",
       "info": "Prefix of the tags on paint products that declare supported color families, e.g. colorcollection_",
@@ -2940,6 +3046,18 @@
       "id": "paired_heading",
       "label": "Heading",
       "default": "Frequently paired with this"
+    },
+    {
+      "type": "product",
+      "id": "paired_pinned_product",
+      "label": "Pinned product",
+      "info": "Shown first in Frequently paired, in addition to the recommended/curated products (doesn't replace them). Leave blank for none."
+    },
+    {
+      "type": "collection",
+      "id": "paired_pinned_collection",
+      "label": "Pinned product — only on this collection",
+      "info": "The pinned product only shows on products that belong to this collection (e.g. Colors ALL). Leave blank to show it on every product."
     },
     {
       "type": "text",

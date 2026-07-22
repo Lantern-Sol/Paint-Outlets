@@ -16,6 +16,11 @@
           "type": "quick_filter",
           "settings": {
             "label": "Bestsellers",
+            "filter_type": "tag",
+            "filter_tag": "best-seller",
+            "mf_namespace": "",
+            "mf_key": "",
+            "mf_value": "",
             "link": ""
           }
         },
@@ -23,6 +28,11 @@
           "type": "quick_filter",
           "settings": {
             "label": "Low-VOC",
+            "filter_type": "tag",
+            "filter_tag": "low-voc",
+            "mf_namespace": "",
+            "mf_key": "",
+            "mf_value": "",
             "link": ""
           }
         },
@@ -30,6 +40,11 @@
           "type": "quick_filter",
           "settings": {
             "label": "Cabinets & Trim",
+            "filter_type": "tag",
+            "filter_tag": "",
+            "mf_namespace": "",
+            "mf_key": "",
+            "mf_value": "",
             "link": ""
           }
         },
@@ -37,6 +52,11 @@
           "type": "quick_filter",
           "settings": {
             "label": "Bath & Kitchen",
+            "filter_type": "tag",
+            "filter_tag": "",
+            "mf_namespace": "",
+            "mf_key": "",
+            "mf_value": "",
             "link": ""
           }
         },
@@ -44,6 +64,11 @@
           "type": "quick_filter",
           "settings": {
             "label": "On sale",
+            "filter_type": "tag",
+            "filter_tag": "",
+            "mf_namespace": "",
+            "mf_key": "",
+            "mf_value": "",
             "link": ""
           }
         },
@@ -51,6 +76,11 @@
           "type": "quick_filter",
           "settings": {
             "label": "Pro picks",
+            "filter_type": "tag",
+            "filter_tag": "",
+            "mf_namespace": "",
+            "mf_key": "",
+            "mf_value": "",
             "link": ""
           }
         }
@@ -66,8 +96,9 @@
       "settings": {
         "font_family": "outfit_n4",
         "show_breadcrumbs": true,
-        "item_noun": "paints",
+        "item_noun": "products",
         "subtitle_suffix": "tinted to any color",
+        "paint_use_tag": "use_paint",
         "assurance_1": "Ready today",
         "assurance_2": "Ships nationwide",
         "filters_label": "Filters",
@@ -77,6 +108,7 @@
         "clear_label": "Clear",
         "show_results_label": "Show",
         "showing_label": "Showing",
+        "price_buckets": "0-40, 40-60, 60-80, 80-",
         "show_finish_filter": true,
         "finish_label": "Finish / sheen",
         "finish_options": "Flat, Matte, Eggshell, Satin, Semi-Gloss, High Gloss, Low Sheen",
@@ -85,7 +117,9 @@
         "cta_heading": "Not sure of the color? Try it first.",
         "cta_text": "Peel-and-stick samples in any Benjamin Moore color — $4.99, no painting, no mess.",
         "cta_button_label": "Shop color samples",
-        "cta_button_link": "",
+        "cta_button_link": "shopify://collections/colors",
+        "cta_button2_label": "Shop color fan decks",
+        "cta_button2_link": "shopify://collections/full-fan-decks",
         "cta_image": "shopify://shop_images/colordeck-full.png",
         "cta_img_width": 180,
         "cta_img_x": 320,
@@ -120,7 +154,7 @@
       "name": "LS Contact",
       "settings": {
         "font_family": "outfit_n4",
-        "eyebrow": "Talk to a human",
+        "eyebrow": "Chat with a human",
         "heading": "Ready to start your project?",
         "subtext": "Our paint experts will help you pick the right product, match your color, and handle bulk pricing — no guesswork.",
         "phone_number": "248.598.0311",

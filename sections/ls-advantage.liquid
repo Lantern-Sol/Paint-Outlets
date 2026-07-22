@@ -13,6 +13,20 @@
   assign adv_font = section.settings.font_family
   assign adv_font_600 = adv_font | font_modify: 'weight', '600'
   assign adv_font_700 = adv_font | font_modify: 'weight', '700'
+
+  # Optional collection gate: when a collection is selected, only render on
+  # product pages whose product belongs to that collection. No collection = always show.
+  assign adv_gate = section.settings.gate_collection
+  assign adv_show = true
+  if adv_gate != blank
+    assign adv_show = false
+    for adv_c in product.collections
+      if adv_c.id == adv_gate.id
+        assign adv_show = true
+        break
+      endif
+    endfor
+  endif
 -%}
 
 {% style %}
@@ -40,6 +54,7 @@
   }
 {% endstyle %}
 
+{%- if adv_show -%}
 <div
   class="ls-adv ls-adv-{{ section.id }} spacing-style"
   style="{% render 'spacing-style', settings: section.settings %}"
@@ -78,6 +93,7 @@
     {%- endif -%}
   </div>
 </div>
+{%- endif -%}
 
 {% stylesheet %}
   .ls-adv {
@@ -203,6 +219,16 @@
       "id": "font_family",
       "label": "Font",
       "default": "outfit_n4"
+    },
+    {
+      "type": "header",
+      "content": "Visibility"
+    },
+    {
+      "type": "collection",
+      "id": "gate_collection",
+      "label": "Only show for products in collection",
+      "info": "On product pages, this section only shows when the product is in the selected collection. Leave blank to always show."
     },
     {
       "type": "header",
