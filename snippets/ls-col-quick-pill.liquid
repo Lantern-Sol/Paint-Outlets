@@ -1,0 +1,80 @@
+{%- comment -%}
+  ls-col-quick-pill
+  -----------------
+  Renders one quick-filter pill for the LS Collection section.
+
+  A pill can filter the CURRENT collection by a product tag OR a product
+  metafield — so it intersects with wherever you are (e.g. on Interior Paint,
+  the "Bestsellers" pill shows Interior Paint ∩ Bestseller). It can also be a
+  plain link.
+
+  It uses the native filter's own toggle URLs when that filter is enabled in
+  Search & Discovery (correct active state, preserves other active facets). If
+  the filter isn't available it falls back to a hand-built filter URL on the
+  current collection; otherwise it uses the block's `link`.
+
+  filter.p.tag=<tag>                         → tag filter
+  filter.p.m.<namespace>.<key>=<value>       → product metafield filter
+
+  Params: block (a quick_filter block), collection
+{%- endcomment -%}
+{%- liquid
+  assign qp_type = block.settings.filter_type | default: 'tag'
+  assign qp_param = blank
+  assign qp_value = blank
+
+  if qp_type == 'tag'
+    assign qp_tag = block.settings.filter_tag | strip
+    if qp_tag != blank
+      assign qp_param = 'filter.p.tag'
+      assign qp_value = qp_tag
+    endif
+  elsif qp_type == 'metafield'
+    assign qp_ns = block.settings.mf_namespace | strip
+    assign qp_key = block.settings.mf_key | strip
+    assign qp_mv = block.settings.mf_value | strip
+    if qp_ns != blank and qp_key != blank and qp_mv != blank
+      assign qp_param = 'filter.p.m.' | append: qp_ns | append: '.' | append: qp_key
+      assign qp_value = qp_mv
+    endif
+  endif
+
+  assign qp_active = false
+  assign qp_href = blank
+
+  # Prefer the native filter's own add/remove URLs (preserves other facets,
+  # correct active state). Requires the filter to be enabled in Search & Discovery.
+  if qp_param != blank
+    for f in collection.filters
+      if f.param_name == qp_param
+        for v in f.values
+          if v.value == qp_value
+            assign qp_active = v.active
+            if v.active
+              assign qp_href = v.url_to_remove
+            else
+              assign qp_href = v.url_to_add
+            endif
+          endif
+        endfor
+      endif
+    endfor
+    # Fallback: filter not enabled/available — build the URL on the current collection.
+    if qp_href == blank
+      assign qp_enc = qp_value | url_encode
+      assign qp_href = collection.url | append: '?' | append: qp_param | append: '=' | append: qp_enc
+    endif
+  endif
+
+  # No filter configured → plain link.
+  if qp_href == blank
+    assign qp_href = block.settings.link | default: '#'
+  endif
+-%}
+<a
+  class="ls-col__pill{% if qp_active %} is-active{% endif %}"
+  href="{{ qp_href }}"
+  role="listitem"
+  {% if qp_active %}aria-current="true"{% endif %}
+  {{ block.shopify_attributes }}
+>{{ block.settings.label }}</a>

@@ -17,7 +17,7 @@
           "settings": {
             "icon": "truck",
             "title": "Free local delivery",
-            "subtitle": "On 48-gal orders"
+            "subtitle": "Limited to Oakland, Macomb, and Genesee County"
           }
         },
         "assurance_pickup": {
@@ -45,6 +45,7 @@
       "settings": {
         "font_family": "outfit_n4",
         "show_breadcrumbs": true,
+        "ships_text": "Ships nationwide",
         "show_rating": true,
         "rating_source": "metafield",
         "manual_rating": 4.5,
@@ -62,6 +63,9 @@
         "hidden_option_names": "Material ID",
         "show_sheen": true,
         "sheen_label": "Sheen",
+        "grit_label": "Grit",
+        "grit_product_types": "Sanding",
+        "family_collection_handle_prefix": "productfamily",
         "show_color_field": true,
         "require_color": false,
         "color_source_mode": "by_family_tags",
@@ -69,11 +73,13 @@
         "color_placeholder": "Search & select a color",
         "color_required_text": "Select a color to continue",
         "color_search_placeholder": "Type a color name or code…",
+        "color_disclaimer_text": "No returns on tinted or non-stocked colors.",
         "paint_family_tag_prefix": "colorcollection_",
         "family_collection_prefix": "",
         "family_collection_suffix": "",
         "color_source_collection": "",
         "color_family_tag_prefix": "color_collection_",
+        "shop_color_heading": "Shop this color in",
         "color_property_key": "Color",
         "color_options_limit": 50,
         "show_custom_color": true,
@@ -90,10 +96,14 @@
         "show_dynamic_checkout": true,
         "secure_note": "Secure checkout · 100% satisfaction guarantee",
         "paired_heading": "Frequently paired with this",
+        "paired_pinned_product": "blue-dolphin-axis-washi-tape-3-sizes",
+        "paired_pinned_collection": "colors",
         "quick_add_text": "Quick add",
         "paired_source": "recommendations",
         "paired_limit": 6,
         "description_heading_tag": "h2",
+        "accordions_first_open": true,
+        "accordion_exclude_headings": "",
         "heading_color": "#1a1a1a",
         "text_color": "#1a1a1a",
         "muted_color": "#989898",
@@ -156,6 +166,7 @@
       "name": "LS Advantage",
       "settings": {
         "font_family": "outfit_n4",
+        "gate_collection": "productfamily_awiap",
         "eyebrow": "Why this finish wins",
         "heading": "The finish of an oil paint, without the oil.",
         "subtext": "<p>ADVANCE pairs a waterborne formula with alkyd-grade leveling — four reasons it's a go-to for cabinets, doors and trim, whether you're painting one room this weekend or finishing a job site.</p>",
@@ -416,7 +427,7 @@
       "name": "LS Contact",
       "settings": {
         "font_family": "outfit_n4",
-        "eyebrow": "Talk to a human",
+        "eyebrow": "Chat with a human",
         "heading": "Ready to start your project?",
         "subtext": "Our paint experts will help you pick the right product, match your color, and handle bulk pricing — no guesswork.",
         "phone_number": "248.598.0311",

@@ -24,6 +24,14 @@
   assign total_all = collection.all_products_count
   assign total_filtered = collection.products_count
 
+  # Paint collections carry the "use_paint" product tag; the "tinted to any
+  # color" suffix only applies to those. Blank tag setting = always show.
+  assign paint_tag = section.settings.paint_use_tag | default: 'use_paint'
+  assign is_paint_collection = false
+  if paint_tag == blank or collection.all_tags contains paint_tag
+    assign is_paint_collection = true
+  endif
+
   assign current_sort = collection.sort_by | default: collection.default_sort_by
 
   # Count active facet values so "Clear all" only shows when something is applied.
@@ -130,7 +138,7 @@
       <h1 class="ls-col__title">{{ collection.title }}</h1>
       {%- if total_all > 0 -%}
         <p class="ls-col__subtitle">
-          <span class="ls-col__count">{{ total_all }}</span> {{ noun }}{% if section.settings.subtitle_suffix != blank %}, {{ section.settings.subtitle_suffix }}{% endif %}
+          <span class="ls-col__count">{{ total_all }}</span> {{ noun }}{% if section.settings.subtitle_suffix != blank and is_paint_collection %}, {{ section.settings.subtitle_suffix }}{% endif %}
         </p>
       {%- endif -%}
     </div>
@@ -184,7 +192,7 @@
         <div class="ls-col__sheet-pills" role="list">
           {%- for block in section.blocks -%}
             {%- if block.type == 'quick_filter' and block.settings.label != blank -%}
-              <a class="ls-col__pill" href="{{ block.settings.link | default: '#' }}" role="listitem" {{ block.shopify_attributes }}>{{ block.settings.label }}</a>
+              {%- render 'ls-col-quick-pill', block: block, collection: collection -%}
             {%- endif -%}
           {%- endfor -%}
         </div>
@@ -376,7 +384,7 @@
           <div class="ls-col__pills" role="list">
             {%- for block in section.blocks -%}
               {%- if block.type == 'quick_filter' and block.settings.label != blank -%}
-                <a class="ls-col__pill" href="{{ block.settings.link | default: '#' }}" role="listitem" {{ block.shopify_attributes }}>{{ block.settings.label }}</a>
+                {%- render 'ls-col-quick-pill', block: block, collection: collection -%}
               {%- endif -%}
             {%- endfor -%}
           </div>
@@ -432,11 +440,21 @@
                     <p class="ls-col__cta-sub">{{ section.settings.cta_text }}</p>
                   {%- endif -%}
                 </div>
-                {%- if section.settings.cta_button_label != blank -%}
-                  <a class="ls-col__cta-btn" href="{{ section.settings.cta_button_link | default: '#' }}">
-                    {{ section.settings.cta_button_label }}
-                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11M11 6l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </a>
+                {%- if section.settings.cta_button_label != blank or section.settings.cta_button2_label != blank -%}
+                  <div class="ls-col__cta-actions">
+                    {%- if section.settings.cta_button_label != blank -%}
+                      <a class="ls-col__cta-btn" href="{{ section.settings.cta_button_link | default: '#' }}">
+                        {{ section.settings.cta_button_label }}
+                        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11M11 6l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </a>
+                    {%- endif -%}
+                    {%- if section.settings.cta_button2_label != blank -%}
+                      <a class="ls-col__cta-btn ls-col__cta-btn--secondary" href="{{ section.settings.cta_button2_link | default: '#' }}">
+                        {{ section.settings.cta_button2_label }}
+                        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11M11 6l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </a>
+                    {%- endif -%}
+                  </div>
                 {%- endif -%}
               </div>
             </div>
@@ -947,9 +965,14 @@
     border-radius: 999px;
     text-decoration: none;
     white-space: nowrap;
-    transition: border-color 0.15s ease, color 0.15s ease;
+    transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
   }
   .ls-col__pill:hover { border-color: var(--ls-col-heading); color: var(--ls-col-heading); }
+  .ls-col__pill.is-active {
+    border-color: var(--ls-col-heading);
+    background: var(--ls-col-heading);
+    color: var(--ls-col-surface);
+  }
 
   .ls-col__sort {
     position: relative;
@@ -1069,6 +1092,17 @@
   }
   .ls-col__cta-btn:hover { filter: brightness(1.06); }
   .ls-col__cta-btn svg { width: 16px; height: 16px; }
+  .ls-col__cta-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .ls-col__cta-btn--secondary {
+    background: transparent;
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32);
+  }
+  .ls-col__cta-btn--secondary:hover {
+    filter: none;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  }
 
   @media screen and (max-width: 749px) {
     .ls-col__cta-content { max-width: none; padding: 28px 24px; }
@@ -1328,15 +1362,22 @@
       "type": "text",
       "id": "item_noun",
       "label": "Item noun",
-      "info": "Used in the count and \"Showing\" lines, e.g. \"paints\".",
-      "default": "paints"
+      "info": "Used in the count and \"Showing\" lines, e.g. \"products\".",
+      "default": "products"
     },
     {
       "type": "text",
       "id": "subtitle_suffix",
       "label": "Subtitle suffix",
-      "info": "Appended after the count, e.g. \"412 paints, tinted to any color\".",
+      "info": "Appended after the count, e.g. \"412 paints, tinted to any color\". Only shows on paint collections (see tag below).",
       "default": "tinted to any color"
+    },
+    {
+      "type": "text",
+      "id": "paint_use_tag",
+      "label": "Paint collection tag",
+      "info": "The subtitle suffix only shows when the collection contains products with this tag. Leave blank to always show.",
+      "default": "use_paint"
     },
     {
       "type": "text",
@@ -1474,6 +1515,18 @@
       "type": "url",
       "id": "cta_button_link",
       "label": "Button link"
+    },
+    {
+      "type": "text",
+      "id": "cta_button2_label",
+      "label": "Secondary button label",
+      "info": "Leave blank to hide the secondary button.",
+      "default": "Shop color fan decks"
+    },
+    {
+      "type": "url",
+      "id": "cta_button2_link",
+      "label": "Secondary button link"
     },
     {
       "type": "image_picker",
@@ -1731,10 +1784,51 @@
           "default": "Bestsellers"
         },
         {
+          "type": "select",
+          "id": "filter_type",
+          "label": "Pill type",
+          "options": [
+            { "value": "tag", "label": "Filter by product tag" },
+            { "value": "metafield", "label": "Filter by product metafield" },
+            { "value": "link", "label": "Plain link" }
+          ],
+          "default": "tag",
+          "info": "Tag/metafield pills filter the CURRENT collection (so they intersect with the collection you're on). The chosen tag or metafield must be enabled as a filter in Search & Discovery."
+        },
+        {
+          "type": "text",
+          "id": "filter_tag",
+          "label": "Product tag",
+          "info": "Exact product tag, e.g. Bestseller. Case- and spelling-sensitive.",
+          "visible_if": "{{ block.settings.filter_type == 'tag' }}"
+        },
+        {
+          "type": "text",
+          "id": "mf_namespace",
+          "label": "Metafield namespace",
+          "info": "e.g. custom, or shopify for category metafields.",
+          "visible_if": "{{ block.settings.filter_type == 'metafield' }}"
+        },
+        {
+          "type": "text",
+          "id": "mf_key",
+          "label": "Metafield key",
+          "info": "e.g. voc_level, or suitable-for-material-type.",
+          "visible_if": "{{ block.settings.filter_type == 'metafield' }}"
+        },
+        {
+          "type": "text",
+          "id": "mf_value",
+          "label": "Metafield value",
+          "info": "The value to filter on, exactly as it appears in the Search & Discovery filter (e.g. Low, Interior).",
+          "visible_if": "{{ block.settings.filter_type == 'metafield' }}"
+        },
+        {
           "type": "url",
           "id": "link",
           "label": "Link",
-          "info": "Point to a filtered collection URL or tag, e.g. ?filter.p.tag=Bestsellers"
+          "info": "Used when Pill type is Plain link (e.g. to another collection).",
+          "visible_if": "{{ block.settings.filter_type == 'link' }}"
         }
       ]
     }
